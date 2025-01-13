@@ -1,0 +1,92 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 169 42% 99%;
+    --foreground: 169 65% 0%;
+    --muted: 349 0% 89.85%;
+    --muted-foreground: 349 0% 33%;
+    --popover: 169 42% 99%;
+    --popover-foreground: 169 65% 0%;
+    --card: 169 0% 100%;
+    --card-foreground: 169 65% 0%;
+    --border: 169 12% 94%;
+    --input: 169 12% 94%;
+    --primary: 163.06 5.35% 21.32%;
+    --primary-foreground: 169 2% 88.38%;
+    --secondary: 349 8% 19%;
+    --secondary-foreground: 349 0% 100%;
+    --accent: 349 8% 19%;
+    --accent-foreground: 349 8% 79%;
+    --destructive: 6 98% 29%;
+    --destructive-foreground: 6 0% 100%;
+    --ring: 169 8% 19%;
+    --chart-1: 0 77.11% 57.65%;
+    --chart-2: 38.85 91.45% 45.72%;
+    --chart-3: 210.49 81.51% 59.23%;
+    --chart-4: 307.6 66.55% 59.06%;
+    --chart-5: 169 90.84% 58.01%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 48 0% 0%;
+    --foreground: 48 10% 100%;
+    --muted: 228 22% 13%;
+    --muted-foreground: 228 11% 61%;
+    --popover: 48 51% 2%;
+    --popover-foreground: 0 0% 100%;
+    --card: 48 51% 2%;
+    --card-foreground: 0 0% 100%;
+    --border: 48 11% 12%;
+    --input: 48 11% 12%;
+    --primary: 48 89% 50%;
+    --primary-foreground: 48 89% 10%;
+    --secondary: 228 23.93% 38.61%;
+    --secondary-foreground: 0 0% 100%;
+    --accent: 29.81 85.99% 40.86%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 360 90.65% 32.76%;
+    --destructive-foreground: 0 0% 100%;
+    --ring: 48 89% 50%;
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+  }
+}
+
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    background-image: radial-gradient(
+  60% 120% at 50% 60%,
+  transparent 0%,
+  rgba(172, 173, 173, 0.521) 100%
+);
+  }
+  
+  .dark body {
+    background-image: radial-gradient(
+  60% 120% at 50% 50%,
+  transparent 0%,
+  rgba(4, 4, 1, 0.01) 30%,
+  rgba(5, 5, 3, 0.02) 60%,
+  rgba(5, 5, 5, 0.164) 100%
+);
+  }
+}
+
+
+
+ input[type=number]::-webkit-inner-spin-button, 
+ input[type=number]::-webkit-outer-spin-button { 
+   -webkit-appearance: none; 
+   margin: 0; 
+ }
