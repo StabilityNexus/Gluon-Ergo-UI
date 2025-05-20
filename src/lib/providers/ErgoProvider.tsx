@@ -43,9 +43,10 @@ interface ErgoContextType {
   disconnect: () => void
   getChangeAddress: () => Promise<string>
   signMessage: (address: string, message: string) => Promise<string>
-  getBalance: () => Promise<any>,
-  getUtxos: () => Promise<any>,
+  getBalance: () => Promise<any>
+  getUtxos: () => Promise<any>
   SignAndSubmitTx: (tx: any) => Promise<any>
+  ergoWallet: typeof window.ergo | undefined
 }
 
 const ErgoContext = createContext<ErgoContextType | undefined>(undefined)
@@ -53,6 +54,7 @@ const ErgoContext = createContext<ErgoContextType | undefined>(undefined)
 export function ErgoProvider({ children }: { children: React.ReactNode }) {
   const [walletList, setWalletList] = useState<WalletInfo[]>([])
   const [isConnected, setIsConnected] = useState(false)
+  const [ergoWallet, setErgoWallet] = useState<typeof window.ergo>()
 
   // Initialize available wallets
   React.useEffect(() => {
@@ -95,6 +97,7 @@ export function ErgoProvider({ children }: { children: React.ReactNode }) {
       console.log('Ergo wallet isConnected:', isWalletConnected)
 
       setIsConnected(isWalletConnected)
+      setErgoWallet(window.ergo)
       return isWalletConnected
     } catch (error) {
       console.error('Error connecting to wallet:', error)
@@ -105,6 +108,7 @@ export function ErgoProvider({ children }: { children: React.ReactNode }) {
 
   const disconnect = useCallback(() => {
     setIsConnected(false)
+    setErgoWallet(undefined)
   }, [])
 
 
@@ -140,20 +144,20 @@ export function ErgoProvider({ children }: { children: React.ReactNode }) {
       throw error
     }
   }, [])
- 
+
   const getBalance = useCallback(async (): Promise<Array<{ tokenId: string; balance: string }>> => {
     const { ergo, ergoConnector } = window
-  
+
     if (!ergo || !ergoConnector) {
       throw new Error('Ergo object not found')
     }
-  
+
     // Double check connection before proceeding
     const isWalletConnected = await ergoConnector.nautilus.isConnected()
     if (!isWalletConnected) {
       throw new Error('Wallet not connected')
     }
-  
+
     try {
       // Get ERG balance
       const balance = await ergo.get_balance('all') as Array<{ tokenId: string; balance: string }>
@@ -207,7 +211,8 @@ export function ErgoProvider({ children }: { children: React.ReactNode }) {
         getBalance,
         signMessage,
         getUtxos,
-        SignAndSubmitTx
+        SignAndSubmitTx,
+        ergoWallet
       }}
     >
       {children}
