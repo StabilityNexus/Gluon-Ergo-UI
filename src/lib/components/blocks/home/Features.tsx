@@ -113,7 +113,7 @@ const TokenFlow = ({
         </div>
 
         {/* Animated Beams */}
-        <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute inset-0 pointer-events-none z-1">
           {fromTokens.flatMap((_, fromIndex) =>
             toTokens.map((_, toIndex) => (
               <AnimatedBeam
@@ -133,9 +133,9 @@ const TokenFlow = ({
                 reverse={reverse}
                 duration={2.5}
                 delay={(fromIndex + toIndex) * 0.3}
-                gradientStartColor="#ff4040"
-                gradientStopColor="#ff4040"
-                pathColor="#ff4040"
+                gradientStartColor="#f5c242"
+                gradientStopColor="#f57242"
+                pathColor="#857773"
                 pathWidth={2}
                 pathOpacity={0.2}
               />

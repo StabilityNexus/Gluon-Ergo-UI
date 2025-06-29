@@ -55,7 +55,7 @@ export function TopNavbar() {
   return (
     <div className="w-full dark:shadow-lg shadow-sm backdrop-blur-xl">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex h-16 items-center justify-between">
+        <div className="flex h-20 items-center justify-between">
           {/* Left - Logo */}
           <div className="flex items-center ">
             <Link href="/" className="flex items-center">

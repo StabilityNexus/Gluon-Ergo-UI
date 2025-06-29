@@ -13,7 +13,7 @@ export default function Hero() {
       transition={{ duration: 0.8 }}
     >
       <div className="relative z-10">
-        <div className="container pt-8">
+        <div className="container pt-2">
           <div className="max-w-4xl text-center mx-auto">
             <motion.div
               className="dark:text-muted-foreground text-foreground font-semibold"

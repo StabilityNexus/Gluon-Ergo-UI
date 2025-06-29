@@ -782,6 +782,71 @@ export function ReactorSwap() {
     }
   }, [boxesReady, gluonInstance, gluonBox, tokens, fromToken.symbol, toToken.symbol])
 
+  // Skeleton loading component
+  const renderSkeletonCard = (isFromCard: boolean) => {
+    const shimmerKeyframes = `
+      @keyframes shimmer {
+        0% { background-position: -200px 0; }
+        100% { background-position: calc(200px + 100%) 0; }
+      }
+    `;
+
+    return (
+      <motion.div
+        className="rounded-xl bg-gradient-to-r dark:from-white/10 dark:to-white/5 from-foreground/10 to-muted-foreground/5 p-4 w-full"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, ease: "easeOut" }}
+      >
+        <style>{shimmerKeyframes}</style>
+
+        <motion.div className="flex justify-between mb-2">
+          <div
+            className="h-4 w-8 rounded bg-gradient-to-r from-muted/60 via-muted/80 to-muted/60 bg-[length:200px_100%]"
+            style={{ animation: "shimmer 1.5s ease-in-out infinite" }}
+          />
+          <div
+            className="h-4 w-24 rounded bg-gradient-to-r from-muted/60 via-muted/80 to-muted/60 bg-[length:200px_100%]"
+            style={{ animation: "shimmer 1.5s ease-in-out infinite", animationDelay: "0.2s" }}
+          />
+        </motion.div>
+
+        <motion.div className="flex items-center gap-4 mb-2">
+          {/* Token selector skeleton */}
+          <div
+            className="w-[140px] h-10 rounded bg-gradient-to-r from-muted/60 via-muted/80 to-muted/60 bg-[length:200px_100%]"
+            style={{ animation: "shimmer 1.5s ease-in-out infinite", animationDelay: "0.1s" }}
+          />
+
+          {/* Amount input skeleton */}
+          <div className="flex items-center justify-end flex-1 gap-2">
+            <div
+              className="h-12 w-32 rounded bg-gradient-to-r from-muted/60 via-muted/80 to-muted/60 bg-[length:200px_100%]"
+              style={{ animation: "shimmer 1.5s ease-in-out infinite", animationDelay: "0.3s" }}
+            />
+            {isFromCard && (
+              <div
+                className="h-4 w-8 rounded bg-gradient-to-r from-muted/60 via-muted/80 to-muted/60 bg-[length:200px_100%]"
+                style={{ animation: "shimmer 1.5s ease-in-out infinite", animationDelay: "0.4s" }}
+              />
+            )}
+          </div>
+        </motion.div>
+
+        {/* Loading pulse indicator */}
+        <motion.div
+          className="flex justify-center mt-2"
+          animate={{ opacity: [0.5, 1, 0.5] }}
+          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+        >
+          <span className="text-xs text-muted-foreground">
+            {isFromCard ? "Loading reactor..." : "Preparing swap..."}
+          </span>
+        </motion.div>
+      </motion.div>
+    );
+  };
+
   const renderTokenCard = (isFromCard: boolean) => {
     const currentToken = isFromCard ? fromToken : toToken;
     const currentAmount = isFromCard ? fromAmount : toAmount;
@@ -1193,16 +1258,6 @@ export function ReactorSwap() {
                     {initError}
                   </p>
                 )}
-                {isInitializing && (
-                  <p className="text-sm text-yellow-500">
-                    Initializing Gluon...
-                  </p>
-                )}
-                {!boxesReady && !isInitializing && !initError && (
-                  <p className="text-sm text-yellow-500">
-                    Waiting for Gluon boxes...
-                  </p>
-                )}
                 {hasPendingTransactions && (
                   <p className="text-sm text-blue-500 animate-pulse">
                     🔄 Transaction pending - waiting for wallet update...
@@ -1220,91 +1275,182 @@ export function ReactorSwap() {
           </CardHeader>
 
           <CardContent className="p-6 pt-0 space-y-1">
-            {renderTokenCard(true)}
-
-            <div className="relative flex justify-center">
-              <div className="absolute -top-2 -bottom-2 z-[999] flex items-center justify-center pointer-events-none">
+            <AnimatePresence mode="wait">
+              {(!boxesReady || isInitializing) && !initError ? (
                 <motion.div
-                  whileHover={{ scale: 1.1, rotate: 180 }}
-                  whileTap={{ scale: 0.9 }}
-                  transition={{ duration: 0.2 }}
-                  className="pointer-events-auto"
+                  key="loading-skeleton"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="space-y-1"
+                >
+                  {renderSkeletonCard(true)}
+
+                  <div className="relative flex justify-center">
+                    <div className="absolute -top-2 -bottom-2 z-[999] flex items-center justify-center">
+                      <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                      >
+                        <div className="rounded-full bg-card border-border shadow-md p-3">
+                          <motion.svg
+                            width="16"
+                            height="16"
+                            viewBox="0 0 16 16"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="text-muted-foreground"
+                          >
+                            <path
+                              d="M4 5h8M8 1L4 5l4-4M12 11H4M8 15l4-4-4 4"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          </motion.svg>
+                        </div>
+                      </motion.div>
+                    </div>
+                  </div>
+
+                  {renderSkeletonCard(false)}
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="actual-content"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, ease: "easeOut" }}
+                  className="space-y-1"
+                >
+                  {renderTokenCard(true)}
+
+                  <div className="relative flex justify-center">
+                    <div className="absolute -top-2 -bottom-2 z-[999] flex items-center justify-center pointer-events-none">
+                      <motion.div
+                        whileHover={{ scale: 1.1, rotate: 180 }}
+                        whileTap={{ scale: 0.9 }}
+                        transition={{ duration: 0.2 }}
+                        className="pointer-events-auto"
+                      >
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="rounded-full bg-card border-border hover:bg-accent hover:text-accent-foreground shadow-md hover:shadow-lg transition-all duration-200 relative"
+                          onClick={handleSwapTokens}
+                          disabled={!boxesReady || isCalculating || (isInitializing && !boxesReady)}
+                        >
+                          <motion.svg
+                            width="16"
+                            height="16"
+                            viewBox="0 0 16 16"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                            initial={{ rotate: 0 }}
+                            animate={{ rotate: 0 }}
+                            transition={{ duration: 0.2 }}
+                          >
+                            <path
+                              d="M4 5h8M8 1L4 5l4-4M12 11H4M8 15l4-4-4 4"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          </motion.svg>
+                        </Button>
+                      </motion.div>
+                    </div>
+                  </div>
+
+                  {renderTokenCard(false)}
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            <AnimatePresence mode="wait">
+              {(!boxesReady || isInitializing) && !initError ? (
+                <motion.div
+                  key="loading-button"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.3 }}
+                  className="mt-4"
+                >
+                  <div className="w-full h-12 rounded-lg bg-gradient-to-r from-muted/60 via-muted/80 to-muted/60 bg-[length:200px_100%] relative overflow-hidden">
+                    <motion.div
+                      className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+                      initial={{ x: "-100%" }}
+                      animate={{ x: "100%" }}
+                      transition={{
+                        repeat: Infinity,
+                        duration: 1.5,
+                        ease: "linear"
+                      }}
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <motion.span
+                        className="text-sm text-muted-foreground"
+                        animate={{ opacity: [0.5, 1, 0.5] }}
+                        transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+                      >
+                        Connecting to Gluon Network...
+                      </motion.span>
+                    </div>
+                  </div>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="actual-button"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.5, ease: "easeOut" }}
+                  whileHover={{ scale: isSwapDisabled() ? 1 : 1.02 }}
+                  whileTap={{ scale: isSwapDisabled() ? 1 : 0.98 }}
                 >
                   <Button
-                    variant="outline"
-                    size="icon"
-                    className="rounded-full bg-card border-border hover:bg-accent hover:text-accent-foreground shadow-md hover:shadow-lg transition-all duration-200 relative"
-                    onClick={handleSwapTokens}
-                    disabled={!boxesReady || isCalculating || (isInitializing && !boxesReady)}
+                    className={cn(
+                      "w-full bg-orange-500 h-12 mt-4 relative overflow-hidden",
+                      !isSwapDisabled() ? "hover:bg-orange-600" : "opacity-50 cursor-not-allowed"
+                    )}
+                    onClick={handleSwap}
+                    disabled={isSwapDisabled()}
                   >
-                    <motion.svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 16 16"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                      initial={{ rotate: 0 }}
-                      animate={{ rotate: 0 }}
-                      transition={{ duration: 0.2 }}
-                    >
-                      <path
-                        d="M4 5h8M8 1L4 5l4-4M12 11H4M8 15l4-4-4 4"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </motion.svg>
-                  </Button>
-                </motion.div>
-              </div>
-            </div>
-
-            {renderTokenCard(false)}
-
-            <motion.div
-              whileHover={{ scale: isSwapDisabled() ? 1 : 1.02 }}
-              whileTap={{ scale: isSwapDisabled() ? 1 : 0.98 }}
-            >
-              <Button
-                className={cn(
-                  "w-full bg-orange-500 h-12 mt-4 relative overflow-hidden",
-                  !isSwapDisabled() ? "hover:bg-orange-600" : "opacity-50 cursor-not-allowed"
-                )}
-                onClick={handleSwap}
-                disabled={isSwapDisabled()}
-              >
-                <AnimatePresence mode="wait">
-                  <motion.span
-                    key={isLoading ? "loading" : isCalculating ? "calculating" : (!boxesReady && isInitializing) ? "initializing" : (!boxesReady && !isInitializing && !initError) ? "waiting" : hasPendingTransactions ? "pending" : "swap"}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    {isLoading ? "Processing..." :
-                      isCalculating ? "Calculating..." :
-                        (!boxesReady && isInitializing) ? "Initializing..." :
-                          (!boxesReady && !isInitializing && !initError) ? "Waiting for Boxes..." :
+                    <AnimatePresence mode="wait">
+                      <motion.span
+                        key={isLoading ? "loading" : isCalculating ? "calculating" : hasPendingTransactions ? "pending" : "swap"}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        {isLoading ? "Processing..." :
+                          isCalculating ? "Calculating..." :
                             hasPendingTransactions ? "Transaction Pending..." :
                               "Swap"}
-                  </motion.span>
-                </AnimatePresence>
+                      </motion.span>
+                    </AnimatePresence>
 
-                {isLoading && (
-                  <motion.div
-                    className="absolute inset-0 bg-gradient-to-r from-transparent via-black/10 to-transparent dark:from-transparent dark:via-white/10 dark:to-transparent"
-                    initial={{ x: "-100%" }}
-                    animate={{ x: "100%" }}
-                    transition={{
-                      repeat: Infinity,
-                      duration: 1.5,
-                      ease: "linear"
-                    }}
-                  />
-                )}
-              </Button>
-            </motion.div>
+                    {isLoading && (
+                      <motion.div
+                        className="absolute inset-0 bg-gradient-to-r from-transparent via-black/10 to-transparent dark:from-transparent dark:via-white/10 dark:to-transparent"
+                        initial={{ x: "-100%" }}
+                        animate={{ x: "100%" }}
+                        transition={{
+                          repeat: Infinity,
+                          duration: 1.5,
+                          ease: "linear"
+                        }}
+                      />
+                    )}
+                  </Button>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </CardContent>
         </Card>
       </motion.div>

@@ -514,7 +514,7 @@ export function GluonStats() {
           >
             <Button
               size="lg"
-              className="w-full h-12 text-white text-lg font-semibold bg-amber-700 hover:bg-amber-600 dark:bg-amber-800 dark:hover:bg-amber-700 transition-all duration-200 shadow-lg"
+              className="w-full h-12 text-white text-lg font-semibold bg-primary hover:bg-amber-600 dark:bg-primary dark:hover:bg-amber-700 transition-all duration-200 shadow-lg rounded-2xl"
               onClick={() => router.push('/reactor/swap')}
               disabled={isLoading || hasError}
             >
