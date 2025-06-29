@@ -78,23 +78,23 @@ export function ErgoProvider({ children }: { children: React.ReactNode }) {
   const connect = useCallback(async (walletName: string): Promise<boolean> => {
     try {
       const { ergoConnector } = window
-      console.log(ergoConnector)
+
       if (!ergoConnector?.[walletName]) {
         throw new Error('Wallet connector not found')
       }
 
-      console.log('Connecting to Ergo wallet:', walletName)
+
       const connected = await ergoConnector[walletName].connect()
 
       if (!connected) {
         throw new Error('Failed to connect to wallet')
       }
 
-      console.log('Ergo wallet connected:', connected)
+
 
       // Verify the connection
       const isWalletConnected = await ergoConnector[walletName].isConnected()
-      console.log('Ergo wallet isConnected:', isWalletConnected)
+
 
       setIsConnected(isWalletConnected)
       setErgoWallet(window.ergo)
@@ -161,7 +161,7 @@ export function ErgoProvider({ children }: { children: React.ReactNode }) {
     try {
       // Get ERG balance
       const balance = await ergo.get_balance('all') as Array<{ tokenId: string; balance: string }>
-      console.log('balance', balance)
+
       return balance
     } catch (error) {
       console.error('Error getting balance:', error)

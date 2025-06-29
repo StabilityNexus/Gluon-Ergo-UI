@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Menu, X, Calculator, Grip , ArrowDownUp } from 'lucide-react'
+import { Menu, X, Calculator, Grip, ArrowDownUp } from 'lucide-react'
 
 const ispoLinks = [
   { href: '/reactor', label: 'Dashboard', icon: Grip },
@@ -33,9 +33,8 @@ export function ReactorSidebar() {
               transition={{ delay: index * 0.1 }}>
               <Link
                 href={link.href}
-                className={`flex items-center space-x-2 px-4 py-2 rounded-xl transition-colors ${
-                  router.pathname === link.href ? 'text-primary bg-primary/10 ' : 'hover:bg-muted'
-                }`}>
+                className={`flex items-center space-x-2 px-4 py-2 rounded-xl transition-colors ${router.pathname === link.href ? 'text-primary bg-primary/10 ' : 'hover:bg-muted'
+                  }`}>
                 <link.icon size={18} />
                 <span>{link.label}</span>
               </Link>
@@ -70,11 +69,10 @@ export function ReactorSidebar() {
                   <motion.li key={link.href} whileTap={{ scale: 0.95 }}>
                     <Link
                       href={link.href}
-                      className={`flex items-center space-x-2 px-4 py-2 rounded transition-colors ${
-                        router.pathname === link.href
+                      className={`flex items-center space-x-2 px-4 py-2 rounded transition-colors ${router.pathname === link.href
                           ? 'text-primary bg-primary/10'
                           : 'hover:bg-muted'
-                      }`}
+                        }`}
                       onClick={toggleMenu}>
                       <link.icon size={18} />
                       <span>{link.label}</span>

@@ -1,6 +1,7 @@
 import { SwapResult, SwapError, ReceiptDetails } from './types'
 import { convertFromDecimals, nanoErgsToErgs, ergsToNanoErgs } from '@/lib/utils/erg-converter'
 import { formatMicroNumber } from '@/lib/utils/erg-converter'
+import { handleTransactionError, handleTransactionSuccess, handleCalculationError } from '@/lib/utils/error-handler'
 
 interface FissionParams {
     gluonInstance: any
@@ -31,7 +32,7 @@ export const calculateFissionAmounts = async (
         console.log("🔍 FISSION PREDICTION RAW:", willGet)
 
         if (!willGet) {
-            throw new Error("Failed to get fission prediction")
+            throw new Error("Failed to get fission prediction from SDK")
         }
 
         // Format the values using our utility - NOTE: neutrons are GAUC, protons are GAU
@@ -67,12 +68,17 @@ export const calculateFissionAmounts = async (
             gauAmount: formattedGau.display,
             gaucAmount: formattedGauc.display,
             toAmount: "0", // Not used in fission
-            receiptDetails
+            receiptDetails,
+            maxErgOutput: "0" // Not applicable for fission
         }
     } catch (error) {
         console.error("Error calculating fission amounts:", error)
+
+        // Use the error handler for proper classification
+        const errorDetails = handleCalculationError(error, 'fission')
+
         return {
-            error: error instanceof Error ? error.message : "Failed to calculate fission amounts",
+            error: errorDetails.userMessage,
             resetValues: {
                 gauAmount: "0",
                 gaucAmount: "0"
@@ -96,18 +102,33 @@ export const handleFissionSwap = async (
             type: typeof amount
         })
 
+        // Validate inputs
+        if (!gluonInstance || !gluonBox || !oracleBox) {
+            throw new Error("Required boxes not initialized")
+        }
+
+        if (!ergoWallet) {
+            throw new Error("Wallet not connected")
+        }
+
         const nanoErgsToFission = ergsToNanoErgs(amount)
         console.log("🔍 FISSION NANO ERGS:", {
             nanoErgsToFission: nanoErgsToFission.toString(),
             type: typeof nanoErgsToFission
         })
 
+        // Verify we can get the expected output
         const willGet = await gluonInstance.fissionWillGet(gluonBox, Number(nanoErgsToFission))
         console.log("🔍 FISSION WILL GET:", {
             neutrons: willGet.neutrons.toString(),
             protons: willGet.protons.toString()
         })
 
+        if (!willGet || (willGet.neutrons === 0 && willGet.protons === 0)) {
+            throw new Error("Invalid fission amount - no tokens will be generated")
+        }
+
+        // Create unsigned transaction
         const unsignedTransaction = await gluonInstance.fissionForEip12(
             gluonBox,
             oracleBox,
@@ -120,17 +141,32 @@ export const handleFissionSwap = async (
         }
 
         console.log("Signing and submitting transaction...")
+
+        // Sign transaction
         const signature = await ergoWallet?.sign_tx(unsignedTransaction)
+        if (!signature) {
+            throw new Error("Failed to sign transaction")
+        }
+
+        // Submit transaction
         const txHash = await ergoWallet?.submit_tx(signature)
+        if (!txHash) {
+            throw new Error("Failed to submit transaction")
+        }
 
         console.log("Transaction submitted successfully. TxId:", txHash)
+
+        // Handle success with toast notification
+        handleTransactionSuccess(txHash, 'fission')
+
         return { txHash }
 
     } catch (error) {
         console.error("Fission failed:", error)
-        if (error instanceof Error) {
-            console.error("Error details:", error.stack)
-        }
-        return { error: "Failed to process fission transaction" }
+
+        // Use the error handler for proper classification and toast notification
+        const errorDetails = handleTransactionError(error, 'fission')
+
+        return { error: errorDetails.userMessage }
     }
 }

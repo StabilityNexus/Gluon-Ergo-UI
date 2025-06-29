@@ -1,6 +1,7 @@
 import { SwapResult, SwapError, ReceiptDetails } from './types'
 import { convertFromDecimals, nanoErgsToErgs, ergsToNanoErgs, convertToDecimals } from '@/lib/utils/erg-converter'
 import { formatMicroNumber } from '@/lib/utils/erg-converter'
+import { handleTransactionError, handleTransactionSuccess, handleCalculationError } from '@/lib/utils/error-handler'
 import BigNumber from 'bignumber.js'
 
 interface FusionParams {
@@ -51,7 +52,7 @@ const calculateMaxErgOutput = async (
         const maxPossibleNanoErgs = maxFromGau < maxFromGauc ? maxFromGau : maxFromGauc
 
         console.log("Max ERG Calculation:", {
-            maxErg: nanoErgsToErgs(Number(maxPossibleNanoErgs)),
+            maxErg: new BigNumber(maxPossibleNanoErgs.toString()).dividedBy(1e9).toFixed(),
             maxNanoErg: maxPossibleNanoErgs.toString()
         })
 
@@ -71,7 +72,8 @@ export const calculateFusionAmounts = async (
     try {
         // Get maximum possible ERG output
         const maxNanoErgs = await calculateMaxErgOutput(gluonInstance, gluonBox, gauBalance, gaucBalance)
-        const maxErgStr = nanoErgsToErgs(maxNanoErgs.toNumber()).toString()
+        // Use BigNumber to preserve precision instead of converting to Number
+        const maxErgStr = maxNanoErgs.dividedBy(1e9).toFixed()
 
         // Convert desired ERG to nanoERGs (as BigInt for comparison)
         const desiredNanoErgs = BigInt(ergsToNanoErgs(value))
@@ -122,8 +124,12 @@ export const calculateFusionAmounts = async (
         }
     } catch (error) {
         console.error("Error calculating fusion amounts:", error)
+
+        // Use the error handler for proper classification
+        const errorDetails = handleCalculationError(error, 'fusion')
+
         return {
-            error: error instanceof Error ? error.message : "Failed to calculate fusion amounts",
+            error: errorDetails.userMessage,
             resetValues: {
                 gauAmount: "0",
                 gaucAmount: "0",
@@ -144,17 +150,46 @@ export const handleFusionSwap = async (
 ): Promise<{ txHash?: string; error?: string }> => {
     try {
         console.log("amount being passed", amount)
+
+        // Validate inputs
+        if (!gluonInstance || !gluonBox || !oracleBox) {
+            throw new Error("Required boxes not initialized")
+        }
+
+        if (!ergoWallet) {
+            throw new Error("Wallet not connected")
+        }
+
+        if (!amount || parseFloat(amount) <= 0) {
+            throw new Error("Invalid amount entered")
+        }
+
         const height = await nodeService.getNetworkHeight()
+        if (!height) {
+            throw new Error("Failed to get network height")
+        }
+
         const oracleBoxJs = await gluonInstance.getGoldOracleBox()
         const gluonBoxJs = await gluonInstance.getGluonBox()
+
+        if (!oracleBoxJs || !gluonBoxJs) {
+            throw new Error("Failed to get required boxes")
+        }
 
         // Convert the desired ERG output amount to nanoERGs
         const nanoErgsToFuse = ergsToNanoErgs(amount)
         console.log("amount to nano ergs", nanoErgsToFuse)
+
         // Get required token amounts for verification
         const { neutrons, protons } = await gluonInstance.fusionWillNeed(gluonBox, Number(nanoErgsToFuse))
         console.log("neutrons", neutrons)
         console.log("protons", protons)
+
+        // Verify we have valid amounts
+        if (!neutrons || !protons || neutrons <= 0 || protons <= 0) {
+            throw new Error("Invalid fusion amounts - insufficient tokens required")
+        }
+
         // Convert to proper display values
         const requiredGau = convertFromDecimals(BigInt(neutrons)).toString()
         const requiredGauc = convertFromDecimals(BigInt(protons)).toString()
@@ -172,6 +207,7 @@ export const handleFusionSwap = async (
             }
         })
 
+        // Create unsigned transaction
         const unsignedTransaction = await gluonInstance.fusionForEip12(
             gluonBoxJs,
             oracleBoxJs,
@@ -184,17 +220,32 @@ export const handleFusionSwap = async (
         }
 
         console.log("Signing and submitting transaction...")
+
+        // Sign transaction
         const signature = await ergoWallet?.sign_tx(unsignedTransaction)
+        if (!signature) {
+            throw new Error("Failed to sign transaction")
+        }
+
+        // Submit transaction
         const txHash = await ergoWallet?.submit_tx(signature)
+        if (!txHash) {
+            throw new Error("Failed to submit transaction")
+        }
 
         console.log("Transaction submitted successfully. TxId:", txHash)
+
+        // Handle success with toast notification
+        handleTransactionSuccess(txHash, 'fusion')
+
         return { txHash }
 
     } catch (error) {
         console.error("Fusion failed:", error)
-        if (error instanceof Error) {
-            console.error("Error details:", error.stack)
-        }
-        return { error: "Failed to process fusion transaction" }
+
+        // Use the error handler for proper classification and toast notification
+        const errorDetails = handleTransactionError(error, 'fusion')
+
+        return { error: errorDetails.userMessage }
     }
 }

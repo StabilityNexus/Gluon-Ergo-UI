@@ -1,16 +1,25 @@
 import { TOKEN_ADDRESS } from '@/lib/constants/token'
 import BigNumber from 'bignumber.js'
 
-// Configure BigNumber
+// Configure BigNumber globally for crypto-safe operations
 BigNumber.config({
   DECIMAL_PLACES: 9, // Maximum blockchain precision
-  ROUNDING_MODE: BigNumber.ROUND_DOWN, // Always truncate, never round up
-  EXPONENTIAL_AT: [-9, 20] // Force decimal notation for small numbers
+  ROUNDING_MODE: BigNumber.ROUND_DOWN, // Always round down for crypto safety
+  EXPONENTIAL_AT: [-9, 20], // Force decimal notation for small numbers
+  FORMAT: {
+    decimalSeparator: '.',
+    groupSeparator: ',',
+    groupSize: 3,
+    secondaryGroupSize: 0,
+    fractionGroupSeparator: ' ',
+    fractionGroupSize: 0
+  }
 })
 
 interface FormattedNumber {
-  display: string
-  tooltip: string
+  display: string  // User-friendly display value
+  tooltip: string  // Full precision value for tooltips
+  raw: string     // Raw value without any formatting
 }
 
 /**
@@ -29,18 +38,24 @@ export const convertFromDecimals = (value: number | bigint | string, decimals: n
  * @param decimals - Number of decimals (defaults to TOKEN_ADDRESS.decimals)
  */
 export const convertToDecimals = (value: number | string, decimals: number = TOKEN_ADDRESS.decimals): bigint => {
-  const bn = new BigNumber(value.toString())
-  const multiplied = bn.times(new BigNumber(10).pow(decimals))
-  return BigInt(multiplied.integerValue(BigNumber.ROUND_DOWN).toString())
+  // Ensure value is a valid number, default to '0' if not
+  const valueStr = (typeof value === 'string' && value.trim() === '') || value === null || value === undefined || Number.isNaN(Number(value))
+    ? '0'
+    : value.toString();
+
+  const bn = new BigNumber(valueStr);
+  const multiplied = bn.times(new BigNumber(10).pow(decimals));
+  return BigInt(multiplied.integerValue(BigNumber.ROUND_DOWN).toString());
 }
 
 /**
  * Formats numbers for macro display (statistics, overviews)
  * Uses full words for millions and above, K for thousands
+ * Always rounds down for crypto safety
  */
 export const formatMacroNumber = (value: number | string | BigNumber): FormattedNumber => {
   const bn = new BigNumber(value.toString())
-  if (bn.isZero()) return { display: '0', tooltip: '0' }
+  if (bn.isZero()) return { display: '0', tooltip: '0', raw: '0' }
 
   const absValue = bn.abs()
   const trillion = new BigNumber(1000000000000)
@@ -50,92 +65,68 @@ export const formatMacroNumber = (value: number | string | BigNumber): Formatted
 
   let display: string
   if (absValue.gte(trillion)) {
-    display = `${bn.dividedBy(trillion).toFormat(2).replace(/\.?0+$/, '')}T`
+    display = `${bn.dividedBy(trillion).decimalPlaces(2, BigNumber.ROUND_DOWN)}T`
   } else if (absValue.gte(billion)) {
-    display = `${bn.dividedBy(billion).toFormat(2).replace(/\.?0+$/, '')}B`
+    display = `${bn.dividedBy(billion).decimalPlaces(2, BigNumber.ROUND_DOWN)}B`
   } else if (absValue.gte(million)) {
-    display = `${bn.dividedBy(million).toFormat(2).replace(/\.?0+$/, '')}M`
+    display = `${bn.dividedBy(million).decimalPlaces(2, BigNumber.ROUND_DOWN)}M`
   } else if (absValue.gte(thousand)) {
-    display = `${bn.dividedBy(thousand).toFormat(2).replace(/\.?0+$/, '')}K`
+    display = `${bn.dividedBy(thousand).decimalPlaces(2, BigNumber.ROUND_DOWN)}K`
   } else {
-    display = bn.toFormat(2).replace(/\.?0+$/, '')
+    display = bn.decimalPlaces(2, BigNumber.ROUND_DOWN).toString()
   }
 
   return {
     display,
-    tooltip: bn.toFormat()
+    tooltip: bn.toFormat(),
+    raw: bn.toString()
   }
 }
 
 /**
  * Formats numbers for micro display (exact amounts)
  * Shows exact values with proper decimal handling
+ * Never rounds up, always truncates
  */
 export const formatMicroNumber = (value: number | string | BigNumber): FormattedNumber => {
   const bn = new BigNumber(value.toString())
-  if (bn.isZero()) return { display: '0', tooltip: '0' }
+  if (bn.isZero()) return { display: '0', tooltip: '0', raw: '0' }
 
-  // For values >= 1, use standard formatting
+  // For values >= 1, show up to 4 decimal places
   if (bn.gte(1)) {
-    const formatted = bn.toFormat(9, {
-      groupSize: 3,
-      decimalSeparator: '.',
-      groupSeparator: ',',
-      secondaryGroupSize: 0,
-      fractionGroupSeparator: ' ',
-      fractionGroupSize: 0
-    }).replace(/\.?0+$/, '')
+    const truncated = bn.decimalPlaces(4, BigNumber.ROUND_DOWN)
     return {
-      display: formatted,
-      tooltip: formatted
+      display: truncated.toFormat(),
+      tooltip: bn.toFormat(9), // Show full precision in tooltip
+      raw: bn.toString()
     }
   }
 
   // For small numbers below 1
   if (bn.lt(1) && bn.gt(0)) {
-    // For very small numbers
-    if (bn.lt(0.01)) {
-      const decimalStr = bn.toFormat(9, {
-        groupSize: 3,
-        decimalSeparator: '.',
-        groupSeparator: ',',
-        secondaryGroupSize: 0,
-        fractionGroupSeparator: ' ',
-        fractionGroupSize: 0
-      })
-
-      // Count leading zeros after decimal point
-      const match = decimalStr.match(/^0\.(0+)/)
-      if (match) {
-        const leadingZeros = match[1].length
-        if (leadingZeros > 2) {
-          // Extract first significant digits after zeros
-          const significantPart = decimalStr.slice(2 + leadingZeros).slice(0, 2)
-          return {
-            display: `0.${leadingZeros > 2 ? `0<sup>${leadingZeros}</sup>` : '0'.repeat(leadingZeros)}${significantPart}`,
-            tooltip: decimalStr
-          }
-        }
+    // For very small numbers (< 0.0001), show scientific notation in display
+    if (bn.lt('0.0001')) {
+      const scientific = bn.toExponential(4)
+      return {
+        display: scientific,
+        tooltip: bn.toFormat(9), // Full precision in tooltip
+        raw: bn.toString()
       }
     }
 
-    // For numbers between 0.01 and 1
+    // For numbers between 0.0001 and 1, show up to 6 decimal places
+    const truncated = bn.decimalPlaces(6, BigNumber.ROUND_DOWN)
     return {
-      display: bn.toFormat(9, {
-        groupSize: 3,
-        decimalSeparator: '.',
-        groupSeparator: ',',
-        secondaryGroupSize: 0,
-        fractionGroupSeparator: ' ',
-        fractionGroupSize: 0
-      }).replace(/\.?0+$/, ''),
-      tooltip: bn.toString()
+      display: truncated.toFormat(),
+      tooltip: bn.toFormat(9), // Show full precision in tooltip
+      raw: bn.toString()
     }
   }
 
   return {
     display: bn.toString(),
-    tooltip: bn.toString()
+    tooltip: bn.toFormat(9),
+    raw: bn.toString()
   }
 }
 

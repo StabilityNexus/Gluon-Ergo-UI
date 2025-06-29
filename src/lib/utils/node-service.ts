@@ -37,7 +37,7 @@ export class NodeService {
     async head(url: string) {
         return this.backend.head(url, {
             timeout: 1000
-        }).then((res: any) => res.status).catch((e: any) => e.response.status)
+        }).then((res: any) => res.status).catch((e: any) => e.response?.status || 500)
     }
 
     async post(url: string, headers?: any, params?: any) {

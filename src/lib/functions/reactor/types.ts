@@ -8,6 +8,8 @@ export interface Token {
     name: string
     color: string
     balance: string
+    tokenId: string
+    decimals: number
 }
 
 export interface TokenPair {
