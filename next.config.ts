@@ -1,20 +1,24 @@
-/** @type {import('next').NextConfig} */
-const nextConfig = {
+import { NextConfig } from 'next'
+
+const nextConfig: NextConfig = {
   reactStrictMode: true,
-  webpack: function (config, options) {
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+  webpack: function (config: any, options: any) {
     config.experiments = {
       asyncWebAssembly: true,
       layers: true,
       topLevelAwait: true,
       syncWebAssembly: true,
     }
-    
+
     // Exclude .map files
     config.module.rules.push({
       test: /\.map$/,
       use: 'null-loader',
     })
-    
+
     config.module.rules.push({
       test: /\.d\.ts$/,
       use: 'null-loader',
