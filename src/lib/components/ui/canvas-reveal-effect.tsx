@@ -1,3 +1,4 @@
+// @ts-nocheck
 "use client";
 import { cn } from "@/lib/utils/utils";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";

@@ -4,10 +4,11 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "npm run custom && next build",
+    "buildtest": "next build",
+    "build": "bun run custom && next build",
     "start": "next start",
     "lint": "next lint",
-    "custom": "cd lib/gluon-gold-sdk && npm install && npm run build",
+    "custom": "cd lib/gluon-gold-sdk && bun install && bun run build",
     "test": "vitest"
   },
   "workspaces": [
@@ -25,6 +26,7 @@
     "@radix-ui/react-tooltip": "^1.1.6",
     "@react-three/fiber": "^9.1.4",
     "@types/lodash": "^4.17.17",
+    "@types/three": "^0.177.0",
     "axios": "^1.9.0",
     "bignumber.js": "^9.3.0",
     "class-variance-authority": "^0.7.1",

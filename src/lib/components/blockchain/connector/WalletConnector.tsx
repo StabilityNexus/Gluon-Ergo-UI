@@ -21,7 +21,7 @@ import { useEffect, useState } from "react"
 
 
 export function WalletConnector() {
-  const { walletList, isConnected, connect, disconnect, getChangeAddress, getBalance  } = useErgo()
+  const { walletList, isConnected, connect, disconnect, getChangeAddress, getBalance } = useErgo()
   const [isOpen, setIsOpen] = useState(false)
   const [ergoAddress, setErgoAddress] = useState<string | null>(null)
   const [ergBalance, setErgoBalance] = useState<string | null>('0')
@@ -35,7 +35,7 @@ export function WalletConnector() {
             const address = await getChangeAddress()
             setErgoAddress(address)
             const ergoTokens = await getBalance()
-            const ergBalance = ergoTokens.find(item => item.tokenId === "ERG")
+            const ergBalance = ergoTokens.find((item: any) => item.tokenId === "ERG")
             if (ergBalance) {
               const balance = (parseInt(ergBalance.balance) / 1000000000)
               setErgoBalance(balance.toString())
@@ -50,7 +50,7 @@ export function WalletConnector() {
   const handleConnect = async (walletName: string) => {
     try {
       console.log("Attempting to connect to wallet:", walletName)
-      
+
       if (!window.ergoConnector) {
         console.error("Ergo connector not found. Is Nautilus installed?")
         return
@@ -87,7 +87,7 @@ export function WalletConnector() {
         <DropdownMenuTrigger asChild>
           <Button variant="outline" className="gap-2">
             <WalletIcon className="h-4 w-4" />
-            {`${ergoAddress.slice(0, 4)}...${ergoAddress.slice(-4)}`}      
+            {`${ergoAddress.slice(0, 4)}...${ergoAddress.slice(-4)}`}
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
@@ -120,42 +120,42 @@ export function WalletConnector() {
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="browser">Browser Wallet</TabsTrigger>
               <TabsTrigger value="ergopay" disabled>
-                Ergo Pay 
+                Ergo Pay
               </TabsTrigger>
             </TabsList>
             <TabsContent value="browser">
-  {walletList.length === 0 ? (
-    <div className="flex flex-col items-center justify-center gap-2 p-4 text-muted-foreground">
-      <p className="text-center w-60">No Ergo wallets installed, learn how to setup your Nautilus Wallet</p>
-      
-      <Button
-        variant='ghost'
-        className="mt-2 hover:bg-white hover:text-black border shadow-sm"
-        onClick={() => window.open('https://ergoplatform.org/en/blog/2022-03-10-storing-crypto-on-ergo-nautilus-wallet/', '_blank')}
-      >
-        Get Started with Ergo <ArrowUpRight />
-      </Button>
-    </div>
-  ) : (
-    <div className="flex flex-col gap-2">
-      {walletList.map((wallet) => (
-        <Button
-          key={wallet.connectName}
-          variant="outline" 
-          className="w-full justify-start gap-2 mt-3"
-          onClick={() => handleConnect(wallet.connectName)}
-        >
-          <img
-            src={wallet.icon}
-            alt={wallet.name}
-            className="h-6 w-6"
-          />
-          {wallet.name}
-        </Button>
-      ))}
-    </div>
-  )}
-</TabsContent>
+              {walletList.length === 0 ? (
+                <div className="flex flex-col items-center justify-center gap-2 p-4 text-muted-foreground">
+                  <p className="text-center w-60">No Ergo wallets installed, learn how to setup your Nautilus Wallet</p>
+
+                  <Button
+                    variant='ghost'
+                    className="mt-2 hover:bg-white hover:text-black border shadow-sm"
+                    onClick={() => window.open('https://ergoplatform.org/en/blog/2022-03-10-storing-crypto-on-ergo-nautilus-wallet/', '_blank')}
+                  >
+                    Get Started with Ergo <ArrowUpRight />
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  {walletList.map((wallet) => (
+                    <Button
+                      key={wallet.connectName}
+                      variant="outline"
+                      className="w-full justify-start gap-2 mt-3"
+                      onClick={() => handleConnect(wallet.connectName)}
+                    >
+                      <img
+                        src={wallet.icon}
+                        alt={wallet.name}
+                        className="h-6 w-6"
+                      />
+                      {wallet.name}
+                    </Button>
+                  ))}
+                </div>
+              )}
+            </TabsContent>
             <TabsContent value="ergopay">
               <div className="text-center p-4 text-muted-foreground">
                 Ergo Pay here
