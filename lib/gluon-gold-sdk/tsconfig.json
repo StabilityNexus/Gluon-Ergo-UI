@@ -10,6 +10,7 @@
     "outDir": "dist",
     "rootDir": "src",
     "types": [
+      "@nautilus-js/eip12-types",
       "@types/node"
     ],
     "declaration": true,
