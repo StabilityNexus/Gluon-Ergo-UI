@@ -14,5 +14,5 @@ export const GLUON_TREE = '10730400040204020404040404000400040006043b9aca0006020
 export const DEV_FEE = 500;
 export const UI_FEE = 0;
 export const ORACLE_FEE = 100;
-export const NODE_URL = 'http://95.217.180.19:9053/';
+export const NODE_URL = 'https://node.sigmaspace.io/';
 export const BUCKET_LEN = 14;
