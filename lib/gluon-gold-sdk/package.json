@@ -1,0 +1,49 @@
+{
+  "name": "gluon-gold-sdk",
+  "version": "1.0.0",
+  "description": "A SDK for the Gluon Gold protocol",
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "ts-node --esm src/test.ts",
+    "lint": "eslint src --ext .ts",
+    "format": "prettier --write src"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@nautilus-js/eip12-types": "^0.1.9",
+    "@types/json-bigint": "^1.0.4",
+    "@types/node": "^20.14.12",
+    "@typescript-eslint/eslint-plugin": "^7.17.0",
+    "@typescript-eslint/parser": "^7.17.0",
+    "axios": "^1.7.3",
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-prettier": "^5.2.1",
+    "prettier": "^3.3.3",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.5.4",
+    "wasm-loader": "^1.3.0"
+  },
+  "dependencies": {
+    "@types/json-bigint": "^1.0.4",
+    "axios": "^1.7.3",
+    "ergo-lib-wasm-browser": "^0.23.0",
+    "ergo-lib-wasm-nodejs": "^0.23.0",
+    "json-bigint": "^1.0.0"
+  },
+  "browser": {
+    "fs": false,
+    "path": false,
+    "os": false
+  }
+}
