@@ -5,7 +5,7 @@ import { CardSpotlight } from "@/lib/components/ui/card-spotlight";
 import ErgIcon from "@/lib/components/icons/ErgIcon";
 import GauIcon from "@/lib/components/icons/GauIcon";
 import GaucIcon from "@/lib/components/icons/GaucIcon";
-import { useRef, forwardRef } from "react";
+import { useRef, forwardRef, useState, useEffect } from "react";
 import { cn } from "@/lib/utils/utils";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -44,6 +44,27 @@ const TokenFlow = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const fromRefs = useRef<(HTMLDivElement | null)[]>([]);
   const toRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const [refsReady, setRefsReady] = useState(false);
+
+  // Check if all refs are populated
+  useEffect(() => {
+    const checkRefs = () => {
+      const fromRefsReady = fromRefs.current.every((ref, index) =>
+        index < fromTokens.length ? ref !== null && ref !== undefined : true
+      );
+      const toRefsReady = toRefs.current.every((ref, index) =>
+        index < toTokens.length ? ref !== null && ref !== undefined : true
+      );
+
+      if (fromRefsReady && toRefsReady && containerRef.current) {
+        setRefsReady(true);
+      }
+    };
+
+    // Check refs after a short delay to ensure DOM is ready
+    const timer = setTimeout(checkRefs, 100);
+    return () => clearTimeout(timer);
+  }, [fromTokens.length, toTokens.length]);
 
   const getTokenIcon = (token: 'ERG' | 'GAU' | 'GAUC', index?: number) => {
     const iconProps = { className: "w-8 h-8" };
@@ -113,35 +134,37 @@ const TokenFlow = ({
         </div>
 
         {/* Animated Beams */}
-        <div className="absolute inset-0 pointer-events-none z-1">
-          {fromTokens.flatMap((_, fromIndex) =>
-            toTokens.map((_, toIndex) => (
-              <AnimatedBeam
-                key={`beam-${fromIndex}-${toIndex}`}
-                containerRef={containerRef}
-                fromRef={{ current: fromRefs.current[fromIndex] }}
-                toRef={{ current: toRefs.current[toIndex] }}
-                curvature={
-                  fromTokens.length > 1 || toTokens.length > 1
-                    ? fromIndex === 0 && toIndex === 0
-                      ? -8
-                      : fromIndex === 1 || toIndex === 1
-                        ? 8
-                        : 0
-                    : 0
-                }
-                reverse={reverse}
-                duration={2.5}
-                delay={(fromIndex + toIndex) * 0.3}
-                gradientStartColor="#f5c242"
-                gradientStopColor="#f57242"
-                pathColor="#857773"
-                pathWidth={2}
-                pathOpacity={0.2}
-              />
-            ))
-          )}
-        </div>
+        {refsReady && (
+          <div className="absolute inset-0 pointer-events-none z-1">
+            {fromTokens.flatMap((_, fromIndex) =>
+              toTokens.map((_, toIndex) => (
+                <AnimatedBeam
+                  key={`beam-${fromIndex}-${toIndex}`}
+                  containerRef={containerRef}
+                  fromRef={{ current: fromRefs.current[fromIndex] }}
+                  toRef={{ current: toRefs.current[toIndex] }}
+                  curvature={
+                    fromTokens.length > 1 || toTokens.length > 1
+                      ? fromIndex === 0 && toIndex === 0
+                        ? -8
+                        : fromIndex === 1 || toIndex === 1
+                          ? 8
+                          : 0
+                      : 0
+                  }
+                  reverse={reverse}
+                  duration={2.5}
+                  delay={(fromIndex + toIndex) * 0.3}
+                  gradientStartColor="#f5c242"
+                  gradientStopColor="#f57242"
+                  pathColor="#857773"
+                  pathWidth={2}
+                  pathOpacity={0.2}
+                />
+              ))
+            )}
+          </div>
+        )}
       </div>
     </motion.div>
   );
