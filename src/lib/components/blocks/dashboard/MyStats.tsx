@@ -207,14 +207,14 @@ export function MyStats() {
             icon: <GauIcon className="w-7 h-7" />,
             name: 'GAU',
             symbol: 'GAU',
-            fullName: 'Gold Pegged'
+            fullName: 'Gold-Pegged Stablecoin'
           }
         case 'GAUC':
           return {
             icon: <GaucIcon className="w-7 h-7" />,
             name: 'GAUC',
             symbol: 'GAUC',
-            fullName: 'Collateral'
+            fullName: 'Leveraged Yield Token'
           }
       }
     }
@@ -396,9 +396,9 @@ export function MyStats() {
           transition={{ delay: 0.3, duration: 0.4 }}
         >
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6">
-            {renderTokenBalance('ERG', stats.ergBalance, stats.ergBalanceUSD, 0.1)}
             {renderTokenBalance('GAU', stats.gauBalance, stats.gauBalanceUSD, 0.2)}
             {renderTokenBalance('GAUC', stats.gaucBalance, stats.gaucBalanceUSD, 0.3)}
+            {renderTokenBalance('ERG', stats.ergBalance, stats.ergBalanceUSD, 0.1)}
           </div>
         </motion.div>
       </div>

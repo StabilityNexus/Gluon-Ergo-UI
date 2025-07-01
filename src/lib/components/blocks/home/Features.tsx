@@ -199,7 +199,7 @@ export const Features = () => (
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.3, duration: 0.3 }}
               >
-                <Badge variant="outline" className="z-20">Simple to use</Badge>
+                <Badge variant="outline" className="z-20">Simple to Use</Badge>
               </motion.div>
               <div className="flex gap-2 flex-col">
                 <motion.h2
@@ -216,16 +216,24 @@ export const Features = () => (
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.5, duration: 0.5 }}
                 >
-                  Gluon enables you to protect your wealth with $GAU while being able to leverage volatility and get yield with $GAUC
+                  Protect your wealth with GAU.
+                  <br />
+                  GAU is the stablecoin pegged to 1g of Gold.
+                  <br /><br />
+                  Get leveraged volatility and yield with GAUC.
+                  <br />
+                  GAUC tokenizes the reserve surplus.
+                  <br /><br />
+                  Both GAU and GAUC are fully backed by ERG.
                 </motion.p>
               </div>
             </div>
             <div className="grid lg:pl-6 grid-cols-1 sm:grid-cols-3 items-start lg:grid-cols-1 gap-6">
               {[
-                { icon: Maximize2, title: "Fission", description: "Splits $ERG tokens into $GAU stable tokeons and $GAUC volatile tokeons" },
-                { icon: Minimize2, title: "Fusion", description: "Merges $GAU stable tokeons and $GAUC volatile tokeons into $ERG tokens" },
-                { icon: Repeat, title: "Transmute to Gold", description: "Transmutes $GAUC volatile tokeons into $GAU stable tokeons" },
-                { icon: Repeat, title: "Transmute from Gold", description: "Transmutes $GAU stable tokeons into $GAUC volatile tokeons" }
+                { icon: Maximize2, title: "Fission", description: "Splits ERG into GAU and GAUC" },
+                { icon: Minimize2, title: "Fusion", description: "Merges GAU and GAUC back into ERG" },
+                { icon: Repeat, title: "Transmute to Gold", description: "Swaps GAUC to GAU" },
+                { icon: Repeat, title: "Transmute from Gold", description: "Swaps GAU to GAUC" }
               ].map((item, index) => (
                 <motion.div
                   key={item.title}
@@ -277,8 +285,8 @@ export const Features = () => (
             {/* Transmute From Gold: GAU -> GAUC */}
             <TokenFlow
               title="Transmute From Gold"
-              fromTokens={['GAU']}
-              toTokens={['GAUC']}
+              fromTokens={['GAUC']}
+              toTokens={['GAU']}
               reverse={true}
             />
           </motion.div>

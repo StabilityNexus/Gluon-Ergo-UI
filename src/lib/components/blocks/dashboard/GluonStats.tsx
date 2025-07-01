@@ -319,7 +319,7 @@ export function GluonStats() {
             transition={{ delay: 0.2, duration: 0.3 }}
             whileHover={{ scale: 1.05 }}
           >
-            <span className="text-muted-foreground">Erg Price: </span>
+            <span className="text-muted-foreground">ERG Price: </span>
             <AnimatePresence mode="wait">
               {isLoading ? (
                 <motion.span
@@ -349,17 +349,17 @@ export function GluonStats() {
         {/* Token Grid - Responsive */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           {renderStatCard(
-            "Gold/KG",
+            "1 kg of Gold",
             "Oracle Gold Price",
             stats.goldKgPrice,
             <Scale className="h-8 w-8 text-yellow-700" />,
-            "ERG/kg",
+            "ERG",
             0.1
           )}
 
           {renderStatCard(
             "GAU",
-            "Gold Pegged Token",
+            "Gold-Pegged Stablecoin",
             stats.gauPrice,
             <GauIcon className="h-8 w-8" />,
             "ERG",
@@ -368,7 +368,7 @@ export function GluonStats() {
 
           {renderStatCard(
             "GAUC",
-            "Collateral Token",
+            "Leveraged Yield Token",
             stats.gaucPrice,
             <GaucIcon className="h-8 w-8" />,
             "ERG",
@@ -455,7 +455,7 @@ export function GluonStats() {
                       {hasError ? '—' : stats.reserveRatio ? Math.round(stats.reserveRatio) : '—'}%
                     </div>
                     <div className="font-medium text-sm text-muted-foreground">
-                      Current Reserve Ratio
+                      Reserve Ratio
                     </div>
                   </motion.div>
                 )}
@@ -496,7 +496,7 @@ export function GluonStats() {
                       {hasError ? '—' : (stats.tvl ? renderTooltip(stats.tvl, "Total Value Locked") : '—')}
                     </div>
                     <div className="text-sm font-medium text-muted-foreground">
-                      Total Value Locked
+                      Total Value Locked (ERG)
                     </div>
                   </motion.div>
                 )}
