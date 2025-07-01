@@ -9,7 +9,9 @@
     "start": "next start",
     "lint": "next lint",
     "custom": "cd lib/gluon-gold-sdk && bun install && bun run build",
-    "test": "vitest"
+    "test": "vitest",
+    "setup": "echo \"🚀 Starting Gluon Gold SDK setup using bun...\" && cd lib/gluon-gold-sdk && echo \"📦 Installing SDK dependencies...\" && bun install && echo \"🔨 Building SDK...\" && bun run build && echo \"📁 Returning to root directory...\" && cd ../.. && echo \"🏠 Installing root dependencies...\" && bun install && echo \"✅ Setup complete! Ready to go! 🎉\" && echo \"🎉 Use bun dev to start! 🔨 \"",
+    "setupnpm": "echo \"🚀 Starting Gluon Gold SDK setup using npm...\" && cd lib/gluon-gold-sdk && echo \"📦 Installing SDK dependencies...\" && npm install && echo \"🔨 Building SDK...\" && npm run build && echo \"📁 Returning to root directory...\" && cd ../.. && echo \"🏠 Installing root dependencies...\" && npm install && echo \"✅ Setup complete! Ready to go! 🎉\" && echo \"🎉 Use npm run dev to start! 🔨\""
   },
   "workspaces": [
     "lib/*"
