@@ -24,11 +24,11 @@ A modern DeFi interface built with Next.js, Tailwind CSS, Shadcn UI, Zustand, Fr
 
 Install bun, if you don't have it already, you can find it [here](https://bun.sh/docs/installation). 
 
-If you don't want to use bun, you can always use NPM or PNPM. 
+If you don't want to use bun, you can always use NPM or PNPM, use `npm run setupnpm`
 
 1. Install dependencies:
 ```bash
-bun install
+bun setup
 ```
 
 2. Start the development server:
