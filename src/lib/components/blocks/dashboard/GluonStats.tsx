@@ -180,14 +180,16 @@ export function GluonStats() {
   }, [])
 
   // Helper function to format GAU supply properly
-  const formatGauSupply = (supply: bigint) => {
-    const supplyNumber = Number(supply) / 1e6 // Convert to millions
-    if (supplyNumber >= 1000) {
-      return `${(supplyNumber / 1000).toFixed(1)}B` // Billions
-    } else if (supplyNumber >= 1) {
-      return `${supplyNumber.toFixed(1)}M` // Millions
+  const formatGauSupply = (supply: bigint): string => {
+    const supplyNumber = Number(supply) / 1e9; // GAU has 9 decimals
+    if (supplyNumber >= 1_000_000_000) {
+      return `${(supplyNumber / 1_000_000_000).toFixed(2)}B`; // Billions
+    } else if (supplyNumber >= 1_000_000) {
+      return `${(supplyNumber / 1_000_000).toFixed(2)}M`; // Millions
+    } else if (supplyNumber >= 1_000) {
+      return `${(supplyNumber / 1_000).toFixed(2)}K`; // Thousands
     } else {
-      return `${(supplyNumber * 1000).toFixed(0)}K` // Thousands
+      return supplyNumber.toFixed(2); // Show small values normally
     }
   }
 
