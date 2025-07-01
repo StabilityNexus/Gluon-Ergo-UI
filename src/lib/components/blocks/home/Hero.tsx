@@ -32,7 +32,7 @@ export default function Hero() {
             >
               <p className="text-xl text-muted-foreground">
                 Trade and transact with digital gold-pegged tokens. <br /> 
-                Secured by the Ergo blockchain and its decentralized Gold price oracle.
+                Secured by the Ergo blockchain and its decentralized gold price oracle.
               </p>
             </motion.div>
 
