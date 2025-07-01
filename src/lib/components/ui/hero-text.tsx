@@ -6,7 +6,7 @@ import { Button } from "@/lib/components/ui/button";
 function HeroText() {
     const [titleNumber, setTitleNumber] = useState(0);
     const titles = useMemo(
-        () => ["decentralized", "autonomous", "permissionless", "transparent", "fully backed"],
+        () => ["secure", "decentralized", "innovative", "reliable", "auditable"],
         []
     );
 
@@ -30,7 +30,7 @@ function HeroText() {
                     </div>
                     <div className="flex gap-4 flex-col">
                         <h1 className="scroll-m-20 text-3xl font-extrabold tracking-tight lg:text-7xl dark:text-white">
-                            Gold-Pegged <span className="text-primary">Stablecoin</span>
+                            Gold-Backed <span className="text-primary">Stablecoin</span>
 
                             <span className="relative flex w-full justify-center overflow-hidden text-center md:pb-4 md:pt-1">
                                 &nbsp;

@@ -6,9 +6,9 @@ export default function Home() {
   return (
     <>
       <SEO
-        title="Gluon | Gold-Pegged Stablecoin on Ergo"
-        description="Experience the future of decentralized stablecoins with the Gluon protocol on the Ergo blockchain - mint gold-pegged stablecoins and leveraged volatity yield tokens backed by ERG."
-        keywords="Gluon, Ergo, DeFi, Gold-pegged, Stablecoin, Cryptocurrency, Blockchain, GAU, GAUC, Digital Gold, Decentralized Finance, Autonomous, Permissionless, Transparent, Distributed Ledger Technology"
+        title="Gluon | Gold-Backed DeFi on Ergo"
+        description="Experience the future of DeFi with Gluon - a revolutionary protocol on Ergo blockchain offering gold-backed tokens, secure swaps, and innovative financial instruments."
+        keywords="Gluon, Ergo, DeFi, Gold-backed tokens, Cryptocurrency, Blockchain, GAU, GAUC, Digital Gold"
       />
       <Hero />
       <Features />

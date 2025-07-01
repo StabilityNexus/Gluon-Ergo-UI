@@ -31,8 +31,7 @@ export default function Hero() {
               transition={{ delay: 0.4, duration: 0.6 }}
             >
               <p className="text-xl text-muted-foreground">
-                Trade and transact with digital gold-pegged tokens. <br /> 
-                Secured by the Ergo blockchain and its decentralized Gold price oracle.
+                Trade, save, and transact with digital gold tokens. Fully backed by physical gold oracles, secured by Ergo's blockchain.
               </p>
             </motion.div>
 
