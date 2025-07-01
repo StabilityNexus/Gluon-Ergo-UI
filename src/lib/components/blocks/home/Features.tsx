@@ -285,9 +285,9 @@ export const Features = () => (
             {/* Transmute From Gold: GAU -> GAUC */}
             <TokenFlow
               title="Transmute From Gold"
-              fromTokens={['GAUC']}
-              toTokens={['GAU']}
-              reverse={true}
+              fromTokens={['GAU']}
+              toTokens={['GAUC']}
+              reverse={false}
             />
           </motion.div>
         </CardSpotlight>
