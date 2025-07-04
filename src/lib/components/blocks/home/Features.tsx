@@ -216,7 +216,7 @@ export const Features = () => (
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.5, duration: 0.5 }}
                 >
-                  Protect your wealth with GAU.
+                  Get exposure to Gold with GAU.
                   <br />
                   GAU is the stablecoin pegged to 1g of Gold.
                   <br /><br />
