@@ -393,13 +393,13 @@ export function GluonStats() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 text-center">
               <div className="space-y-2">
                 <div className="text-2xl font-bold text-foreground">
-                  {isLoading ? <Skeleton className="h-8 w-16 mx-auto" /> : (hasError ? '—' : nanoErgsToErgs(protocolMetrics.volume14Day.neutronsToProtons).toFixed(0))}
+                  {isLoading ? <Skeleton className="h-8 w-16 mx-auto" /> : (hasError ? '—' : nanoErgsToErgs(protocolMetrics.volume14Day.neutronsToProtons).toFixed(2))}
                 </div>
                 <div className="text-sm text-muted-foreground">14d GAU to GAUC Volume (ERG)</div>
               </div>
               <div className="space-y-2">
                 <div className="text-2xl font-bold text-foreground">
-                  {isLoading ? <Skeleton className="h-8 w-16 mx-auto" /> : (hasError ? '—' : nanoErgsToErgs(protocolMetrics.volume14Day.protonsToNeutrons).toFixed(0))}
+                  {isLoading ? <Skeleton className="h-8 w-16 mx-auto" /> : (hasError ? '—' : nanoErgsToErgs(protocolMetrics.volume14Day.protonsToNeutrons).toFixed(2))}
                 </div>
                 <div className="text-sm text-muted-foreground">14d GAUC to GAU Volume (ERG)</div>
               </div>
