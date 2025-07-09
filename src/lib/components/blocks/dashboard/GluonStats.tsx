@@ -180,8 +180,8 @@ export function GluonStats() {
   }, [])
 
   // Helper function to format GAU supply properly
-  const formatGauGaucSupply = (supply: bigint): string => {
-    const supplyNumber = Number(supply) / 1e9; // GAU has 9 decimals
+  const formatSupply = (supply: bigint): string => {
+    const supplyNumber = Number(supply) / 1e9; // GAU GAUC have 9 decimals
     if (supplyNumber >= 1_000_000_000) {
       return `${(supplyNumber / 1_000_000_000).toFixed(2)}B`; // Billions
     } else if (supplyNumber >= 1_000_000) {
@@ -405,13 +405,13 @@ export function GluonStats() {
               </div>
               <div className="space-y-2">
                 <div className="text-2xl font-bold text-foreground">
-                  {isLoading ? <Skeleton className="h-8 w-16 mx-auto" /> : (hasError ? '—' : formatGauGaucSupply(protocolMetrics.circulatingSupply.neutrons))}
+                  {isLoading ? <Skeleton className="h-8 w-16 mx-auto" /> : (hasError ? '—' : formatSupply(protocolMetrics.circulatingSupply.neutrons))}
                 </div>
                 <div className="text-sm text-muted-foreground">GAU Supply</div>
               </div>
               <div className="space-y-2">
                 <div className="text-2xl font-bold text-foreground">
-                  {isLoading ? <Skeleton className="h-8 w-16 mx-auto" /> : (hasError ? '—' : formatGauGaucSupply(protocolMetrics.circulatingSupply.protons))}
+                  {isLoading ? <Skeleton className="h-8 w-16 mx-auto" /> : (hasError ? '—' : formatSupply(protocolMetrics.circulatingSupply.protons))}
                 </div>
                 <div className="text-sm text-muted-foreground">GAUC Supply</div>
               </div>
