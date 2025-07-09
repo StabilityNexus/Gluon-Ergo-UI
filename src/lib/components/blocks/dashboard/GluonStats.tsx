@@ -180,7 +180,7 @@ export function GluonStats() {
   }, [])
 
   // Helper function to format GAU supply properly
-  const formatGauSupply = (supply: bigint): string => {
+  const formatGauGaucSupply = (supply: bigint): string => {
     const supplyNumber = Number(supply) / 1e9; // GAU has 9 decimals
     if (supplyNumber >= 1_000_000_000) {
       return `${(supplyNumber / 1_000_000_000).toFixed(2)}B`; // Billions
@@ -390,7 +390,7 @@ export function GluonStats() {
               <Activity className="h-5 w-5 text-primary" />
               <span className="font-semibold text-lg">Protocol Activity</span>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-center">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 text-center">
               <div className="space-y-2">
                 <div className="text-2xl font-bold text-foreground">
                   {isLoading ? <Skeleton className="h-8 w-16 mx-auto" /> : (hasError ? '—' : nanoErgsToErgs(protocolMetrics.volume14Day.neutronsToProtons).toFixed(0))}
@@ -405,9 +405,15 @@ export function GluonStats() {
               </div>
               <div className="space-y-2">
                 <div className="text-2xl font-bold text-foreground">
-                  {isLoading ? <Skeleton className="h-8 w-16 mx-auto" /> : (hasError ? '—' : formatGauSupply(protocolMetrics.circulatingSupply.neutrons))}
+                  {isLoading ? <Skeleton className="h-8 w-16 mx-auto" /> : (hasError ? '—' : formatGauGaucSupply(protocolMetrics.circulatingSupply.neutrons))}
                 </div>
                 <div className="text-sm text-muted-foreground">GAU Supply</div>
+              </div>
+              <div className="space-y-2">
+                <div className="text-2xl font-bold text-foreground">
+                  {isLoading ? <Skeleton className="h-8 w-16 mx-auto" /> : (hasError ? '—' : formatGauGaucSupply(protocolMetrics.circulatingSupply.protons))}
+                </div>
+                <div className="text-sm text-muted-foreground">GAUC Supply</div>
               </div>
             </div>
           </Card>
