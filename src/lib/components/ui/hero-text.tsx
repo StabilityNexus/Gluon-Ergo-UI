@@ -1,7 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { MoveRight, PhoneCall } from "lucide-react";
-import { Button } from "@/lib/components/ui/button";
 
 function HeroText() {
     const [titleNumber, setTitleNumber] = useState(0);

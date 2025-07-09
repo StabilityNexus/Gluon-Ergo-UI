@@ -6,7 +6,6 @@ import {
   CardContent,
   CardHeader,
 } from "@/lib/components/ui/card"
-import { Input } from "@/lib/components/ui/input"
 import {
   Select,
   SelectContent,
@@ -19,14 +18,14 @@ import { Settings2 } from "lucide-react"
 import { useState, useCallback, useEffect } from "react"
 import { cn } from "@/lib/utils/utils"
 import { useErgo } from "@/lib/providers/ErgoProvider"
-import { NumericFormat, type OnValueChange, type NumberFormatValues } from 'react-number-format'
+import { NumericFormat, type NumberFormatValues } from 'react-number-format'
 import { NodeService } from "@/lib/utils/node-service"
 import { TOKEN_ADDRESS } from '@/lib/constants/token'
-import { convertFromDecimals, formatMicroNumber, nanoErgsToErgs, ergsToNanoErgs, convertToDecimals } from '@/lib/utils/erg-converter'
-import { createTransactionListener, type TransactionListener, type WalletState, type ExpectedChanges } from '@/lib/utils/transaction-listener'
+import { convertFromDecimals, formatMicroNumber, nanoErgsToErgs, convertToDecimals } from '@/lib/utils/erg-converter'
+import { createTransactionListener, type WalletState, type ExpectedChanges } from '@/lib/utils/transaction-listener'
 import BigNumber from 'bignumber.js'
 import { Token, TokenSymbol, ReceiptDetails } from '@/lib/functions/reactor/types'
-import { defaultTokens, getValidToTokens, getActionType, getDescription, getTitle, validateAmount, formatValue } from '@/lib/functions/reactor/utils'
+import { defaultTokens, getValidToTokens, getActionType, getDescription, getTitle, formatValue } from '@/lib/functions/reactor/utils'
 import { calculateFissionAmounts, handleFissionSwap } from '@/lib/functions/reactor/handleFission'
 import { calculateFusionAmounts, handleFusionSwap } from '@/lib/functions/reactor/handleFusion'
 import { calculateTransmutationAmounts, handleTransmuteToGoldSwap, handleTransmuteFromGoldSwap } from '@/lib/functions/reactor/handleTransmutation'
@@ -70,7 +69,7 @@ const formatTokenAmount = (value: number | string): string => {
 
 
 // Helper function to check if two values are equal within precision tolerance
-const isPreciselyEqual = (value1: string, value2: string): boolean => {
+/*const isPreciselyEqual = (value1: string, value2: string): boolean => {
   try {
     const bn1 = new BigNumber(value1 || "0");
     const bn2 = new BigNumber(value2 || "0");
@@ -79,7 +78,7 @@ const isPreciselyEqual = (value1: string, value2: string): boolean => {
     console.error("Error in precision comparison:", error);
     return false;
   }
-}
+}*/
 
 // NEW: Value management system for display vs precise values
 const createValuePair = (preciseValue: string) => {
@@ -139,7 +138,7 @@ export function ReactorSwap() {
   const [isInitializing, setIsInitializing] = useState(true)
   const [initError, setInitError] = useState<string | null>(null)
   const [nodeService] = useState(() => new NodeService(process.env.NEXT_PUBLIC_NODE || ''))
-  const [balanceUpdateTrigger, setBalanceUpdateTrigger] = useState(0)
+  const [balanceUpdateTrigger] = useState(0)
   const [boxesReady, setBoxesReady] = useState(false)
   const [receiptDetails, setReceiptDetails] = useState<ReceiptDetails>({
     inputAmount: 0,
@@ -153,7 +152,7 @@ export function ReactorSwap() {
   })
   const [maxErgOutput, setMaxErgOutput] = useState<string>("0")
   const [maxErgOutputPrecise, setMaxErgOutputPrecise] = useState<string>("0") // Precise value for calculations
-  const [isUpdatingProgrammatically, setIsUpdatingProgrammatically] = useState(false)
+  //const [isUpdatingProgrammatically, setIsUpdatingProgrammatically] = useState(false)
 
   // Transaction listener state
   const [transactionListener] = useState(() => createTransactionListener(nodeService))
@@ -1084,8 +1083,9 @@ export function ReactorSwap() {
     )
   }
 
-  const renderGauGaucCard = (isFromCard: boolean) => (
-    <motion.div
+  const renderGauGaucCard = (isFromCard?:boolean) => {
+    console.log(isFromCard)
+    return <motion.div
       className="space-y-4 flex-1 w-full py-6"
       initial={{ opacity: 0, height: 0 }}
       animate={{ opacity: 1, height: "auto" }}
@@ -1169,7 +1169,7 @@ export function ReactorSwap() {
         </motion.div>
       </motion.div>
     </motion.div>
-  )
+  }
 
   const currentAction = getActionType(fromToken.symbol, toToken.symbol)
 
