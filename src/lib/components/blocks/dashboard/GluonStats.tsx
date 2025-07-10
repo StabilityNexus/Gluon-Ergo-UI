@@ -179,20 +179,6 @@ export function GluonStats() {
     }
   }, [])
 
-  // Helper function to format GAU supply properly
-  const formatGauSupply = (supply: bigint): string => {
-    const supplyNumber = Number(supply) / 1e9; // GAU has 9 decimals
-    if (supplyNumber >= 1_000_000_000) {
-      return `${(supplyNumber / 1_000_000_000).toFixed(2)}B`; // Billions
-    } else if (supplyNumber >= 1_000_000) {
-      return `${(supplyNumber / 1_000_000).toFixed(2)}M`; // Millions
-    } else if (supplyNumber >= 1_000) {
-      return `${(supplyNumber / 1_000).toFixed(2)}K`; // Thousands
-    } else {
-      return supplyNumber.toFixed(2); // Show small values normally
-    }
-  }
-
   const renderTooltip = (value: BigNumber | null, label: string) => {
     if (!value) return null;
     const formatted = formatNumber(value, false);
@@ -390,24 +376,30 @@ export function GluonStats() {
               <Activity className="h-5 w-5 text-primary" />
               <span className="font-semibold text-lg">Protocol Activity</span>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-center">
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-6 text-center">
               <div className="space-y-2">
                 <div className="text-2xl font-bold text-foreground">
-                  {isLoading ? <Skeleton className="h-8 w-16 mx-auto" /> : (hasError ? '—' : nanoErgsToErgs(protocolMetrics.volume14Day.neutronsToProtons).toFixed(0))}
+                  {isLoading ? <Skeleton className="h-8 w-16 mx-auto" /> : (hasError ? '—' : nanoErgsToErgs(protocolMetrics.volume14Day.neutronsToProtons).toFixed(2))}
                 </div>
                 <div className="text-sm text-muted-foreground">14d GAU to GAUC Volume (ERG)</div>
               </div>
               <div className="space-y-2">
                 <div className="text-2xl font-bold text-foreground">
-                  {isLoading ? <Skeleton className="h-8 w-16 mx-auto" /> : (hasError ? '—' : nanoErgsToErgs(protocolMetrics.volume14Day.protonsToNeutrons).toFixed(0))}
+                  {isLoading ? <Skeleton className="h-8 w-16 mx-auto" /> : (hasError ? '—' : nanoErgsToErgs(protocolMetrics.volume14Day.protonsToNeutrons).toFixed(2))}
                 </div>
                 <div className="text-sm text-muted-foreground">14d GAUC to GAU Volume (ERG)</div>
               </div>
               <div className="space-y-2">
                 <div className="text-2xl font-bold text-foreground">
-                  {isLoading ? <Skeleton className="h-8 w-16 mx-auto" /> : (hasError ? '—' : formatGauSupply(protocolMetrics.circulatingSupply.neutrons))}
+                  {isLoading ? <Skeleton className="h-8 w-16 mx-auto" /> : (hasError ? '—' : nanoErgsToErgs(protocolMetrics.circulatingSupply.neutrons).toFixed(2))}
                 </div>
                 <div className="text-sm text-muted-foreground">GAU Supply</div>
+              </div>
+              <div className="space-y-2">
+                <div className="text-2xl font-bold text-foreground">
+                  {isLoading ? <Skeleton className="h-8 w-16 mx-auto" /> : (hasError ? '—' : nanoErgsToErgs(protocolMetrics.circulatingSupply.protons).toFixed(2))}
+                </div>
+                <div className="text-sm text-muted-foreground">GAUC Supply</div>
               </div>
             </div>
           </Card>
