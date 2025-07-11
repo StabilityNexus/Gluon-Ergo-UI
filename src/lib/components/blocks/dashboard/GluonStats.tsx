@@ -5,7 +5,7 @@ import { Card } from "@/lib/components/ui/card"
 import { Button } from "@/lib/components/ui/button"
 import { Skeleton } from "@/lib/components/ui/skeleton"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/lib/components/ui/tooltip"
-import { nanoErgsToErgs, formatMacroNumber, formatNumber } from "@/lib/utils/erg-converter"
+import { nanoErgsToErgs, convertFromDecimals, formatMacroNumber, formatNumber } from "@/lib/utils/erg-converter"
 import { Scale, BarChart3, Percent, Loader2, TrendingUp, Activity, Users } from "lucide-react"
 import { cn } from "@/lib/utils/utils"
 import { useRouter } from "next/navigation"
@@ -391,13 +391,13 @@ export function GluonStats() {
               </div>
               <div className="space-y-2">
                 <div className="text-2xl font-bold text-foreground">
-                  {isLoading ? <Skeleton className="h-8 w-16 mx-auto" /> : (hasError ? '—' : nanoErgsToErgs(protocolMetrics.circulatingSupply.neutrons).toFixed(2))}
+                  {isLoading ? <Skeleton className="h-8 w-16 mx-auto" /> : (hasError ? '—' : convertFromDecimals(protocolMetrics.circulatingSupply.neutrons).toFixed(2))}
                 </div>
                 <div className="text-sm text-muted-foreground">GAU Supply</div>
               </div>
               <div className="space-y-2">
                 <div className="text-2xl font-bold text-foreground">
-                  {isLoading ? <Skeleton className="h-8 w-16 mx-auto" /> : (hasError ? '—' : nanoErgsToErgs(protocolMetrics.circulatingSupply.protons).toFixed(2))}
+                  {isLoading ? <Skeleton className="h-8 w-16 mx-auto" /> : (hasError ? '—' : convertFromDecimals(protocolMetrics.circulatingSupply.protons).toFixed(2))}
                 </div>
                 <div className="text-sm text-muted-foreground">GAUC Supply</div>
               </div>
