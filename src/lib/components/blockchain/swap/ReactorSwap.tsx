@@ -1487,14 +1487,16 @@ export function ReactorSwap() {
                     exit={{ opacity: 0, scale: 0.8 }}
                     transition={{ duration: 0.15 }}
                   >
-                    {formatTokenAmount(formatValue(receiptDetails.inputAmount))} {fromToken.symbol !== "GAU-GAUC" ? fromToken.symbol : "Pair"}
+                    {fromToken.symbol !== "GAU-GAUC"
+                      ? `${formatTokenAmount(formatValue(receiptDetails.inputAmount))} ${fromToken.symbol}`
+                      : `${formatTokenAmount(gauAmount)} GAU - ${formatTokenAmount(gaucAmount)} GAUC`}
                   </motion.span>
                 </AnimatePresence>
               </motion.div>
 
               <Separator className="xl:my-1 my-2 xl:opacity-50" />
 
-              <motion.div
+              {receiptDetails.fees.devFee ? <motion.div
                 className="flex justify-between"
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -1513,8 +1515,8 @@ export function ReactorSwap() {
                     {formatTokenAmount(formatValue(receiptDetails.fees.devFee))} ERG
                   </motion.span>
                 </AnimatePresence>
-              </motion.div>
-              <motion.div
+              </motion.div>:null}
+              {receiptDetails.fees.uiFee ? <motion.div
                 className="flex justify-between"
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -1533,8 +1535,8 @@ export function ReactorSwap() {
                     {formatTokenAmount(formatValue(receiptDetails.fees.uiFee))} ERG
                   </motion.span>
                 </AnimatePresence>
-              </motion.div>
-              <motion.div
+              </motion.div>:null}
+              {receiptDetails.fees.minerFee ? <motion.div
                 className="flex justify-between"
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -1553,7 +1555,7 @@ export function ReactorSwap() {
                     {formatTokenAmount(formatValue(receiptDetails.fees.minerFee))} ERG
                   </motion.span>
                 </AnimatePresence>
-              </motion.div>
+              </motion.div>:null}
 
               <Separator className="xl:my-1 my-2 xl:opacity-50" />
 
