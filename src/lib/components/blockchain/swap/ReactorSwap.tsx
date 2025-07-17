@@ -858,7 +858,7 @@ export function ReactorSwap() {
         <motion.div className="flex items-center gap-4 mb-2">
           {/* Token selector skeleton */}
           <div
-            className="w-[140px] h-10 rounded bg-gradient-to-r from-muted/60 via-muted/80 to-muted/60 bg-[length:200px_100%]"
+            className="w-[200px] h-10 rounded bg-gradient-to-r from-muted/60 via-muted/80 to-muted/60 bg-[length:200px_100%]"
             style={{ animation: "shimmer 1.5s ease-in-out infinite", animationDelay: "0.1s" }}
           />
 
@@ -1023,7 +1023,7 @@ export function ReactorSwap() {
           >
             <SelectTrigger
               className={cn(
-                "w-[140px] px-3 py-2 font-semibold font-sans",
+                "w-[200px] px-3 py-2 font-semibold font-sans",
                 tokenColors.trigger,
                 isInputDisabled && "opacity-50 cursor-not-allowed"
               )}
