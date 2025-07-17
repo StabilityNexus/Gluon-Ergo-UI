@@ -1,4 +1,4 @@
-import { Check, Maximize2, Minimize2, Repeat } from "lucide-react";
+import { Maximize2, Minimize2, Repeat } from "lucide-react";
 import { Badge } from "@/lib/components/ui/badge";
 import { AnimatedBeam } from "@/lib/components/ui/animated-beam";
 import { CardSpotlight } from "@/lib/components/ui/card-spotlight";
@@ -7,7 +7,7 @@ import GauIcon from "@/lib/components/icons/GauIcon";
 import GaucIcon from "@/lib/components/icons/GaucIcon";
 import { useRef, forwardRef, useState, useEffect } from "react";
 import { cn } from "@/lib/utils/utils";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 
 const Circle = forwardRef<
   HTMLDivElement,
@@ -66,7 +66,7 @@ const TokenFlow = ({
     return () => clearTimeout(timer);
   }, [fromTokens.length, toTokens.length]);
 
-  const getTokenIcon = (token: 'ERG' | 'GAU' | 'GAUC', index?: number) => {
+  const getTokenIcon = (token: 'ERG' | 'GAU' | 'GAUC') => {
     const iconProps = { className: "w-8 h-8" };
     switch (token) {
       case 'ERG':
@@ -108,7 +108,7 @@ const TokenFlow = ({
               transition={{ delay: 0.2 + index * 0.1, duration: 0.3 }}
             >
               <Circle ref={(el) => { fromRefs.current[index] = el; }}>
-                {getTokenIcon(token, index)}
+                {getTokenIcon(token)}
               </Circle>
               <span className="text-xs font-medium">{token}</span>
             </motion.div>
@@ -126,7 +126,7 @@ const TokenFlow = ({
               transition={{ delay: 0.4 + index * 0.1, duration: 0.3 }}
             >
               <Circle ref={(el) => { toRefs.current[index] = el; }}>
-                {getTokenIcon(token, index)}
+                {getTokenIcon(token)}
               </Circle>
               <span className="text-xs font-medium">{token}</span>
             </motion.div>
@@ -216,7 +216,15 @@ export const Features = () => (
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.5, duration: 0.5 }}
                 >
-                  Gluon enables you to protect your wealth with $GAU while being able to leverage volatility and get yield with $GAUC
+                  Get exposure to Gold with GAU.
+                  <br />
+                  GAU is the stablecoin pegged to 1g of Gold.
+                  <br /><br />
+                  Get leveraged volatility and yield with GAUC.
+                  <br />
+                  GAUC tokenizes the reserve surplus.
+                  <br /><br />
+                  Both GAU and GAUC are fully backed by ERG.
                 </motion.p>
               </div>
             </div>
@@ -279,7 +287,7 @@ export const Features = () => (
               title="Transmute From Gold"
               fromTokens={['GAU']}
               toTokens={['GAUC']}
-              reverse={true}
+              reverse={false}
             />
           </motion.div>
         </CardSpotlight>

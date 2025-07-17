@@ -5,13 +5,12 @@ import { Card } from "@/lib/components/ui/card"
 import { Button } from "@/lib/components/ui/button"
 import { Skeleton } from "@/lib/components/ui/skeleton"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/lib/components/ui/tooltip"
-import { nanoErgsToErgs, formatMacroNumber, formatNumber } from "@/lib/utils/erg-converter"
+import { nanoErgsToErgs, convertFromDecimals, formatMacroNumber, formatNumber } from "@/lib/utils/erg-converter"
 import { Scale, BarChart3, Percent, Loader2, TrendingUp, Activity, Users } from "lucide-react"
 import { cn } from "@/lib/utils/utils"
 import { useRouter } from "next/navigation"
 import BigNumber from "bignumber.js"
 import { motion, AnimatePresence } from "framer-motion"
-import ErgIcon from "@/lib/components/icons/ErgIcon"
 import GauIcon from "@/lib/components/icons/GauIcon"
 import GaucIcon from "@/lib/components/icons/GaucIcon"
 
@@ -178,18 +177,6 @@ export function GluonStats() {
       clearInterval(protocolInterval)
     }
   }, [])
-
-  // Helper function to format GAU supply properly
-  const formatGauSupply = (supply: bigint) => {
-    const supplyNumber = Number(supply) / 1e6 // Convert to millions
-    if (supplyNumber >= 1000) {
-      return `${(supplyNumber / 1000).toFixed(1)}B` // Billions
-    } else if (supplyNumber >= 1) {
-      return `${supplyNumber.toFixed(1)}M` // Millions
-    } else {
-      return `${(supplyNumber * 1000).toFixed(0)}K` // Thousands
-    }
-  }
 
   const renderTooltip = (value: BigNumber | null, label: string) => {
     if (!value) return null;
@@ -388,24 +375,30 @@ export function GluonStats() {
               <Activity className="h-5 w-5 text-primary" />
               <span className="font-semibold text-lg">Protocol Activity</span>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-center">
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-6 text-center">
               <div className="space-y-2">
                 <div className="text-2xl font-bold text-foreground">
-                  {isLoading ? <Skeleton className="h-8 w-16 mx-auto" /> : (hasError ? '—' : nanoErgsToErgs(protocolMetrics.volume1Day.protonsToNeutrons + protocolMetrics.volume1Day.neutronsToProtons).toFixed(0))}
+                  {isLoading ? <Skeleton className="h-8 w-16 mx-auto" /> : (hasError ? '—' : nanoErgsToErgs(protocolMetrics.volume14Day.neutronsToProtons).toFixed(2))}
                 </div>
-                <div className="text-sm text-muted-foreground">24h Volume (ERG)</div>
+                <div className="text-sm text-muted-foreground">14d GAU to GAUC Volume (ERG)</div>
               </div>
               <div className="space-y-2">
                 <div className="text-2xl font-bold text-foreground">
-                  {isLoading ? <Skeleton className="h-8 w-16 mx-auto" /> : (hasError ? '—' : nanoErgsToErgs(protocolMetrics.volume7Day.protonsToNeutrons + protocolMetrics.volume7Day.neutronsToProtons).toFixed(0))}
+                  {isLoading ? <Skeleton className="h-8 w-16 mx-auto" /> : (hasError ? '—' : nanoErgsToErgs(protocolMetrics.volume14Day.protonsToNeutrons).toFixed(2))}
                 </div>
-                <div className="text-sm text-muted-foreground">7d Volume (ERG)</div>
+                <div className="text-sm text-muted-foreground">14d GAUC to GAU Volume (ERG)</div>
               </div>
               <div className="space-y-2">
                 <div className="text-2xl font-bold text-foreground">
-                  {isLoading ? <Skeleton className="h-8 w-16 mx-auto" /> : (hasError ? '—' : formatGauSupply(protocolMetrics.circulatingSupply.neutrons))}
+                  {isLoading ? <Skeleton className="h-8 w-16 mx-auto" /> : (hasError ? '—' : convertFromDecimals(protocolMetrics.circulatingSupply.neutrons).toFixed(2))}
                 </div>
                 <div className="text-sm text-muted-foreground">GAU Supply</div>
+              </div>
+              <div className="space-y-2">
+                <div className="text-2xl font-bold text-foreground">
+                  {isLoading ? <Skeleton className="h-8 w-16 mx-auto" /> : (hasError ? '—' : convertFromDecimals(protocolMetrics.circulatingSupply.protons).toFixed(2))}
+                </div>
+                <div className="text-sm text-muted-foreground">GAUC Supply</div>
               </div>
             </div>
           </Card>

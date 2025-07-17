@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils/utils";
 export const CardSpotlight = ({
     children,
     radius = 350,
-    color = "#262626",
+    //color = "#262626",
     className,
     ...props
 }: {
@@ -23,7 +23,7 @@ export const CardSpotlight = ({
         clientX,
         clientY,
     }: ReactMouseEvent<HTMLDivElement>) {
-        let { left, top } = currentTarget.getBoundingClientRect();
+        const { left, top } = currentTarget.getBoundingClientRect();
 
         mouseX.set(clientX - left);
         mouseY.set(clientY - top);

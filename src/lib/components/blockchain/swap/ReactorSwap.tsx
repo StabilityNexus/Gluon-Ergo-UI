@@ -6,7 +6,6 @@ import {
   CardContent,
   CardHeader,
 } from "@/lib/components/ui/card"
-import { Input } from "@/lib/components/ui/input"
 import {
   Select,
   SelectContent,
@@ -16,17 +15,17 @@ import {
 } from "@/lib/components/ui/select"
 import { Separator } from "@/lib/components/ui/separator"
 import { Settings2 } from "lucide-react"
-import { useState, useCallback, useEffect } from "react"
+import { useState, useCallback, useEffect, useRef } from "react"
 import { cn } from "@/lib/utils/utils"
 import { useErgo } from "@/lib/providers/ErgoProvider"
-import { NumericFormat, type OnValueChange, type NumberFormatValues } from 'react-number-format'
+import { NumericFormat, type NumberFormatValues } from 'react-number-format'
 import { NodeService } from "@/lib/utils/node-service"
 import { TOKEN_ADDRESS } from '@/lib/constants/token'
-import { convertFromDecimals, formatMicroNumber, nanoErgsToErgs, ergsToNanoErgs, convertToDecimals } from '@/lib/utils/erg-converter'
-import { createTransactionListener, type TransactionListener, type WalletState, type ExpectedChanges } from '@/lib/utils/transaction-listener'
+import { convertFromDecimals, formatMicroNumber, nanoErgsToErgs, convertToDecimals } from '@/lib/utils/erg-converter'
+import { createTransactionListener, type WalletState, type ExpectedChanges } from '@/lib/utils/transaction-listener'
 import BigNumber from 'bignumber.js'
 import { Token, TokenSymbol, ReceiptDetails } from '@/lib/functions/reactor/types'
-import { defaultTokens, getValidToTokens, getActionType, getDescription, getTitle, validateAmount, formatValue } from '@/lib/functions/reactor/utils'
+import { defaultTokens, getValidToTokens, getActionType, getDescription, getTitle, formatValue } from '@/lib/functions/reactor/utils'
 import { calculateFissionAmounts, handleFissionSwap } from '@/lib/functions/reactor/handleFission'
 import { calculateFusionAmounts, handleFusionSwap } from '@/lib/functions/reactor/handleFusion'
 import { calculateTransmutationAmounts, handleTransmuteToGoldSwap, handleTransmuteFromGoldSwap } from '@/lib/functions/reactor/handleTransmutation'
@@ -70,7 +69,7 @@ const formatTokenAmount = (value: number | string): string => {
 
 
 // Helper function to check if two values are equal within precision tolerance
-const isPreciselyEqual = (value1: string, value2: string): boolean => {
+/*const isPreciselyEqual = (value1: string, value2: string): boolean => {
   try {
     const bn1 = new BigNumber(value1 || "0");
     const bn2 = new BigNumber(value2 || "0");
@@ -79,7 +78,7 @@ const isPreciselyEqual = (value1: string, value2: string): boolean => {
     console.error("Error in precision comparison:", error);
     return false;
   }
-}
+}*/
 
 // NEW: Value management system for display vs precise values
 const createValuePair = (preciseValue: string) => {
@@ -139,7 +138,7 @@ export function ReactorSwap() {
   const [isInitializing, setIsInitializing] = useState(true)
   const [initError, setInitError] = useState<string | null>(null)
   const [nodeService] = useState(() => new NodeService(process.env.NEXT_PUBLIC_NODE || ''))
-  const [balanceUpdateTrigger, setBalanceUpdateTrigger] = useState(0)
+  const [balanceUpdateTrigger] = useState(0)
   const [boxesReady, setBoxesReady] = useState(false)
   const [receiptDetails, setReceiptDetails] = useState<ReceiptDetails>({
     inputAmount: 0,
@@ -153,7 +152,8 @@ export function ReactorSwap() {
   })
   const [maxErgOutput, setMaxErgOutput] = useState<string>("0")
   const [maxErgOutputPrecise, setMaxErgOutputPrecise] = useState<string>("0") // Precise value for calculations
-  const [isUpdatingProgrammatically, setIsUpdatingProgrammatically] = useState(false)
+  //const [isUpdatingProgrammatically, setIsUpdatingProgrammatically] = useState(false)
+  const updateBalancesRef = useRef(() => {});
 
   // Transaction listener state
   const [transactionListener] = useState(() => createTransactionListener(nodeService))
@@ -420,68 +420,112 @@ export function ReactorSwap() {
     return () => clearInterval(boxRefreshInterval)
   }, [])
 
-  useEffect(() => {
-    const updateBalances = async () => {
-      if (isConnected) {
-        try {
-          const balances = await getBalance();
-          let updatedTokens = [...tokens].map(token => {
-            const defaultToken = defaultTokens.find(dt => dt.symbol === token.symbol);
-            return { ...token, ...defaultToken };
-          });
+  const updateBalances = useCallback(async () => {
+    if (isConnected) {
+      try {
+        const balances = await getBalance();
+        let updatedTokens = [...tokens].map((token) => {
+          const defaultToken = defaultTokens.find(
+            (dt) => dt.symbol === token.symbol
+          );
+          return { ...token, ...defaultToken };
+        });
 
-          if (Array.isArray(balances) && balances.length > 0) {
-            const ergBalanceData = balances.find(b => b.tokenId === 'ERG' || !b.tokenId);
-            if (ergBalanceData && ergBalanceData.balance) {
-              const ergRawBalance = BigInt(ergBalanceData.balance);
-              const ergAmount = formatErgAmount(nanoErgsToErgs(ergRawBalance));
-              updatedTokens = updatedTokens.map(token =>
-                token.symbol === "ERG" ? { ...token, balance: ergAmount } : token
+        if (Array.isArray(balances) && balances.length > 0) {
+          const ergBalanceData = balances.find(
+            (b) => b.tokenId === "ERG" || !b.tokenId
+          );
+          if (ergBalanceData && ergBalanceData.balance) {
+            const ergRawBalance = BigInt(ergBalanceData.balance);
+            const ergAmount = formatErgAmount(nanoErgsToErgs(ergRawBalance));
+            updatedTokens = updatedTokens.map((token) =>
+              token.symbol === "ERG" ? { ...token, balance: ergAmount } : token
+            );
+          }
+
+          balances.forEach((tokenBalance) => {
+            if (tokenBalance.tokenId === TOKEN_ADDRESS.gau) {
+              const gauRawBalance =
+                tokenBalance.balance && tokenBalance.balance !== "NaN"
+                  ? BigInt(tokenBalance.balance)
+                  : BigInt(0);
+              const gauDecimalBalance = convertFromDecimals(gauRawBalance);
+              updatedTokens = updatedTokens.map((t) =>
+                t.symbol === "GAU"
+                  ? {
+                      ...t,
+                      balance: formatMicroNumber(gauDecimalBalance).display,
+                    }
+                  : t
+              );
+            } else if (tokenBalance.tokenId === TOKEN_ADDRESS.gauc) {
+              const gaucRawBalance =
+                tokenBalance.balance && tokenBalance.balance !== "NaN"
+                  ? BigInt(tokenBalance.balance)
+                  : BigInt(0);
+              const gaucDecimalBalance = convertFromDecimals(gaucRawBalance);
+              updatedTokens = updatedTokens.map((t) =>
+                t.symbol === "GAUC"
+                  ? {
+                      ...t,
+                      balance: formatMicroNumber(gaucDecimalBalance).display,
+                    }
+                  : t
               );
             }
+          });
 
-            balances.forEach(tokenBalance => {
-              if (tokenBalance.tokenId === TOKEN_ADDRESS.gau) {
-                const gauRawBalance = tokenBalance.balance && tokenBalance.balance !== "NaN" ? BigInt(tokenBalance.balance) : BigInt(0);
-                const gauDecimalBalance = convertFromDecimals(gauRawBalance);
-                updatedTokens = updatedTokens.map(t => t.symbol === "GAU" ? { ...t, balance: formatMicroNumber(gauDecimalBalance).display } : t);
-              } else if (tokenBalance.tokenId === TOKEN_ADDRESS.gauc) {
-                const gaucRawBalance = tokenBalance.balance && tokenBalance.balance !== "NaN" ? BigInt(tokenBalance.balance) : BigInt(0);
-                const gaucDecimalBalance = convertFromDecimals(gaucRawBalance);
-                updatedTokens = updatedTokens.map(t => t.symbol === "GAUC" ? { ...t, balance: formatMicroNumber(gaucDecimalBalance).display } : t);
-              }
-            });
-
-            const gauToken = updatedTokens.find(t => t.symbol === "GAU");
-            const gaucToken = updatedTokens.find(t => t.symbol === "GAUC");
-            if (gauToken && gaucToken) {
-              const gauBalanceNum = parseFloat(gauToken.balance);
-              const gaucBalanceNum = parseFloat(gaucToken.balance);
-              const pairBalanceVal = Math.min(Number.isNaN(gauBalanceNum) ? 0 : gauBalanceNum, Number.isNaN(gaucBalanceNum) ? 0 : gaucBalanceNum);
-              const pairBalance = formatTokenAmount(pairBalanceVal.toString());
-              updatedTokens = updatedTokens.map(t => t.symbol === "GAU-GAUC" ? { ...t, balance: pairBalance } : t);
-            }
+          const gauToken = updatedTokens.find((t) => t.symbol === "GAU");
+          const gaucToken = updatedTokens.find((t) => t.symbol === "GAUC");
+          if (gauToken && gaucToken) {
+            const gauBalanceNum = parseFloat(gauToken.balance);
+            const gaucBalanceNum = parseFloat(gaucToken.balance);
+            const pairBalanceVal = Math.min(
+              Number.isNaN(gauBalanceNum) ? 0 : gauBalanceNum,
+              Number.isNaN(gaucBalanceNum) ? 0 : gaucBalanceNum
+            );
+            const pairBalance = formatTokenAmount(pairBalanceVal.toString());
+            updatedTokens = updatedTokens.map((t) =>
+              t.symbol === "GAU-GAUC" ? { ...t, balance: pairBalance } : t
+            );
           }
-
-          setTokens(updatedTokens);
-
-          // Update current tokens while preserving their selection
-          const currentFromTokenInUpdated = updatedTokens.find(t => t.symbol === fromToken.symbol);
-          const currentToTokenInUpdated = updatedTokens.find(t => t.symbol === toToken.symbol);
-
-          if (currentFromTokenInUpdated) {
-            setFromToken(prev => ({ ...prev, balance: currentFromTokenInUpdated.balance }));
-          }
-          if (currentToTokenInUpdated) {
-            setToToken(prev => ({ ...prev, balance: currentToTokenInUpdated.balance }));
-          }
-        } catch (error) {
-          console.error("Error fetching balances:", error);
         }
+
+        setTokens(updatedTokens);
+
+        // Update current tokens while preserving their selection
+        const currentFromTokenInUpdated = updatedTokens.find(
+          (t) => t.symbol === fromToken.symbol
+        );
+        const currentToTokenInUpdated = updatedTokens.find(
+          (t) => t.symbol === toToken.symbol
+        );
+
+        if (currentFromTokenInUpdated) {
+          setFromToken((prev) => ({
+            ...prev,
+            balance: currentFromTokenInUpdated.balance,
+          }));
+        }
+        if (currentToTokenInUpdated) {
+          setToToken((prev) => ({
+            ...prev,
+            balance: currentToTokenInUpdated.balance,
+          }));
+        }
+      } catch (error) {
+        console.error("Error fetching balances:", error);
       }
-    };
-    updateBalances();
-    const pollingInterval = setInterval(updateBalances, 30000);
+    }
+  }, [isConnected, getBalance, balanceUpdateTrigger, fromToken, toToken]);
+
+  useEffect(() => {
+    updateBalancesRef.current = updateBalances;
+  },[updateBalances]);
+
+  useEffect(() => {
+    updateBalancesRef.current();
+    const pollingInterval = setInterval(() => updateBalancesRef.current(), 30000);
     return () => clearInterval(pollingInterval);
   }, [isConnected, getBalance, balanceUpdateTrigger]);
 
@@ -814,7 +858,7 @@ export function ReactorSwap() {
         <motion.div className="flex items-center gap-4 mb-2">
           {/* Token selector skeleton */}
           <div
-            className="w-[140px] h-10 rounded bg-gradient-to-r from-muted/60 via-muted/80 to-muted/60 bg-[length:200px_100%]"
+            className="w-[200px] h-10 rounded bg-gradient-to-r from-muted/60 via-muted/80 to-muted/60 bg-[length:200px_100%]"
             style={{ animation: "shimmer 1.5s ease-in-out infinite", animationDelay: "0.1s" }}
           />
 
@@ -979,7 +1023,7 @@ export function ReactorSwap() {
           >
             <SelectTrigger
               className={cn(
-                "w-[140px] px-3 py-2 font-semibold font-sans",
+                "w-[200px] px-3 py-2 font-semibold font-sans",
                 tokenColors.trigger,
                 isInputDisabled && "opacity-50 cursor-not-allowed"
               )}
@@ -1084,8 +1128,9 @@ export function ReactorSwap() {
     )
   }
 
-  const renderGauGaucCard = (isFromCard: boolean) => (
-    <motion.div
+  const renderGauGaucCard = (isFromCard?:boolean) => {
+    console.log(isFromCard)
+    return <motion.div
       className="space-y-4 flex-1 w-full py-6"
       initial={{ opacity: 0, height: 0 }}
       animate={{ opacity: 1, height: "auto" }}
@@ -1169,7 +1214,7 @@ export function ReactorSwap() {
         </motion.div>
       </motion.div>
     </motion.div>
-  )
+  }
 
   const currentAction = getActionType(fromToken.symbol, toToken.symbol)
 
@@ -1487,14 +1532,16 @@ export function ReactorSwap() {
                     exit={{ opacity: 0, scale: 0.8 }}
                     transition={{ duration: 0.15 }}
                   >
-                    {formatTokenAmount(formatValue(receiptDetails.inputAmount))} {fromToken.symbol !== "GAU-GAUC" ? fromToken.symbol : "Pair"}
+                    {fromToken.symbol !== "GAU-GAUC"
+                      ? `${formatTokenAmount(formatValue(receiptDetails.inputAmount))} ${fromToken.symbol}`
+                      : `${formatTokenAmount(gauAmount)} GAU - ${formatTokenAmount(gaucAmount)} GAUC`}
                   </motion.span>
                 </AnimatePresence>
               </motion.div>
 
               <Separator className="xl:my-1 my-2 xl:opacity-50" />
 
-              <motion.div
+              {receiptDetails.fees.devFee ? <motion.div
                 className="flex justify-between"
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -1513,8 +1560,8 @@ export function ReactorSwap() {
                     {formatTokenAmount(formatValue(receiptDetails.fees.devFee))} ERG
                   </motion.span>
                 </AnimatePresence>
-              </motion.div>
-              <motion.div
+              </motion.div>:null}
+              {receiptDetails.fees.uiFee ? <motion.div
                 className="flex justify-between"
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -1533,8 +1580,8 @@ export function ReactorSwap() {
                     {formatTokenAmount(formatValue(receiptDetails.fees.uiFee))} ERG
                   </motion.span>
                 </AnimatePresence>
-              </motion.div>
-              <motion.div
+              </motion.div>:null}
+              {receiptDetails.fees.minerFee ? <motion.div
                 className="flex justify-between"
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -1553,7 +1600,7 @@ export function ReactorSwap() {
                     {formatTokenAmount(formatValue(receiptDetails.fees.minerFee))} ERG
                   </motion.span>
                 </AnimatePresence>
-              </motion.div>
+              </motion.div>:null}
 
               <Separator className="xl:my-1 my-2 xl:opacity-50" />
 

@@ -1,12 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { MoveRight, PhoneCall } from "lucide-react";
-import { Button } from "@/lib/components/ui/button";
 
 function HeroText() {
     const [titleNumber, setTitleNumber] = useState(0);
     const titles = useMemo(
-        () => ["secure", "decentralized", "innovative", "reliable", "auditable"],
+        () => ["Decentralized", "Autonomous", "Permissionless", "Transparent", "Fully Crypto Backed", "Gold-Pegged"],
         []
     );
 
@@ -25,14 +23,9 @@ function HeroText() {
         <div className="w-full">
             <div className="container mx-auto">
                 <div className="flex gap-8 pt-20 lg:pt-40 items-center justify-center flex-col">
-                    <div>
-                        Decentralized Gold on Ergo
-                    </div>
                     <div className="flex gap-4 flex-col">
                         <h1 className="scroll-m-20 text-3xl font-extrabold tracking-tight lg:text-7xl dark:text-white">
-                            Gold-Backed <span className="text-primary">Stablecoin</span>
-
-                            <span className="relative flex w-full justify-center overflow-hidden text-center md:pb-4 md:pt-1">
+                            <span className="relative flex justify-center overflow-hidden w-screen text-center md:pb-4 md:pt-1">
                                 &nbsp;
                                 {titles.map((title, index) => (
                                     <motion.span
@@ -56,6 +49,8 @@ function HeroText() {
                                     </motion.span>
                                 ))}
                             </span>
+
+                            <span className="text-primary">Stablecoin</span>
                         </h1>
                     </div>
                 </div>

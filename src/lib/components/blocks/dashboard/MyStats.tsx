@@ -6,7 +6,6 @@ import { useErgo } from "@/lib/providers/ErgoProvider"
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Wallet, Loader2, AlertCircle } from "lucide-react"
-import { cn } from "@/lib/utils/utils"
 import { nanoErgsToErgs, convertFromDecimals, formatMicroNumber } from "@/lib/utils/erg-converter"
 import { TOKEN_ADDRESS } from '@/lib/constants/token'
 import BigNumber from "bignumber.js"

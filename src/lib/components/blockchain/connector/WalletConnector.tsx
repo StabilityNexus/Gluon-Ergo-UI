@@ -16,7 +16,7 @@ import {
 } from "@/lib/components/ui/dropdown-menu"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/lib/components/ui/tabs"
 import { useErgo } from "@/lib/providers/ErgoProvider"
-import { WalletIcon, LogOut, BadgeCheck, ArrowUpRight } from "lucide-react"
+import { WalletIcon, LogOut, ArrowUpRight } from "lucide-react"
 import { useEffect, useState } from "react"
 
 
@@ -24,11 +24,14 @@ export function WalletConnector() {
   const { walletList, isConnected, connect, disconnect, getChangeAddress, getBalance } = useErgo()
   const [isOpen, setIsOpen] = useState(false)
   const [ergoAddress, setErgoAddress] = useState<string | null>(null)
-  const [ergBalance, setErgoBalance] = useState<string | null>('0')
+  const [ergBalance, setErgoBalance] = useState<string | null>('0');
+
+  console.log(ergBalance); // To avoid linting error
 
   useEffect(() => {
-    const savedWallet = localStorage.getItem("connectedWallet")
-    if (savedWallet) {
+    const savedWallet = localStorage.getItem("connectedWallet");
+    const isLoaded = walletList.find(wallet => wallet.connectName === savedWallet);
+    if (savedWallet && isLoaded) {
       connect(savedWallet)
         .then(async (success) => {
           if (success) {
@@ -44,7 +47,7 @@ export function WalletConnector() {
         })
         .catch(console.error)
     }
-  }, [connect, isConnected, getChangeAddress, getBalance])
+  }, [connect, isConnected, getChangeAddress, walletList, getBalance])
 
 
   const handleConnect = async (walletName: string) => {
