@@ -306,7 +306,7 @@ export function GluonStats() {
             transition={{ delay: 0.2, duration: 0.3 }}
             whileHover={{ scale: 1.05 }}
           >
-            <span className="text-muted-foreground">Erg Price: </span>
+            <span className="text-muted-foreground">ERG Price: </span>
             <AnimatePresence mode="wait">
               {isLoading ? (
                 <motion.span
