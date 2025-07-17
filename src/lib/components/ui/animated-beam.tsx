@@ -51,17 +51,17 @@ export const AnimatedBeam: React.FC<AnimatedBeamProps> = ({
   // Calculate the gradient coordinates based on the reverse prop
   const gradientCoordinates = reverse
     ? {
-      x1: ["90%", "-10%"],
-      x2: ["100%", "0%"],
-      y1: ["0%", "0%"],
-      y2: ["0%", "0%"],
-    }
+        x1: ["90%", "-10%"],
+        x2: ["100%", "0%"],
+        y1: ["0%", "0%"],
+        y2: ["0%", "0%"],
+      }
     : {
-      x1: ["10%", "110%"],
-      x2: ["0%", "100%"],
-      y1: ["0%", "0%"],
-      y2: ["0%", "0%"],
-    };
+        x1: ["10%", "110%"],
+        x2: ["0%", "100%"],
+        y1: ["0%", "0%"],
+        y2: ["0%", "0%"],
+      };
 
   useEffect(() => {
     const updatePath = () => {
@@ -84,8 +84,9 @@ export const AnimatedBeam: React.FC<AnimatedBeamProps> = ({
           rectB.top - containerRect.top + rectB.height / 2 + endYOffset;
 
         const controlY = startY - curvature;
-        const d = `M ${startX},${startY} Q ${(startX + endX) / 2
-          },${controlY} ${endX},${endY}`;
+        const d = `M ${startX},${startY} Q ${
+          (startX + endX) / 2
+        },${controlY} ${endX},${endY}`;
         setPathD(d);
       }
     };
@@ -93,9 +94,9 @@ export const AnimatedBeam: React.FC<AnimatedBeamProps> = ({
     // Initialize ResizeObserver
     const resizeObserver = new ResizeObserver((entries) => {
       // For all entries, recalculate the path
-      for (let entry of entries) {
+      entries.forEach(() => {
         updatePath();
-      }
+      });
     });
 
     // Observe the container element
@@ -129,7 +130,7 @@ export const AnimatedBeam: React.FC<AnimatedBeamProps> = ({
       xmlns="http://www.w3.org/2000/svg"
       className={cn(
         "pointer-events-none absolute left-0 top-0 transform-gpu stroke-2 ",
-        className,
+        className
       )}
       viewBox={`0 0 ${svgDimensions.width} ${svgDimensions.height}`}
     >
@@ -173,9 +174,21 @@ export const AnimatedBeam: React.FC<AnimatedBeamProps> = ({
           }}
         >
           <stop stopColor={gradientStartColor} stopOpacity="0"></stop>
-          <stop offset="20%" stopColor={gradientStartColor} stopOpacity="1"></stop>
-          <stop offset="80%" stopColor={gradientStopColor} stopOpacity="1"></stop>
-          <stop offset="100%" stopColor={gradientStopColor} stopOpacity="0"></stop>
+          <stop
+            offset="20%"
+            stopColor={gradientStartColor}
+            stopOpacity="1"
+          ></stop>
+          <stop
+            offset="80%"
+            stopColor={gradientStopColor}
+            stopOpacity="1"
+          ></stop>
+          <stop
+            offset="100%"
+            stopColor={gradientStopColor}
+            stopOpacity="0"
+          ></stop>
         </motion.linearGradient>
       </defs>
     </svg>
