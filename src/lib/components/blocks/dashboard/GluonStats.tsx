@@ -5,8 +5,8 @@ import { Card } from "@/lib/components/ui/card"
 import { Button } from "@/lib/components/ui/button"
 import { Skeleton } from "@/lib/components/ui/skeleton"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/lib/components/ui/tooltip"
-import { nanoErgsToErgs,formatNumber } from "@/lib/utils/erg-converter"
-import { Scale, Percent, Loader2, TrendingUp, Activity } from "lucide-react"
+import { nanoErgsToErgs, convertFromDecimals, formatMacroNumber, formatNumber } from "@/lib/utils/erg-converter"
+import { Scale, BarChart3, Percent, Loader2, TrendingUp, Activity, Users } from "lucide-react"
 import { cn } from "@/lib/utils/utils"
 import { useRouter } from "next/navigation"
 import BigNumber from "bignumber.js"
@@ -177,20 +177,6 @@ export function GluonStats() {
       clearInterval(protocolInterval)
     }
   }, [])
-
-  // Helper function to format GAU supply properly
-  const formatGauSupply = (supply: bigint): string => {
-    const supplyNumber = Number(supply) / 1e9; // GAU has 9 decimals
-    if (supplyNumber >= 1_000_000_000) {
-      return `${(supplyNumber / 1_000_000_000).toFixed(2)}B`; // Billions
-    } else if (supplyNumber >= 1_000_000) {
-      return `${(supplyNumber / 1_000_000).toFixed(2)}M`; // Millions
-    } else if (supplyNumber >= 1_000) {
-      return `${(supplyNumber / 1_000).toFixed(2)}K`; // Thousands
-    } else {
-      return supplyNumber.toFixed(2); // Show small values normally
-    }
-  }
 
   const renderTooltip = (value: BigNumber | null, label: string) => {
     if (!value) return null;
@@ -389,24 +375,30 @@ export function GluonStats() {
               <Activity className="h-5 w-5 text-primary" />
               <span className="font-semibold text-lg">Protocol Activity</span>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-center">
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-6 text-center">
               <div className="space-y-2">
                 <div className="text-2xl font-bold text-foreground">
-                  {isLoading ? <Skeleton className="h-8 w-16 mx-auto" /> : (hasError ? '—' : nanoErgsToErgs(protocolMetrics.volume14Day.neutronsToProtons).toFixed(0))}
+                  {isLoading ? <Skeleton className="h-8 w-16 mx-auto" /> : (hasError ? '—' : nanoErgsToErgs(protocolMetrics.volume14Day.neutronsToProtons).toFixed(2))}
                 </div>
                 <div className="text-sm text-muted-foreground">14d GAU to GAUC Volume (ERG)</div>
               </div>
               <div className="space-y-2">
                 <div className="text-2xl font-bold text-foreground">
-                  {isLoading ? <Skeleton className="h-8 w-16 mx-auto" /> : (hasError ? '—' : nanoErgsToErgs(protocolMetrics.volume14Day.protonsToNeutrons).toFixed(0))}
+                  {isLoading ? <Skeleton className="h-8 w-16 mx-auto" /> : (hasError ? '—' : nanoErgsToErgs(protocolMetrics.volume14Day.protonsToNeutrons).toFixed(2))}
                 </div>
                 <div className="text-sm text-muted-foreground">14d GAUC to GAU Volume (ERG)</div>
               </div>
               <div className="space-y-2">
                 <div className="text-2xl font-bold text-foreground">
-                  {isLoading ? <Skeleton className="h-8 w-16 mx-auto" /> : (hasError ? '—' : formatGauSupply(protocolMetrics.circulatingSupply.neutrons))}
+                  {isLoading ? <Skeleton className="h-8 w-16 mx-auto" /> : (hasError ? '—' : convertFromDecimals(protocolMetrics.circulatingSupply.neutrons).toFixed(2))}
                 </div>
                 <div className="text-sm text-muted-foreground">GAU Supply</div>
+              </div>
+              <div className="space-y-2">
+                <div className="text-2xl font-bold text-foreground">
+                  {isLoading ? <Skeleton className="h-8 w-16 mx-auto" /> : (hasError ? '—' : convertFromDecimals(protocolMetrics.circulatingSupply.protons).toFixed(2))}
+                </div>
+                <div className="text-sm text-muted-foreground">GAUC Supply</div>
               </div>
             </div>
           </Card>
