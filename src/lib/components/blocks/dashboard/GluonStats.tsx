@@ -11,7 +11,6 @@ import { cn } from "@/lib/utils/utils"
 import { useRouter } from "next/navigation"
 import BigNumber from "bignumber.js"
 import { motion, AnimatePresence } from "framer-motion"
-import ErgIcon from "@/lib/components/icons/ErgIcon"
 import GauIcon from "@/lib/components/icons/GauIcon"
 import GaucIcon from "@/lib/components/icons/GaucIcon"
 

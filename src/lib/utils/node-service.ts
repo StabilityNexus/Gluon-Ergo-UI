@@ -61,7 +61,7 @@ export class NodeService {
         return this.post(url, { 'api_key': this.apiKey }, params)
     }
 
-    async getUnspentBoxByTokenId(tokenId: string, offset?: number, limit?: number) {
+    async getUnspentBoxByTokenId(tokenId: string) {
         return this.get(
             `/blockchain/box/unspent/byTokenId/${tokenId}`
         )

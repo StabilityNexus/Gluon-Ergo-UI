@@ -1,5 +1,5 @@
 import { SwapResult, SwapError, ReceiptDetails, TokenSymbol } from './types'
-import { convertFromDecimals, nanoErgsToErgs, ergsToNanoErgs, convertToDecimals } from '@/lib/utils/erg-converter'
+import { convertFromDecimals, nanoErgsToErgs, convertToDecimals } from '@/lib/utils/erg-converter'
 import { formatMicroNumber } from '@/lib/utils/erg-converter'
 import { handleTransactionError, handleTransactionSuccess, handleCalculationError } from '@/lib/utils/error-handler'
 import BigNumber from 'bignumber.js'

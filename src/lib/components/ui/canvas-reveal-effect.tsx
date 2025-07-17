@@ -1,4 +1,3 @@
-// @ts-nocheck
 "use client";
 import { cn } from "@/lib/utils/utils";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
@@ -209,7 +208,7 @@ const ShaderMaterial = ({
     uniforms: Uniforms;
 }) => {
     const { size } = useThree();
-    const ref = useRef<THREE.Mesh>();
+    const ref = useRef<THREE.Mesh>(undefined);
     let lastFrameTime = 0;
 
     useFrame(({ clock }) => {

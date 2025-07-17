@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Menu, X, Calculator, Grip, ArrowDownUp } from 'lucide-react'
+import { Menu, X, Grip, ArrowDownUp } from 'lucide-react'
 
 const ispoLinks = [
   { href: '/reactor', label: 'Dashboard', icon: Grip },
