@@ -29,8 +29,9 @@ export function WalletConnector() {
   console.log(ergBalance); // To avoid linting error
 
   useEffect(() => {
-    const savedWallet = localStorage.getItem("connectedWallet")
-    if (savedWallet) {
+    const savedWallet = localStorage.getItem("connectedWallet");
+    const isLoaded = walletList.find(wallet => wallet.connectName === savedWallet);
+    if (savedWallet && isLoaded) {
       connect(savedWallet)
         .then(async (success) => {
           if (success) {
@@ -46,7 +47,7 @@ export function WalletConnector() {
         })
         .catch(console.error)
     }
-  }, [connect, isConnected, getChangeAddress, getBalance])
+  }, [connect, isConnected, getChangeAddress, walletList, getBalance])
 
 
   const handleConnect = async (walletName: string) => {
