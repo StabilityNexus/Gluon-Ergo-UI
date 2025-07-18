@@ -106,6 +106,7 @@ const isUserInputMaxValue = (userInput: string, preciseMax: string): boolean => 
 
     return difference.isLessThanOrEqualTo(tolerance);
   } catch (error) {
+    console.log(error);
     return false;
   }
 }
