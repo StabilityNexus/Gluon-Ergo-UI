@@ -129,7 +129,7 @@ export class TransactionListener {
                 }
             } catch (confirmedError) {
                 // Transaction not confirmed yet, check if it's still in mempool
-                console.log("Transaction not confirmed yet, checking mempool...")
+                console.log("Transaction not confirmed yet, checking mempool...", confirmedError);
             }
 
             // Check if transaction is still in unconfirmed mempool
