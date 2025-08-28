@@ -1,7 +1,7 @@
 "use client";
 
 import { useMotionValue, motion, useMotionTemplate } from "framer-motion";
-import React, { MouseEvent as ReactMouseEvent, useState, useEffect } from "react";
+import React, { PointerEvent as ReactPointerEvent, useState, useEffect } from "react";
 import { CanvasRevealEffect } from "./canvas-reveal-effect";
 import { cn } from "@/lib/utils/utils";
 
@@ -18,16 +18,6 @@ export const CardSpotlight = ({
 } & React.HTMLAttributes<HTMLDivElement>) => {
     const mouseX = useMotionValue(0);
     const mouseY = useMotionValue(0);
-    function handleMouseMove({
-        currentTarget,
-        clientX,
-        clientY,
-    }: ReactMouseEvent<HTMLDivElement>) {
-        const { left, top } = currentTarget.getBoundingClientRect();
-
-        mouseX.set(clientX - left);
-        mouseY.set(clientY - top);
-    }
 
     const [isHovering, setIsHovering] = useState(false);
     const [isDarkTheme, setIsDarkTheme] = useState(false);
@@ -47,19 +37,46 @@ export const CardSpotlight = ({
 
         return () => observer.disconnect();
     }, []);
+    
+    // Pointer-aware spotlight
+    function handlePointerMove({
+      currentTarget,
+      clientX,
+      clientY,
+      pointerType,
+    }: ReactPointerEvent<HTMLDivElement>) {
+      if (pointerType !== "mouse") return; // Skip spotlight on touch/pen
 
-    const handleMouseEnter = () => setIsHovering(true);
-    const handleMouseLeave = () => setIsHovering(false);
+      const { left, top } = currentTarget.getBoundingClientRect();
+      mouseX.set(clientX - left);
+      mouseY.set(clientY - top);
+    }
 
+    const handlePointerEnter = (e: ReactPointerEvent<HTMLDivElement>) => {
+      if (e.pointerType === "mouse") {
+        setIsHovering(true);
+      }
+    };
+
+    const handlePointerLeave = () => {
+      setIsHovering(false);
+    };
+
+    const handlePointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
+      if (e.pointerType !== "mouse") {
+        setIsHovering(false); // Prevent stuck state on touch
+      }
+    };
+ 
     // Theme-aware colors
     const canvasColors = isDarkTheme
         ? [
-            [59, 130, 246],   // Blue-500 for dark theme
-            [139, 92, 246],   // Purple-500 for dark theme
+            [245, 194, 66], // darker yellow
+            [245, 114, 66], // darker red
         ]
         : [
-            [147, 197, 253],  // Blue-300 - soft light blue
-            [196, 181, 253],  // Purple-300 - soft light purple
+            [253, 230, 138], // light yellow
+            [252, 165, 165], // light red
         ];
 
     return (
@@ -68,9 +85,10 @@ export const CardSpotlight = ({
                 "group/spotlight p-10 rounded-md relative border border-border bg-background",
                 className
             )}
-            onMouseMove={handleMouseMove}
-            onMouseEnter={handleMouseEnter}
-            onMouseLeave={handleMouseLeave}
+            onPointerMove={handlePointerMove}
+            onPointerEnter={handlePointerEnter}
+            onPointerLeave={handlePointerLeave}
+            onPointerDown={handlePointerDown}
             {...props}
         >
             <motion.div
