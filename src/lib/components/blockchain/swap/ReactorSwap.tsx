@@ -454,9 +454,9 @@ export function ReactorSwap() {
               updatedTokens = updatedTokens.map((t) =>
                 t.symbol === "GAU"
                   ? {
-                      ...t,
-                      balance: formatMicroNumber(gauDecimalBalance).display,
-                    }
+                    ...t,
+                    balance: formatMicroNumber(gauDecimalBalance).display,
+                  }
                   : t
               );
             } else if (tokenBalance.tokenId === TOKEN_ADDRESS.gauc) {
@@ -468,9 +468,9 @@ export function ReactorSwap() {
               updatedTokens = updatedTokens.map((t) =>
                 t.symbol === "GAUC"
                   ? {
-                      ...t,
-                      balance: formatMicroNumber(gaucDecimalBalance).display,
-                    }
+                    ...t,
+                    balance: formatMicroNumber(gaucDecimalBalance).display,
+                  }
                   : t
               );
             }
@@ -522,7 +522,7 @@ export function ReactorSwap() {
 
   useEffect(() => {
     updateBalancesRef.current = updateBalances;
-  },[updateBalances]);
+  }, [updateBalances]);
 
   useEffect(() => {
     updateBalancesRef.current();
@@ -908,7 +908,8 @@ export function ReactorSwap() {
     }
 
     const isInputDisabled = !boxesReady || isCalculating || (isInitializing && !boxesReady);
-    const showInput = isFromCard ? currentToken.symbol !== "GAU-GAUC" : true;
+    // const showInput = isFromCard ? currentToken.symbol !== "GAU-GAUC" : true;
+    const shouldRenderInputOrDisplay = !(currentToken.symbol === "GAU-GAUC" && !isFromCard);
 
     // Helper function to get token icon
     const getTokenIcon = (symbol: string, className: string = "w-6 h-6") => {
@@ -1055,7 +1056,7 @@ export function ReactorSwap() {
             </SelectContent>
           </Select>
 
-          {showInput && (
+          {shouldRenderInputOrDisplay ? (
             <div className="flex pl-8 items-center justify-center sm:justify-end flex-1 min-w-0">
               <motion.div
                 key={`${currentToken.symbol}-input`}
@@ -1099,7 +1100,7 @@ export function ReactorSwap() {
                     return floatValue <= currentBalance;
                   }}
                   className={cn(
-                    "w-full min-w-[80px] text-left sm:text-right border-0 bg-transparent text-3xl sm:text-4xl font-bold focus-visible:ring-0 focus:outline-none",
+                    "w-full min-w-[80px] text-left sm:text-right border-0 bg-transparent text-4xl font-bold focus-visible:ring-0 focus:outline-none",
                     isFromCard ? "text-gray-400" : "text-gray-400",
                     isInputDisabled && "opacity-50 cursor-not-allowed"
                   )}
@@ -1120,7 +1121,7 @@ export function ReactorSwap() {
                   </button>
                 )}
             </div>
-          )}
+          ) : null}
         </motion.div>
 
         {currentToken.symbol === "GAU-GAUC" && (
@@ -1563,7 +1564,7 @@ export function ReactorSwap() {
                     {formatTokenAmount(formatValue(receiptDetails.fees.devFee))} ERG
                   </motion.span>
                 </AnimatePresence>
-              </motion.div>:null}
+              </motion.div> : null}
               {receiptDetails.fees.uiFee ? <motion.div
                 className="flex justify-between"
                 initial={{ opacity: 0, x: -10 }}
@@ -1583,7 +1584,7 @@ export function ReactorSwap() {
                     {formatTokenAmount(formatValue(receiptDetails.fees.uiFee))} ERG
                   </motion.span>
                 </AnimatePresence>
-              </motion.div>:null}
+              </motion.div> : null}
               {receiptDetails.fees.minerFee ? <motion.div
                 className="flex justify-between"
                 initial={{ opacity: 0, x: -10 }}
@@ -1603,7 +1604,7 @@ export function ReactorSwap() {
                     {formatTokenAmount(formatValue(receiptDetails.fees.minerFee))} ERG
                   </motion.span>
                 </AnimatePresence>
-              </motion.div>:null}
+              </motion.div> : null}
 
               <Separator className="xl:my-1 my-2 xl:opacity-50" />
 
