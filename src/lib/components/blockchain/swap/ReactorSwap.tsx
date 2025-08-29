@@ -1012,7 +1012,7 @@ export function ReactorSwap() {
         </motion.div>
 
         <motion.div
-          className="flex items-center gap-4 mb-2"
+          className="flex flex-col sm:flex-row sm:items-center gap-4 mb-2"
           initial={{ opacity: 0, y: 5 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.2 }}
@@ -1024,7 +1024,7 @@ export function ReactorSwap() {
           >
             <SelectTrigger
               className={cn(
-                "w-[200px] px-3 py-2 font-semibold font-sans",
+                "w-full sm:w-[200px] px-3 py-2 font-semibold font-sans",
                 tokenColors.trigger,
                 isInputDisabled && "opacity-50 cursor-not-allowed"
               )}
@@ -1056,12 +1056,13 @@ export function ReactorSwap() {
           </Select>
 
           {showInput && (
-            <div className="flex items-center justify-end flex-1">
+            <div className="flex pl-8 items-center justify-center sm:justify-end flex-1 min-w-0">
               <motion.div
                 key={`${currentToken.symbol}-input`}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.2 }}
+                className="flex-1 min-w-[80px]"
               >
                 <NumericFormat
                   value={currentAmount}
@@ -1098,8 +1099,8 @@ export function ReactorSwap() {
                     return floatValue <= currentBalance;
                   }}
                   className={cn(
-                    "w-full text-right border-0 bg-transparent text-4xl font-bold focus-visible:ring-0 focus:outline-none",
-                    isFromCard ? "text-white" : "text-gray-400",
+                    "w-full min-w-[80px] text-left sm:text-right border-0 bg-transparent text-3xl sm:text-4xl font-bold focus-visible:ring-0 focus:outline-none",
+                    isFromCard ? "text-gray-400" : "text-gray-400",
                     isInputDisabled && "opacity-50 cursor-not-allowed"
                   )}
                   disabled={isInputDisabled}
@@ -1112,7 +1113,7 @@ export function ReactorSwap() {
               ) && boxesReady && !isCalculating && (
                   <button
                     onClick={() => handleMax(isFromCard)}
-                    className="font-semibold text-sm text-foreground hover:text-foreground/80 transition-colors ml-2"
+                    className="font-semibold text-sm text-foreground hover:text-foreground/80 transition-colors mt-2 sm:mt-0 sm:ml-2"
                     disabled={isInputDisabled}
                   >
                     MAX
