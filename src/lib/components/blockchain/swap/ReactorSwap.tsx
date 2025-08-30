@@ -454,9 +454,9 @@ export function ReactorSwap() {
               updatedTokens = updatedTokens.map((t) =>
                 t.symbol === "GAU"
                   ? {
-                      ...t,
-                      balance: formatMicroNumber(gauDecimalBalance).display,
-                    }
+                    ...t,
+                    balance: formatMicroNumber(gauDecimalBalance).display,
+                  }
                   : t
               );
             } else if (tokenBalance.tokenId === TOKEN_ADDRESS.gauc) {
@@ -468,9 +468,9 @@ export function ReactorSwap() {
               updatedTokens = updatedTokens.map((t) =>
                 t.symbol === "GAUC"
                   ? {
-                      ...t,
-                      balance: formatMicroNumber(gaucDecimalBalance).display,
-                    }
+                    ...t,
+                    balance: formatMicroNumber(gaucDecimalBalance).display,
+                  }
                   : t
               );
             }
@@ -522,7 +522,7 @@ export function ReactorSwap() {
 
   useEffect(() => {
     updateBalancesRef.current = updateBalances;
-  },[updateBalances]);
+  }, [updateBalances]);
 
   useEffect(() => {
     updateBalancesRef.current();
@@ -908,7 +908,8 @@ export function ReactorSwap() {
     }
 
     const isInputDisabled = !boxesReady || isCalculating || (isInitializing && !boxesReady);
-    const showInput = isFromCard ? currentToken.symbol !== "GAU-GAUC" : true;
+    // const showInput = isFromCard ? currentToken.symbol !== "GAU-GAUC" : true;
+    const shouldRenderInputOrDisplay = !(currentToken.symbol === "GAU-GAUC" && !isFromCard);
 
     // Helper function to get token icon
     const getTokenIcon = (symbol: string, className: string = "w-6 h-6") => {
@@ -1012,7 +1013,7 @@ export function ReactorSwap() {
         </motion.div>
 
         <motion.div
-          className="flex items-center gap-4 mb-2"
+          className="flex flex-col sm:flex-row sm:items-center gap-4 mb-2"
           initial={{ opacity: 0, y: 5 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.2 }}
@@ -1024,7 +1025,7 @@ export function ReactorSwap() {
           >
             <SelectTrigger
               className={cn(
-                "w-[200px] px-3 py-2 font-semibold font-sans",
+                "w-full sm:w-[200px] px-3 py-2 font-semibold font-sans",
                 tokenColors.trigger,
                 isInputDisabled && "opacity-50 cursor-not-allowed"
               )}
@@ -1055,13 +1056,14 @@ export function ReactorSwap() {
             </SelectContent>
           </Select>
 
-          {showInput && (
-            <div className="flex items-center justify-end flex-1">
+          {shouldRenderInputOrDisplay ? (
+            <div className="flex pl-8 items-center justify-center sm:justify-end flex-1 min-w-0">
               <motion.div
                 key={`${currentToken.symbol}-input`}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.2 }}
+                className="flex-1 min-w-[80px]"
               >
                 <NumericFormat
                   value={currentAmount}
@@ -1098,8 +1100,8 @@ export function ReactorSwap() {
                     return floatValue <= currentBalance;
                   }}
                   className={cn(
-                    "w-full text-right border-0 bg-transparent text-4xl font-bold focus-visible:ring-0 focus:outline-none",
-                    isFromCard ? "text-white" : "text-gray-400",
+                    "w-full min-w-[80px] text-left sm:text-right border-0 bg-transparent text-4xl font-bold focus-visible:ring-0 focus:outline-none",
+                    isFromCard ? "text-gray-400" : "text-gray-400",
                     isInputDisabled && "opacity-50 cursor-not-allowed"
                   )}
                   disabled={isInputDisabled}
@@ -1112,14 +1114,14 @@ export function ReactorSwap() {
               ) && boxesReady && !isCalculating && (
                   <button
                     onClick={() => handleMax(isFromCard)}
-                    className="font-semibold text-sm text-foreground hover:text-foreground/80 transition-colors ml-2"
+                    className="font-semibold text-sm text-foreground hover:text-foreground/80 transition-colors mt-2 sm:mt-0 sm:ml-2"
                     disabled={isInputDisabled}
                   >
                     MAX
                   </button>
                 )}
             </div>
-          )}
+          ) : null}
         </motion.div>
 
         {currentToken.symbol === "GAU-GAUC" && (
@@ -1562,7 +1564,7 @@ export function ReactorSwap() {
                     {formatTokenAmount(formatValue(receiptDetails.fees.devFee))} ERG
                   </motion.span>
                 </AnimatePresence>
-              </motion.div>:null}
+              </motion.div> : null}
               {receiptDetails.fees.uiFee ? <motion.div
                 className="flex justify-between"
                 initial={{ opacity: 0, x: -10 }}
@@ -1582,7 +1584,7 @@ export function ReactorSwap() {
                     {formatTokenAmount(formatValue(receiptDetails.fees.uiFee))} ERG
                   </motion.span>
                 </AnimatePresence>
-              </motion.div>:null}
+              </motion.div> : null}
               {receiptDetails.fees.minerFee ? <motion.div
                 className="flex justify-between"
                 initial={{ opacity: 0, x: -10 }}
@@ -1602,7 +1604,7 @@ export function ReactorSwap() {
                     {formatTokenAmount(formatValue(receiptDetails.fees.minerFee))} ERG
                   </motion.span>
                 </AnimatePresence>
-              </motion.div>:null}
+              </motion.div> : null}
 
               <Separator className="xl:my-1 my-2 xl:opacity-50" />
 
