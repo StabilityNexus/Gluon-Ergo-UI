@@ -908,7 +908,7 @@ export function ReactorSwap() {
     }
 
     const isInputDisabled = !boxesReady || isCalculating || (isInitializing && !boxesReady);
-    // const showInput = isFromCard ? currentToken.symbol !== "GAU-GAUC" : true;
+    const showInput = isFromCard ? currentToken.symbol !== "GAU-GAUC" : true;
     const shouldRenderInputOrDisplay = !(currentToken.symbol === "GAU-GAUC" && !isFromCard);
 
     // Helper function to get token icon
@@ -1056,7 +1056,7 @@ export function ReactorSwap() {
             </SelectContent>
           </Select>
 
-          {shouldRenderInputOrDisplay ? (
+          {(showInput && shouldRenderInputOrDisplay) ? (
             <div className="flex pl-8 items-center justify-center sm:justify-end flex-1 min-w-0">
               <motion.div
                 key={`${currentToken.symbol}-input`}
