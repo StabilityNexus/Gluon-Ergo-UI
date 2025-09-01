@@ -1055,7 +1055,7 @@ export function ReactorSwap() {
             </SelectContent>
           </Select>
 
-          {(showInput && shouldRenderInputOrDisplay) ? (
+          {shouldRenderInputOrDisplay ? (
             <div className="flex pl-8 items-center justify-center sm:justify-end flex-1 min-w-0">
               <motion.div
                 key={`${currentToken.symbol}-input`}
