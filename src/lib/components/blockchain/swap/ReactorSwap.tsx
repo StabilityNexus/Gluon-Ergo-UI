@@ -908,8 +908,7 @@ export function ReactorSwap() {
     }
 
     const isInputDisabled = !boxesReady || isCalculating || (isInitializing && !boxesReady);
-    const showInput = isFromCard ? currentToken.symbol !== "GAU-GAUC" : true;
-    const shouldRenderInputOrDisplay = !(currentToken.symbol === "GAU-GAUC" && !isFromCard);
+    const shouldRenderInputOrDisplay = currentToken.symbol !== "GAU-GAUC";
 
     // Helper function to get token icon
     const getTokenIcon = (symbol: string, className: string = "w-6 h-6") => {
