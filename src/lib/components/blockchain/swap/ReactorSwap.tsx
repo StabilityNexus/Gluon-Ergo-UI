@@ -37,9 +37,6 @@ import GaucIcon from '@/lib/components/icons/GaucIcon'
 import GauGaucIcon from '@/lib/components/icons/GauGaucIcon'
 import { motion, AnimatePresence } from 'framer-motion'
 
-const ERG_RESERVE = new BigNumber("0.01"); // keep 0.01 if you want max=0.99 for 1.0 balance
-const INPUT_TOLERANCE = new BigNumber("0.0001"); // used by isUserInputMaxValue already
-
 const formatTokenAmount = (value: number | string): string => {
   const numValue = typeof value === 'string' ? parseFloat(value) : value;
   if (!numValue) return '0';
@@ -100,12 +97,10 @@ const isUserInputMaxValue = (userInput: string, preciseMax: string): boolean => 
   try {
     const userBN = new BigNumber(userInput || "0");
     const maxBN = new BigNumber(preciseMax || "0");
-
-    // Allow for small rounding differences (user typed 4 decimals vs precise 9 decimals)
     const difference = userBN.minus(maxBN).abs();
-    const tolerance = new BigNumber("0.0001"); // 0.01% tolerance
+    const tolerance = new BigNumber("0.0001");
 
-    return difference.isLessThanOrEqualTo(INPUT_TOLERANCE);
+    return difference.isLessThanOrEqualTo(tolerance);
   } catch (error) {
     console.log(error);
     return false;
@@ -358,15 +353,12 @@ export function ReactorSwap() {
 
   const handleAmountChange = (inputValues: NumberFormatValues, isFromInput: boolean) => {
     const { value: stringValue, floatValue } = inputValues;
-
     // Only update the field that was actually changed by the user
     if (isFromInput) {
       setFromAmount(stringValue);
     } else {
       setToAmount(stringValue);
-    }
-
-    if (floatValue === undefined || floatValue === 0) {
+    } if (floatValue === undefined || floatValue === 0) {
       setToAmount("");
       setGauAmount("0");
       setGaucAmount("0");
@@ -379,7 +371,6 @@ export function ReactorSwap() {
       debouncedCalculateAmounts.cancel();
       return;
     }
-
     // For GAU-GAUC to ERG, we need to calculate when the ERG (To) amount changes
     if (!isFromInput && fromToken.symbol === "GAU-GAUC" && toToken.symbol === "ERG") {
       debouncedCalculateAmounts(stringValue, isFromInput);
@@ -628,57 +619,45 @@ export function ReactorSwap() {
       displayValue: maxErgOutput,
       preciseValue: maxErgOutputPrecise
     });
-
     if (isFromCard && fromToken.symbol === "GAU-GAUC") {
       console.log("❌ Ignoring MAX for GAU-GAUC in FROM field");
       return;
     }
-
     let maxAmount = "0";
     if (!isFromCard && fromToken.symbol === "GAU-GAUC" && toToken.symbol === "ERG") {
-      // Use clean display value for UI, but precise value for calculations
-      maxAmount = maxErgOutput; // Clean display value (e.g., "1.9315")
-      console.log("🎯 Setting MAX for GAU-GAUC to ERG conversion", {
-        displayValue: maxErgOutput,
-        preciseValue: maxErgOutputPrecise,
-        usingForUI: maxAmount
-      });
-
+      maxAmount = maxErgOutput;
+      console.log("🎯 Setting MAX for GAU-GAUC to ERG conversion", { displayValue: maxErgOutput, preciseValue: maxErgOutputPrecise, usingForUI: maxAmount });
       setToAmount(maxAmount);
-      // Calculate with precise value for accurate results
       console.log("🔄 Triggering calculation with precise value:", { preciseValue: maxErgOutputPrecise });
       await calculateAmounts(maxErgOutputPrecise, false);
       return;
     }
-
     if (isFromCard) {
       const balanceNum = parseFloat(fromToken.balance);
       if (isNaN(balanceNum)) {
         setFromAmount("0");
-        debouncedCalculateAmounts("0", true);
-        return;
+        debouncedCalculateAmounts("0", true); return;
       }
-
       if (fromToken.symbol === "ERG") {
-        const bnMax = new BigNumber(fromToken.balance).minus(ERG_RESERVE);
-        const safeMax = bnMax.isNegative() ? new BigNumber(0) : bnMax;
-        maxAmount = safeMax.toFixed(fromToken.decimals || 4, BigNumber.ROUND_DOWN);
+        maxAmount = Math.max(0, balanceNum - 0.1).toFixed(fromToken.decimals || 4);
       } else if (fromToken.symbol === "GAU" || fromToken.symbol === "GAUC") {
         maxAmount = fromToken.balance;
-      }
-      setFromAmount(maxAmount);
+      } setFromAmount(maxAmount);
     }
-
     if (parseFloat(maxAmount) > 0) {
       await calculateAmounts(maxAmount, isFromCard);
     } else {
       setToAmount("");
       setGauAmount("0");
       setGaucAmount("0");
-      setReceiptDetails({ inputAmount: 0, outputAmount: { gau: 0, gauc: 0, erg: 0 }, fees: { devFee: 0, uiFee: 0, minerFee: 0, totalFee: 0 }, maxErgOutput: maxErgOutput });
+      setReceiptDetails({
+        inputAmount: 0,
+        outputAmount: { gau: 0, gauc: 0, erg: 0 },
+        fees: { devFee: 0, uiFee: 0, minerFee: 0, totalFee: 0 },
+        maxErgOutput: maxErgOutput
+      });
     }
   }
-
   const handleSwap = async () => {
     if (!isConnected || isInitializing || !gluonInstance || !gluonBox || !oracleBox || isLoading || isCalculating || hasPendingTransactions) {
       console.error("Swap prerequisites not met.", {
@@ -1263,39 +1242,26 @@ export function ReactorSwap() {
     }
 
     if (fromToken.symbol === "ERG" && toToken.symbol === "GAU-GAUC") {
-      // prefer using the original string amounts (fromAmount) to avoid FP rounding
-      const ergInput = new BigNumber(fromAmount || "0");
-      const ergBalance = new BigNumber(fromToken.balance || "0");
-
-      // invalid input
-      if (!ergInput.isFinite() || ergInput.lte(0)) return true; // same as : if (isNaN(ergInput) || ergInput <= 0) return true;
-
-      // can't spend more than balance
-      if (ergInput.gt(ergBalance)) return true; // same as : if (ergInput > ergBalance) return true;
-
-      // if (ergBalance - ergInput < 0.1) return true;
-
-      if (ergBalance.minus(ergInput).isLessThan(ERG_RESERVE)) return true;
-
+      const ergInput = fromVal;
+      const ergBalance = parseFloat(fromToken.balance);
+      if (isNaN(ergInput) || ergInput <= 0) return true;
+      if (ergInput > ergBalance) return true;
+      if (ergBalance - ergInput < 0.1) return true;
       return false;
     }
-
     if (fromToken.symbol === "GAUC" && toToken.symbol === "GAU") {
       const gaucInput = fromVal;
       const gaucBalance = parseFloat(tokens.find(t => t.symbol === "GAUC")?.balance || "0");
       if (Number.isNaN(gaucInput) || gaucInput <= 0) return true;
-      if (gaucInput > gaucBalance) return true;
-      return false;
+      if (gaucInput > gaucBalance) return true; return false;
     }
-
     if (fromToken.symbol === "GAU" && toToken.symbol === "GAUC") {
       const gauInput = fromVal;
       const gauBalance = parseFloat(tokens.find(t => t.symbol === "GAU")?.balance || "0");
       if (Number.isNaN(gauInput) || gauInput <= 0) return true;
       if (gauInput > gauBalance) return true;
       return false;
-    }
-    return true;
+    } return true;
   }
 
   return (
