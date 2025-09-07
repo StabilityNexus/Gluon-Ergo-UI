@@ -37,6 +37,9 @@ import GaucIcon from '@/lib/components/icons/GaucIcon'
 import GauGaucIcon from '@/lib/components/icons/GauGaucIcon'
 import { motion, AnimatePresence } from 'framer-motion'
 
+const ERG_RESERVE = new BigNumber("0.01"); // keep 0.01 if you want max=0.99 for 1.0 balance
+const INPUT_TOLERANCE = new BigNumber("0.0001"); // used by isUserInputMaxValue already
+
 const formatTokenAmount = (value: number | string): string => {
   const numValue = typeof value === 'string' ? parseFloat(value) : value;
   if (!numValue) return '0';
@@ -102,7 +105,7 @@ const isUserInputMaxValue = (userInput: string, preciseMax: string): boolean => 
     const difference = userBN.minus(maxBN).abs();
     const tolerance = new BigNumber("0.0001"); // 0.01% tolerance
 
-    return difference.isLessThanOrEqualTo(tolerance);
+    return difference.isLessThanOrEqualTo(INPUT_TOLERANCE);
   } catch (error) {
     console.log(error);
     return false;
@@ -152,7 +155,7 @@ export function ReactorSwap() {
   const [maxErgOutput, setMaxErgOutput] = useState<string>("0")
   const [maxErgOutputPrecise, setMaxErgOutputPrecise] = useState<string>("0") // Precise value for calculations
   //const [isUpdatingProgrammatically, setIsUpdatingProgrammatically] = useState(false)
-  const updateBalancesRef = useRef(() => {});
+  const updateBalancesRef = useRef(() => { });
 
   // Transaction listener state
   const [transactionListener] = useState(() => createTransactionListener(nodeService))
@@ -657,7 +660,9 @@ export function ReactorSwap() {
       }
 
       if (fromToken.symbol === "ERG") {
-        maxAmount = Math.max(0, balanceNum - 0.1).toFixed(fromToken.decimals || 4);
+        const bnMax = new BigNumber(fromToken.balance).minus(ERG_RESERVE);
+        const safeMax = bnMax.isNegative() ? new BigNumber(0) : bnMax;
+        maxAmount = safeMax.toFixed(fromToken.decimals || 4, BigNumber.ROUND_DOWN);
       } else if (fromToken.symbol === "GAU" || fromToken.symbol === "GAUC") {
         maxAmount = fromToken.balance;
       }
@@ -1072,29 +1077,31 @@ export function ReactorSwap() {
                   placeholder="0"
                   isAllowed={(values) => {
                     const { floatValue } = values;
+
+                    // allow empty/backspace
                     if (floatValue === undefined) return true;
-                    if (!isFromCard && fromToken.symbol !== "GAU-GAUC") return true;
 
-                    if (isNaN(currentBalance)) return false;
+                    // block NaN and negatives
+                    if (isNaN(floatValue) || floatValue < 0) return false;
 
-                    if (currentToken.symbol === "ERG") {
-                      if (fromToken.symbol === "GAU-GAUC") {
-                        // Allow input if it's within our max range (including tolerance for display vs precise)
-                        try {
-                          const inputBN = new BigNumber(floatValue);
-                          const maxErgBN = new BigNumber(maxErgOutputPrecise || "0");
+                    // Special-case: when converting GAU-GAUC -> ERG we must enforce the precise max output
+                    // (allow small display rounding via isUserInputMaxValue).
+                    if (!isFromCard && fromToken.symbol === "GAU-GAUC" && currentToken.symbol === "ERG") {
+                      try {
+                        const inputBN = new BigNumber(floatValue || 0);
+                        const maxErgBN = new BigNumber(maxErgOutputPrecise || "0");
 
-                          // Allow if input is less than max, OR if it's close to max (user typing display value)
-                          return inputBN.isLessThanOrEqualTo(maxErgBN) ||
-                            isUserInputMaxValue(floatValue.toString(), maxErgOutputPrecise);
-                        } catch (error) {
-                          console.error("Error in input validation precision comparison:", error);
-                          return false;
-                        }
+                        return inputBN.isLessThanOrEqualTo(maxErgBN) ||
+                          isUserInputMaxValue(inputBN.toString(), maxErgOutputPrecise);
+                      } catch (error) {
+                        console.error("Precision compare error in isAllowed:", error);
+                        return false;
                       }
-                      return floatValue <= Math.max(0, currentBalance - ergFeeBuffer);
                     }
-                    return floatValue <= currentBalance;
+
+                    // For all other cases, be permissive: allow any non-negative number.
+                    // (isSwapDisabled will be the authoritative gate for disabling the Swap button.)
+                    return true;
                   }}
                   className={cn(
                     "w-full min-w-[80px] text-left sm:text-right border-0 bg-transparent text-4xl font-bold focus-visible:ring-0 focus:outline-none",
@@ -1128,7 +1135,7 @@ export function ReactorSwap() {
     )
   }
 
-  const renderGauGaucCard = (isFromCard?:boolean) => {
+  const renderGauGaucCard = (isFromCard?: boolean) => {
     console.log(isFromCard)
     return <motion.div
       className="space-y-4 flex-1 w-full py-6"
@@ -1219,11 +1226,11 @@ export function ReactorSwap() {
 
   const currentAction = getActionType(fromToken.symbol, toToken.symbol)
 
-  const amount = parseFloat(fromAmount || "0");            // numeric amount user typed
-  const maxAmount = parseFloat(fromToken?.balance || "0"); // what's allowed
+  // const amount = parseFloat(fromAmount || "0");            // numeric amount user typed
+  // const maxAmount = parseFloat(fromToken?.balance || "0"); // what's allowed
 
   const isSwapDisabled = () => {
-    if (amount > maxAmount|| isLoading || !isConnected || !boxesReady || isCalculating || (isInitializing && !boxesReady) || hasPendingTransactions) return true;
+    if (isLoading || !isConnected || !boxesReady || isCalculating || (isInitializing && !boxesReady) || hasPendingTransactions) return true;
 
     const fromVal = parseFloat(fromAmount);
     const toVal = parseFloat(toAmount);
@@ -1256,11 +1263,20 @@ export function ReactorSwap() {
     }
 
     if (fromToken.symbol === "ERG" && toToken.symbol === "GAU-GAUC") {
-      const ergInput = fromVal;
-      const ergBalance = parseFloat(fromToken.balance);
-      if (isNaN(ergInput) || ergInput <= 0) return true;
-      if (ergInput > ergBalance) return true;
-      if (ergBalance - ergInput < 0.1) return true;
+      // prefer using the original string amounts (fromAmount) to avoid FP rounding
+      const ergInput = new BigNumber(fromAmount || "0");
+      const ergBalance = new BigNumber(fromToken.balance || "0");
+
+      // invalid input
+      if (!ergInput.isFinite() || ergInput.lte(0)) return true; // same as : if (isNaN(ergInput) || ergInput <= 0) return true;
+
+      // can't spend more than balance
+      if (ergInput.gt(ergBalance)) return true; // same as : if (ergInput > ergBalance) return true;
+
+      // if (ergBalance - ergInput < 0.1) return true;
+
+      if (ergBalance.minus(ergInput).isLessThan(ERG_RESERVE)) return true;
+
       return false;
     }
 
