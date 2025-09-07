@@ -66,8 +66,6 @@ const formatTokenAmount = (value: number | string): string => {
   }
 }
 
-
-
 // Helper function to check if two values are equal within precision tolerance
 /*const isPreciselyEqual = (value1: string, value2: string): boolean => {
   try {
@@ -1221,8 +1219,11 @@ export function ReactorSwap() {
 
   const currentAction = getActionType(fromToken.symbol, toToken.symbol)
 
+  const amount = parseFloat(fromAmount || "0");            // numeric amount user typed
+  const maxAmount = parseFloat(fromToken?.balance || "0"); // what's allowed
+
   const isSwapDisabled = () => {
-    if (isLoading || !isConnected || !boxesReady || isCalculating || (isInitializing && !boxesReady) || hasPendingTransactions) return true;
+    if (amount > maxAmount|| isLoading || !isConnected || !boxesReady || isCalculating || (isInitializing && !boxesReady) || hasPendingTransactions) return true;
 
     const fromVal = parseFloat(fromAmount);
     const toVal = parseFloat(toAmount);
@@ -1312,13 +1313,13 @@ export function ReactorSwap() {
                   </p>
                 )}
               </div>
-              <Button
+              {/* <Button
                 variant="ghost"
                 size="icon"
                 className="rounded-lg bg-white/5"
               >
                 <Settings2 className="h-5 w-5" />
-              </Button>
+              </Button> */}
             </div>
           </CardHeader>
 
