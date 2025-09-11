@@ -114,11 +114,11 @@ export function WalletConnector() {
           Connect Wallet
         </Button>
       </DrawerTrigger>
-      <DrawerContent>
+      <DrawerContent className="z-[9999]">
         <DrawerHeader>
           <DrawerTitle className="text-center text-xl">Connect your wallet</DrawerTitle>
         </DrawerHeader>
-        <div className="flex p-4 self-center w-[460px] pb-12">
+        <div className="flex p-4 self-center w-full max-w-md pb-12">
           <Tabs defaultValue="browser" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="browser">Browser Wallet</TabsTrigger>

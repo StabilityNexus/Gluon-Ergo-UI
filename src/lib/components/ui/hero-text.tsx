@@ -22,7 +22,7 @@ function HeroText() {
     return (
         <div className="w-full">
             <div className="container mx-auto">
-                <div className="flex gap-8 pt-20 lg:pt-40 items-center justify-center flex-col">
+                <div className="flex gap-8 pt-8 items-center justify-center flex-col">
                     <div className="flex gap-4 flex-col">
                         <h1 className="scroll-m-20 text-3xl font-extrabold tracking-tight lg:text-7xl dark:text-white">
                             <span className="relative flex justify-center overflow-hidden w-screen text-center md:pb-4 md:pt-1">

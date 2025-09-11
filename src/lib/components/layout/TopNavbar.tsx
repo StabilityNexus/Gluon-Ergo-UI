@@ -2,13 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Button } from "@/lib/components/ui/button";
-import { Menu } from "lucide-react";
 import { useMediaQuery } from "usehooks-ts";
-import {
-  Drawer,
-  DrawerContent,
-  DrawerTrigger,
-} from "@/lib/components/ui/drawer";
 import { ThemeToggle } from "../toggle/ThemeToggle";
 import { cn } from "@/lib/utils/utils";
 import { useRouter } from "next/router";
@@ -17,6 +11,7 @@ import { useTheme } from "next-themes";
 
 const navItems = [
   { href: "/reactor", label: "Reactor" },
+  { href: "/swap", label: "Swap" },  
   { href: "https://docs.stability.nexus/gluon-protocols/gluon-overview", label: "Docs", external: true },
 ];
 
@@ -55,7 +50,7 @@ export function TopNavbar() {
   return (
     <div className="w-full dark:shadow-lg shadow-sm backdrop-blur-xl">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex h-20 items-center justify-between">
+        <div className="flex py-4 items-center justify-between">
           {/* Left - Logo */}
           <div className="flex items-center ">
             <Link href="/" className="flex items-center">
@@ -66,7 +61,9 @@ export function TopNavbar() {
                 height={28}
                 priority
               />
-              <p className="ml-2 text-2xl font-medium font-sans">GLUON GOLD</p>
+              {isDesktop && (
+                <p className="ml-2 text-2xl font-medium font-sans">GLUON GOLD</p>
+              )}
             </Link>
           </div>
 
@@ -80,34 +77,19 @@ export function TopNavbar() {
               {/* Right - Actions */}
               <div className="flex items-center gap-2">
                 <ThemeToggle />
-                {pathname?.startsWith("/reactor") || pathname?.startsWith("/test") ? (
+                {pathname?.startsWith("/reactor") || pathname?.startsWith("/test") || pathname?.startsWith("/swap") ? (
                   <WalletConnector />
-                ) : (
-                  <Button variant="default" size="sm" onClick={() => router.push('/reactor')}>
-                    Open Reactor
-                  </Button>
-                )}
+                ) : null}
               </div>
             </>
           ) : (
             <>
+              {/* Mobile view */}
               <div className="flex items-center gap-2">
                 <ThemeToggle />
-                <Drawer direction="bottom">
-                  <DrawerTrigger asChild>
-                    <Button variant="ghost" size="icon">
-                      <Menu className="h-5 w-5" />
-                    </Button>
-                  </DrawerTrigger>
-                  <DrawerContent>
-                    <div className="flex flex-col items-center justify-center text-center py-6 space-y-4">
-                      <NavLinks />
-                      <Button variant="default" size="sm">
-                        Connect Wallet
-                      </Button>
-                    </div>
-                  </DrawerContent>
-                </Drawer>
+                {pathname?.startsWith("/reactor") || pathname?.startsWith("/test") || pathname?.startsWith("/swap") ? (
+                  <WalletConnector />
+                ) : null}
               </div>
             </>
           )}
