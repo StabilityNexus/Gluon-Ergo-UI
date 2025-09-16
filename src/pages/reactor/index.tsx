@@ -1,5 +1,5 @@
 import { GluonStats } from "@/lib/components/blocks/dashboard/GluonStats";
-import ReactorLayout from "./layout";
+import ReactorLayout from "../layout";
 import { MyStats } from "@/lib/components/blocks/dashboard/MyStats";
 import { SEO } from "@/lib/components/layout/SEO";
 import { motion } from "framer-motion";
