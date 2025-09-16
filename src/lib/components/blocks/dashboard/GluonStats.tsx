@@ -336,11 +336,11 @@ export function GluonStats() {
         {/* Token Grid - Responsive */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           {renderStatCard(
-            "Gold/KG",
+            "1 kg of Gold",
             "Oracle Gold Price",
             stats.goldKgPrice,
             <Scale className="h-8 w-8 text-yellow-700" />,
-            "ERG/kg",
+            "ERG",
             0.1
           )}
 
