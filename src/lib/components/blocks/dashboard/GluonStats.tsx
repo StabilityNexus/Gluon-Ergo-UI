@@ -355,7 +355,7 @@ export function GluonStats() {
 
           {renderStatCard(
             "GAUC",
-            "Collateral Token",
+            "Leveraged Yield Token",
             stats.gaucPrice,
             <GaucIcon className="h-8 w-8" />,
             "ERG",
