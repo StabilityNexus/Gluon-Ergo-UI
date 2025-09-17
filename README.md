@@ -35,7 +35,7 @@ bun install
 ```bash
 bun dev
 ```
-
+ 
 ### Adding Shadcn Components
 
 To install new shadcn components:
