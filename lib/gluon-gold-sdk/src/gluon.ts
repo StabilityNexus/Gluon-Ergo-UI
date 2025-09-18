@@ -557,6 +557,6 @@ export class Gluon {
         const neutronValue = (neutronPrice * neutronSupply) / BigInt(1e9)
         const protonValue = (protonPrice * protonSupply) / BigInt(1e9)
 
-        return Number(protonValue) / Number(neutronValue) * 100
+        return 100 * (Number(protonValue) + Number(neutronValue)) / Number(neutronValue)
     }
 }
