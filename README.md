@@ -168,6 +168,19 @@ const oracleBox = await gluon.getGoldOracleBox()
 | Multiple Functions / Utils | kebab-case | `error-handler.ts`, `node-service.ts` |
 | Constants | UPPERCASE | `LIKE_THIS.ts` |
 
+
+## 💡 Deploying on Vercel
+
+1. Configure Vercel to deploy from the `mainnet` branch.
+2. Get a coingecko API key from https://www.coingecko.com/en/developers/dashboard .
+3. Configure your Vercel environment variables as shown in the first screenshot below.
+4. Configure your Vercel Framework settings as shown in the second screenshot below.
+
+<img width="659" height="250" alt="Screenshot 2025-09-19 at 09 36 50" src="https://github.com/user-attachments/assets/285c3eb8-7222-4e9d-8c9f-3a35071bdeab" />
+
+<img width="923" height="857" alt="Screenshot 2025-09-19 at 09 37 24" src="https://github.com/user-attachments/assets/3c38e2c7-9bfd-474d-b162-6f1f6b3b3173" />
+
+
 ## 🔄 Pull Request Workflow
 
 ### Branch Structure
