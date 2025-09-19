@@ -2,23 +2,6 @@
 
 A modern DeFi interface built with Next.js, Tailwind CSS, Shadcn UI, Zustand, Framer Motion, and bun as package manager.
 
-## 📝 TODO
-
-- [ ] Setup Eslint and Prettier rules
-- [x] Setup shadcn/ui theming 
-- [x] Setup theme switcher
-- [x] Rework the homepage to be more dynamic and modern 
-- [x] Create layout components (navbar, footer, sidebar, etc)
-- [x] Implement Nautilus Wallet connector 
-- [ ] Implement ErgoPay Connector
-- [x] Implement Ergo Gluon SDK 
-- [x] Rework the dashboard with real protocol data
-- [x] Handle wallet logic for testnet / mainnet
-- [x] Handle Gluon information based on SDK availability 
-- [x] Implement real-time protocol metrics and wallet integration
-- [x] Add responsive design across all dashboard components
-- [ ] Add transaction history and detailed analytics
-- [ ] Performance optimization and caching strategies (maybe websockets to confirm transactions)
 
 ## 🚀 Getting Started
 
