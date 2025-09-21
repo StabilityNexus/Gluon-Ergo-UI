@@ -27,6 +27,7 @@ export interface ReceiptDetails {
     fees: {
         devFee: number | BigNumber
         uiFee: number | BigNumber
+        oracleFee: number | BigNumber
         minerFee: number | BigNumber
         totalFee: number | BigNumber
     }

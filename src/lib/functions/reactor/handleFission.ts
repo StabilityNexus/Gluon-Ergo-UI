@@ -59,7 +59,8 @@ export const calculateFissionAmounts = async (
             fees: {
                 devFee: nanoErgsToErgs(fees.devFee),
                 uiFee: nanoErgsToErgs(fees.uiFee),
-                minerFee: nanoErgsToErgs(fees.oracleFee),
+                oracleFee: nanoErgsToErgs(fees.oracleFee),
+                minerFee: nanoErgsToErgs(fees.minerFee),
                 totalFee: nanoErgsToErgs(fees.totalFee)
             }
         }

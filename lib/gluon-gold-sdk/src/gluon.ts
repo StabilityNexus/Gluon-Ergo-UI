@@ -68,15 +68,17 @@ export class Gluon {
      * - devFee: The fee for the developer
      * - uiFee: The fee for the UI (if applicable)
      * - oracleFee: The fee for the oracle (always 0 for fission)
+     * - minerFee: The fee for the miner
      * - totalFee: The sum of all fees
      */
-    async getTotalFeeAmountFission(gluonBox: GluonBox, ergToFission: number): Promise<{ devFee: number, uiFee: number, oracleFee: number, totalFee: number }> {
+    async getTotalFeeAmountFission(gluonBox: GluonBox, ergToFission: number): Promise<{ devFee: number, uiFee: number, oracleFee: number, minerFee: number, totalFee: number }> {
         const feeBoxes = await this.getFeeBoxes(gluonBox, ergToFission, false);
         const devFee = feeBoxes.devFee?.value || 0;
         const uiFee = feeBoxes.uiFee?.value || 0;
         const oracleFee = 0;
-        const totalFee = devFee + uiFee + oracleFee;
-        return { devFee, uiFee, oracleFee, totalFee };
+        const minerFee = this.config.MINER_FEE || 0;
+        const totalFee = devFee + uiFee + oracleFee + minerFee;
+        return { devFee, uiFee, oracleFee, minerFee, totalFee };
     }
 
     /**
@@ -87,14 +89,16 @@ export class Gluon {
      * - devFee: The fee percentage for the developer
      * - uiFee: The fee percentage for the UI (if applicable)
      * - oracleFee: The fee percentage for the oracle (always 0 for fission)
+     * - minerFee: The fee percentage for the miner
      * - totalFee: The total fee percentage
     */
-    async getFeePercentageFission(gluonBox: GluonBox, ergToFission: number): Promise<{ devFee: number, uiFee: number, oracleFee: number, totalFee: number }> {
+    async getFeePercentageFission(gluonBox: GluonBox, ergToFission: number): Promise<{ devFee: number, uiFee: number, oracleFee: number, minerFee: number, totalFee: number }> {
         const fees = await this.getTotalFeeAmountFission(gluonBox, ergToFission)
         return {
             devFee: fees.devFee / ergToFission,
             uiFee: fees.uiFee / ergToFission,
             oracleFee: fees.oracleFee / ergToFission,
+            minerFee: this.config.MINER_FEE / ergToFission,
             totalFee: fees.totalFee / ergToFission
         }
     }
@@ -107,15 +111,17 @@ export class Gluon {
      * - devFee: The fee for the developer
      * - uiFee: The fee for the UI (if applicable)
      * - oracleFee: The fee for the oracle (always 0 for fusion)
+     * - minerFee: The fee for the miner
      * - totalFee: The sum of all fees
      */
-    async getTotalFeeAmountFusion(gluonBox: GluonBox, ergToFusion: number): Promise<{ devFee: number, uiFee: number, oracleFee: number, totalFee: number }> {
+    async getTotalFeeAmountFusion(gluonBox: GluonBox, ergToFusion: number): Promise<{ devFee: number, uiFee: number, oracleFee: number, minerFee: number, totalFee: number }> {
         const feeBoxes = await this.getFeeBoxes(gluonBox, ergToFusion, false);
         const devFee = feeBoxes.devFee?.value || 0;
         const uiFee = feeBoxes.uiFee?.value || 0;
         const oracleFee = 0;
-        const totalFee = devFee + uiFee + oracleFee;
-        return { devFee, uiFee, oracleFee, totalFee };
+        const minerFee = this.config.MINER_FEE || 0;
+        const totalFee = devFee + uiFee + oracleFee + minerFee;
+        return { devFee, uiFee, oracleFee, minerFee, totalFee };
     }
 
     /**
@@ -126,14 +132,16 @@ export class Gluon {
      * - devFee: The fee percentage for the developer
      * - uiFee: The fee percentage for the UI (if applicable)
      * - oracleFee: The fee percentage for the oracle (always 0 for fusion)
+     * - minerFee: The fee percentage for the miner
      * - totalFee: The total fee percentage
     */
-    async getFeePercentageFusion(gluonBox: GluonBox, ergToFusion: number): Promise<{ devFee: number, uiFee: number, oracleFee: number, totalFee: number }> {
+    async getFeePercentageFusion(gluonBox: GluonBox, ergToFusion: number): Promise<{ devFee: number, uiFee: number, oracleFee: number, minerFee: number, totalFee: number }> {
         const fees = await this.getTotalFeeAmountFusion(gluonBox, ergToFusion)
         return {
             devFee: fees.devFee / ergToFusion,
             uiFee: fees.uiFee / ergToFusion,
             oracleFee: fees.oracleFee / ergToFusion,
+            minerFee: this.config.MINER_FEE / ergToFusion,
             totalFee: fees.totalFee / ergToFusion
         }
     }
@@ -147,16 +155,18 @@ export class Gluon {
      * - devFee: The fee for the developer
      * - uiFee: The fee for the UI (if applicable)
      * - oracleFee: The fee for the oracle
+     * - minerFee: The fee for the miner
      * - totalFee: The sum of all fees
      */
-    async getTotalFeeAmountTransmuteToGold(gluonBox: GluonBox, goldOracleBox: GoldOracleBox, protonsToTransmute: number): Promise<{ devFee: number, uiFee: number, oracleFee: number, totalFee: number }> {
+    async getTotalFeeAmountTransmuteToGold(gluonBox: GluonBox, goldOracleBox: GoldOracleBox, protonsToTransmute: number): Promise<{ devFee: number, uiFee: number, oracleFee: number, minerFee: number, totalFee: number }> {
         const protonVol = ((await gluonBox.protonPrice(goldOracleBox)) * BigInt(protonsToTransmute)) / BigInt(1e9);
         const feeBoxes = await this.getFeeBoxes(gluonBox, Number(protonVol), true);
         const devFee = feeBoxes.devFee?.value || 0;
         const uiFee = feeBoxes.uiFee?.value || 0;
         const oracleFee = feeBoxes.oracleFee?.value || 0;
-        const totalFee = devFee + uiFee + oracleFee;
-        return { devFee, uiFee, oracleFee, totalFee };
+        const minerFee = this.config.MINER_FEE || 0;
+        const totalFee = devFee + uiFee + oracleFee + minerFee;
+        return { devFee, uiFee, oracleFee, minerFee, totalFee };
     }
 
     /**
@@ -168,15 +178,17 @@ export class Gluon {
      * - devFee: The fee percentage for the developer
      * - uiFee: The fee percentage for the UI (if applicable)
      * - oracleFee: The fee percentage for the oracle
+     * - minerFee: The fee percentage for the miner
      * - totalFee: The total fee percentage
     */
-    async getFeePercentageTransmuteToGold(gluonBox: GluonBox, goldOracleBox: GoldOracleBox, protonsToTransmute: number): Promise<{ devFee: number, uiFee: number, oracleFee: number, totalFee: number }> {
+    async getFeePercentageTransmuteToGold(gluonBox: GluonBox, goldOracleBox: GoldOracleBox, protonsToTransmute: number): Promise<{ devFee: number, uiFee: number, oracleFee: number, minerFee: number, totalFee: number }> {
         const fees = await this.getTotalFeeAmountTransmuteToGold(gluonBox, goldOracleBox, protonsToTransmute)
         const protonVol = ((await gluonBox.protonPrice(goldOracleBox)) * BigInt(protonsToTransmute)) / BigInt(1e9);
         return {
             devFee: fees.devFee / Number(protonVol),
             uiFee: fees.uiFee / Number(protonVol),
             oracleFee: fees.oracleFee / Number(protonVol),
+            minerFee: this.config.MINER_FEE / Number(protonVol),
             totalFee: fees.totalFee / Number(protonVol)
         }
     }
@@ -190,16 +202,18 @@ export class Gluon {
      * - devFee: The fee for the developer
      * - uiFee: The fee for the UI (if applicable)
      * - oracleFee: The fee for the oracle
+     * - minerFee: The fee for the miner
      * - totalFee: The sum of all fees
      */
-    async getTotalFeeAmountTransmuteFromGold(gluonBox: GluonBox, goldOracleBox: GoldOracleBox, neutronsToDecay: number): Promise<{ devFee: number, uiFee: number, oracleFee: number, totalFee: number }> {
+    async getTotalFeeAmountTransmuteFromGold(gluonBox: GluonBox, goldOracleBox: GoldOracleBox, neutronsToDecay: number): Promise<{ devFee: number, uiFee: number, oracleFee: number, minerFee: number, totalFee: number }> {
         const neutronVol = ((await gluonBox.neutronPrice(goldOracleBox)) * BigInt(neutronsToDecay)) / BigInt(1e9);
         const feeBoxes = await this.getFeeBoxes(gluonBox, Number(neutronVol), true);
         const devFee = feeBoxes.devFee?.value || 0;
         const uiFee = feeBoxes.uiFee?.value || 0;
         const oracleFee = feeBoxes.oracleFee?.value || 0;
-        const totalFee = devFee + uiFee + oracleFee;
-        return { devFee, uiFee, oracleFee, totalFee };
+        const minerFee = this.config.MINER_FEE || 0;
+        const totalFee = devFee + uiFee + oracleFee + minerFee;
+        return { devFee, uiFee, oracleFee, minerFee, totalFee };
     }
 
     /**
@@ -210,15 +224,17 @@ export class Gluon {
      * @returns An object containing the following fee percentages:
      * - devFee: The fee percentage for the developer
      * - uiFee: The fee percentage for the UI (if applicable)
+     * - minerFee: The fee percentage for the miner
      * - oracleFee: The fee percentage for the oracle
     */
-    async getFeePercentageTransmuteFromGold(gluonBox: GluonBox, goldOracleBox: GoldOracleBox, neutronsToDecay: number): Promise<{ devFee: number, uiFee: number, oracleFee: number, totalFee: number }> {
+    async getFeePercentageTransmuteFromGold(gluonBox: GluonBox, goldOracleBox: GoldOracleBox, neutronsToDecay: number): Promise<{ devFee: number, uiFee: number, oracleFee: number, minerFee: number, totalFee: number }> {
         const fees = await this.getTotalFeeAmountTransmuteFromGold(gluonBox, goldOracleBox, neutronsToDecay)
         const neutronVol = ((await gluonBox.neutronPrice(goldOracleBox)) * BigInt(neutronsToDecay)) / BigInt(1e9);
         return {
             devFee: fees.devFee / Number(neutronVol),
             uiFee: fees.uiFee / Number(neutronVol),
             oracleFee: fees.oracleFee / Number(neutronVol),
+            minerFee: this.config.MINER_FEE / Number(neutronVol),
             totalFee: fees.totalFee / Number(neutronVol)
         }
     }
