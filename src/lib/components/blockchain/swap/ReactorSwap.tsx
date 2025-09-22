@@ -143,6 +143,7 @@ export function ReactorSwap() {
     fees: {
       devFee: 0,
       uiFee: 0,
+      oracleFee: 0,
       minerFee: 0,
       totalFee: 0
     }
@@ -238,7 +239,7 @@ export function ReactorSwap() {
       setReceiptDetails({
         inputAmount: 0,
         outputAmount: { gau: 0, gauc: 0, erg: 0 },
-        fees: { devFee: 0, uiFee: 0, minerFee: 0, totalFee: 0 },
+        fees: { devFee: 0, uiFee: 0, oracleFee: 0, minerFee: 0, totalFee: 0 },
         maxErgOutput: maxErgOutput
       });
       return;
@@ -365,7 +366,7 @@ export function ReactorSwap() {
       setReceiptDetails({
         inputAmount: 0,
         outputAmount: { gau: 0, gauc: 0, erg: 0 },
-        fees: { devFee: 0, uiFee: 0, minerFee: 0, totalFee: 0 },
+        fees: { devFee: 0, uiFee: 0, oracleFee: 0, minerFee: 0, totalFee: 0 },
         maxErgOutput: maxErgOutput,
       });
       debouncedCalculateAmounts.cancel();
@@ -567,7 +568,7 @@ export function ReactorSwap() {
       setToToken(validToTokens[0])
     }
     debouncedCalculateAmounts.cancel();
-    setReceiptDetails({ inputAmount: 0, outputAmount: { gau: 0, gauc: 0, erg: 0 }, fees: { devFee: 0, uiFee: 0, minerFee: 0, totalFee: 0 }, maxErgOutput });
+    setReceiptDetails({ inputAmount: 0, outputAmount: { gau: 0, gauc: 0, erg: 0 }, fees: { devFee: 0, uiFee: 0, oracleFee: 0, minerFee: 0, totalFee: 0 }, maxErgOutput });
   }
 
   const handleToTokenChange = (symbol: string) => {
@@ -580,7 +581,7 @@ export function ReactorSwap() {
       setFromAmount("");
     }
     debouncedCalculateAmounts.cancel();
-    setReceiptDetails({ inputAmount: 0, outputAmount: { gau: 0, gauc: 0, erg: 0 }, fees: { devFee: 0, uiFee: 0, minerFee: 0, totalFee: 0 }, maxErgOutput });
+    setReceiptDetails({ inputAmount: 0, outputAmount: { gau: 0, gauc: 0, erg: 0 }, fees: { devFee: 0, uiFee: 0, oracleFee: 0, minerFee: 0, totalFee: 0 }, maxErgOutput });
   }
 
   const handleSwapTokens = () => {
@@ -600,7 +601,7 @@ export function ReactorSwap() {
       setReceiptDetails({
         inputAmount: 0,
         outputAmount: { gau: 0, gauc: 0, erg: 0 },
-        fees: { devFee: 0, uiFee: 0, minerFee: 0, totalFee: 0 },
+        fees: { devFee: 0, uiFee: 0, oracleFee: 0, minerFee: 0, totalFee: 0 },
         maxErgOutput
       });
 
@@ -653,7 +654,7 @@ export function ReactorSwap() {
       setReceiptDetails({
         inputAmount: 0,
         outputAmount: { gau: 0, gauc: 0, erg: 0 },
-        fees: { devFee: 0, uiFee: 0, minerFee: 0, totalFee: 0 },
+        fees: { devFee: 0, uiFee: 0, oracleFee: 0, minerFee: 0, totalFee: 0 },
         maxErgOutput: maxErgOutput
       });
     }
@@ -761,7 +762,7 @@ export function ReactorSwap() {
         setReceiptDetails({
           inputAmount: 0,
           outputAmount: { gau: 0, gauc: 0, erg: 0 },
-          fees: { devFee: 0, uiFee: 0, minerFee: 0, totalFee: 0 },
+          fees: { devFee: 0, uiFee: 0, oracleFee: 0, minerFee: 0, totalFee: 0 },
           maxErgOutput: maxErgOutput
         });
 
@@ -1547,23 +1548,23 @@ export function ReactorSwap() {
                   </motion.span>
                 </AnimatePresence>
               </motion.div> : null}
-              {receiptDetails.fees.uiFee ? <motion.div
+              {receiptDetails.fees.oracleFee ? <motion.div
                 className="flex justify-between"
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.55, duration: 0.2 }}
               >
-                <span className="text-muted-foreground xl:text-xs">UI Fee</span>
+                <span className="text-muted-foreground xl:text-xs">Oracle Fee</span>
                 <AnimatePresence mode="wait">
                   <motion.span
-                    key={`ui-fee-${receiptDetails.fees.uiFee}`}
+                    key={`oracle-fee-${receiptDetails.fees.oracleFee}`}
                     className="text-muted-foreground"
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.8 }}
                     transition={{ duration: 0.15 }}
                   >
-                    {formatTokenAmount(formatValue(receiptDetails.fees.uiFee))} ERG
+                    {formatTokenAmount(formatValue(receiptDetails.fees.oracleFee))} ERG
                   </motion.span>
                 </AnimatePresence>
               </motion.div> : null}
