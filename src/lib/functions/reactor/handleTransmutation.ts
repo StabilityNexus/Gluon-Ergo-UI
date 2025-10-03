@@ -176,7 +176,12 @@ export const handleTransmuteToGoldSwap = async (
         }
 
         if (!ergoWallet) {
-            throw new Error("Wallet not connected")
+            throw new Error("Wallet not connected. Please disconnect and reconnect your wallet.")
+        }
+
+        // Additional validation for wallet API methods
+        if (!ergoWallet.sign_tx || !ergoWallet.submit_tx) {
+            throw new Error("Wallet API not fully initialized. Please refresh the page and reconnect.")
         }
 
         if (!amount || parseFloat(amount) <= 0) {
@@ -266,7 +271,12 @@ export const handleTransmuteFromGoldSwap = async (
         }
 
         if (!ergoWallet) {
-            throw new Error("Wallet not connected")
+            throw new Error("Wallet not connected. Please disconnect and reconnect your wallet.")
+        }
+
+        // Additional validation for wallet API methods
+        if (!ergoWallet.sign_tx || !ergoWallet.submit_tx) {
+            throw new Error("Wallet API not fully initialized. Please refresh the page and reconnect.")
         }
 
         if (!amount || parseFloat(amount) <= 0) {
