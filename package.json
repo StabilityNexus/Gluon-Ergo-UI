@@ -10,7 +10,8 @@
     "lint": "next lint",
     "custom": "cd lib/gluon-gold-sdk && bun install && bun run build",
     "test": "vitest",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "prepare": "husky"
   },
   "workspaces": [
     "lib/*"
@@ -67,6 +68,7 @@
     "eslint-config-next": "15.1.3",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.4",
+    "husky": "^9.1.7",
     "jsdom": "^26.1.0",
     "postcss": "^8",
     "prettier": "^3.6.2",
