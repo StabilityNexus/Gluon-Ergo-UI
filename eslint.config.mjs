@@ -25,6 +25,16 @@ const eslintConfig = [
       ],
     },
   },
+  ...compat.extends("prettier"),
+  {
+    files: ["**/*.{js,jsx,ts,tsx}"],
+    plugins: {
+      prettier: eslintPluginPrettier,
+    },
+    rules: {
+      "prettier/prettier": "error",
+    },
+  },
 ];
 
 export default eslintConfig;

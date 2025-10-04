@@ -21,8 +21,8 @@ npm install gluon-gold-sdk@1.0.0
 To use the SDK in a browser environment, you can dynamically import it as follows:
 
 ```javascript
-if (typeof window !== 'undefined') {
-    gluon = import('gluon-gold-sdk');
+if (typeof window !== "undefined") {
+  gluon = import("gluon-gold-sdk");
 }
 ```
 
@@ -44,7 +44,7 @@ To adjust the constant parameters, you can create a new instance of the `Config`
 const config = new Config();
 
 // Set the network to the desired environment (e.g., 'mainnet' or 'testnet')
-config.NETWORK = 'mainnet'; // or 'testnet'
+config.NETWORK = "mainnet"; // or 'testnet'
 
 // Set the miner fee (in nanoERGs)
 config.MINER_FEE = 1000000; // Example: 0.001 ERG
@@ -53,10 +53,10 @@ config.MINER_FEE = 1000000; // Example: 0.001 ERG
 config.UI_FEE = 1000; // Example: 1% fee
 
 // Set the node URL for connecting to the Ergo blockchain
-config.NODE_URL = 'https://ergo-node.example.com';
+config.NODE_URL = "https://ergo-node.example.com";
 
 // Set the UI tree, which is used for specific UI-related operations
-config.UI_TREE = 'your-ui-tree-value-here';
+config.UI_TREE = "your-ui-tree-value-here";
 ```
 
 By configuring these parameters, you ensure that the SDK is tailored to your application's requirements, allowing for seamless interaction with the Gluon protocol. Adjust these values according to your specific needs and the environment in which your application will operate.
@@ -80,7 +80,6 @@ const gluonBoxJs = await gluonInstance.getGluonBox();
 **Why Refresh the Boxes?**
 
 The state of the blockchain is dynamic, with transactions occurring continuously. By periodically refreshing these boxes, you ensure that your application is working with the most up-to-date information. These boxes are updated whenever a transaction is made or the oracle price is updated, so it's important to keep them updated to avoid using stale data.
-
 
 ### User Interaction with Nautilus Wallet
 
@@ -118,7 +117,14 @@ This operation involves sending Protons to the reactor to receive Neutrons:
 const protonsToTransmute = 5000000; // Example amount
 const height = await nodeService.getNetworkHeight(); // Get current network height
 const oracleBuyBackJs = await gluonInstance.getOracleBuyBackBoxJs();
-const unsignedTransaction = await gluonInstance.transmuteToGoldForEip12(gluonBoxJs, oracleBoxJs, userBoxes, oracleBuyBackJs, protonsToTransmute, height);
+const unsignedTransaction = await gluonInstance.transmuteToGoldForEip12(
+  gluonBoxJs,
+  oracleBoxJs,
+  userBoxes,
+  oracleBuyBackJs,
+  protonsToTransmute,
+  height
+);
 ```
 
 ### Transmuting from Gold
@@ -127,7 +133,14 @@ This operation involves sending Neutrons to the reactor to receive Protons:
 
 ```javascript
 const neutronsToDecay = 2700000; // Example amount
-const unsignedTransaction = await gluonInstance.transmuteFromGoldForEip12(gluonBoxJs, oracleBoxJs, userBoxes, oracleBuyBackJs, neutronsToDecay, height);
+const unsignedTransaction = await gluonInstance.transmuteFromGoldForEip12(
+  gluonBoxJs,
+  oracleBoxJs,
+  userBoxes,
+  oracleBuyBackJs,
+  neutronsToDecay,
+  height
+);
 ```
 
 ### Signing the Transaction
@@ -137,6 +150,7 @@ You can use any method to sign the transaction. One of the most common methods i
 ```javascript
 const signedTransaction = await ergo.sign_tx(unsignedTransaction);
 ```
+
 The signed transaction can then be submitted to the network using the `submit_tx` method provided by the Nautilus wallet.
 
 ```javascript
@@ -155,8 +169,11 @@ For each operation, you can calculate the total fees and their breakdown:
 
 ```javascript
 const fees = await gluonInstance.getTotalFeeAmountFission(gluonBoxJs, amountToFission);
-console.log(`Developer Fee: ${fees.devFee}, UI Fee: ${fees.uiFee}, Oracle Fee: ${fees.oracleFee}, Total Fee: ${fees.totalFee}`);
+console.log(
+  `Developer Fee: ${fees.devFee}, UI Fee: ${fees.uiFee}, Oracle Fee: ${fees.oracleFee}, Total Fee: ${fees.totalFee}`
+);
 ```
+
 These fees can be shown to the user in the UI so they know what to expect in terms of costs for the operation. These fees are in nanoERGs.
 
 ### Displaying Prices
@@ -169,7 +186,9 @@ const protonPrice = await gluonInstance.protonPrice(oracleBoxJs);
 const oracleGoldPricePerKg = await oracleBoxJs.getPrice();
 const oracleGoldPricePerGram = await oracleBoxJs.getPricePerGram();
 
-console.log(`Neutron Price: ${neutronPrice}, Proton Price: ${protonPrice}, Gold Price: ${oracleGoldPricePerKg}, Gold Price Per Gram: ${oracleGoldPricePerGram}`);
+console.log(
+  `Neutron Price: ${neutronPrice}, Proton Price: ${protonPrice}, Gold Price: ${oracleGoldPricePerKg}, Gold Price Per Gram: ${oracleGoldPricePerGram}`
+);
 ```
 
 These values should be displayed in the website to users so they know what the current price of the assets are. They can easily be called with the updated oracle box to get the latest price periodically.
@@ -189,6 +208,7 @@ const volumeNeutronsToProtons = await gluon.accumulateVolumeNeutronsToProtons(n)
 console.log(`Volume of protons to neutrons over ${n} days:`, volumeProtonsToNeutrons);
 console.log(`Volume of neutrons to protons over ${n} days:`, volumeNeutronsToProtons);
 ```
+
 Displaying these to the user will give them a good idea of the trend of the protocol.
 
 ## Conclusion

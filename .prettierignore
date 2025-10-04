@@ -1,0 +1,6 @@
+/.github
+/node_modules
+/.next
+
+/lib/*/dist
+/lib/*/node_modules

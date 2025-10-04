@@ -14,9 +14,9 @@ export default function Hero() {
     >
       <div className="relative z-10">
         <div className="container pt-2">
-          <div className="max-w-4xl text-center mx-auto">
+          <div className="mx-auto max-w-4xl text-center">
             <motion.div
-              className="dark:text-muted-foreground text-foreground font-semibold"
+              className="font-semibold text-foreground dark:text-muted-foreground"
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2, duration: 0.6 }}
@@ -25,34 +25,34 @@ export default function Hero() {
             </motion.div>
 
             <motion.div
-              className="mt-5 max-w-3xl mx-auto"
+              className="mx-auto mt-5 max-w-3xl"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4, duration: 0.6 }}
             >
               <p className="text-xl text-muted-foreground">
-                Trade and transact with digital gold-pegged tokens. <br /> 
+                Trade and transact with digital gold-pegged tokens. <br />
                 Secured by the Ergo blockchain and its decentralized gold price oracle.
               </p>
             </motion.div>
 
             <motion.div
-              className="mt-8 gap-3 flex justify-center"
+              className="mt-8 flex justify-center gap-3"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.6, duration: 0.6 }}
             >
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <Button size={"lg"} onClick={() => router.push("/reactor")}>Start Trading</Button>
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Button size={"lg"} onClick={() => router.push("/reactor")}>
+                  Start Trading
+                </Button>
               </motion.div>
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <Button size={"lg"} variant={"outline"} onClick={() => router.push("https://docs.stability.nexus/gluon-protocols/gluon-overview")}>
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Button
+                  size={"lg"}
+                  variant={"outline"}
+                  onClick={() => router.push("https://docs.stability.nexus/gluon-protocols/gluon-overview")}
+                >
                   Read Docs
                 </Button>
               </motion.div>
@@ -61,5 +61,5 @@ export default function Hero() {
         </div>
       </div>
     </motion.div>
-  )
+  );
 }

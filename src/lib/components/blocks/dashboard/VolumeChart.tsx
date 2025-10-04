@@ -1,72 +1,60 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { Card } from "@/lib/components/ui/card"
-import { Loader2, BarChart2 } from "lucide-react"
-import { nanoErgsToErgs } from "@/lib/utils/erg-converter"
-import { motion } from "framer-motion"
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Legend,
-} from "recharts"
+import { useEffect, useState } from "react";
+import { Card } from "@/lib/components/ui/card";
+import { Loader2, BarChart2 } from "lucide-react";
+import { nanoErgsToErgs } from "@/lib/utils/erg-converter";
+import { motion } from "framer-motion";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 
 interface VolumeChartProps {
-  isLoading?: boolean
-  hasError?: boolean
+  isLoading?: boolean;
+  hasError?: boolean;
 }
 
 interface VolumeDataPoint {
-  day: number
-  VolumeProtonsToNeutrons: number
-  VolumeNeutronsToProtons: number
+  day: number;
+  VolumeProtonsToNeutrons: number;
+  VolumeNeutronsToProtons: number;
 }
 
-export function VolumeChart({
-  isLoading: externalLoading = false,
-  hasError: externalError = false,
-}: VolumeChartProps) {
-  const [chartData, setChartData] = useState<VolumeDataPoint[]>([])
-  const [loadingChart, setLoadingChart] = useState(true)
-  const [chartError, setChartError] = useState(false)
-  const [debugMessage, setDebugMessage] = useState<string>("")
+export function VolumeChart({ isLoading: externalLoading = false, hasError: externalError = false }: VolumeChartProps) {
+  const [chartData, setChartData] = useState<VolumeDataPoint[]>([]);
+  const [loadingChart, setLoadingChart] = useState(true);
+  const [chartError, setChartError] = useState(false);
+  const [debugMessage, setDebugMessage] = useState<string>("");
 
   useEffect(() => {
-    let isMounted = true
+    let isMounted = true;
 
     async function fetchVolumeData() {
       try {
-        setLoadingChart(true)
-        setChartError(false)
+        setLoadingChart(true);
+        setChartError(false);
 
-        const sdk = await import("gluon-gold-sdk")
-        const gluon = new sdk.Gluon()
-        gluon.config.NETWORK = process.env.NEXT_PUBLIC_DEPLOYMENT || "testnet"
+        const sdk = await import("gluon-gold-sdk");
+        const gluon = new sdk.Gluon();
+        gluon.config.NETWORK = process.env.NEXT_PUBLIC_DEPLOYMENT || "testnet";
 
-        const gluonBox = await gluon.getGluonBox()
+        const gluonBox = await gluon.getGluonBox();
 
-        const days = Array.from({ length: 14 }, (_, i) => i + 1)
-        const cumulativeData: VolumeDataPoint[] = []
+        const days = Array.from({ length: 14 }, (_, i) => i + 1);
+        const cumulativeData: VolumeDataPoint[] = [];
 
         for (const day of days) {
           const [ProtonsToNeutrons, NeutronsToProtons] = await Promise.all([
             gluonBox.accumulateVolumeProtonsToNeutrons(day),
             gluonBox.accumulateVolumeNeutronsToProtons(day),
-          ])
+          ]);
 
           cumulativeData.push({
             day,
             VolumeProtonsToNeutrons: nanoErgsToErgs(ProtonsToNeutrons).toNumber(),
             VolumeNeutronsToProtons: nanoErgsToErgs(NeutronsToProtons).toNumber(),
-          })
+          });
         }
 
-        const dailyData: VolumeDataPoint[] = []
+        const dailyData: VolumeDataPoint[] = [];
 
         for (let i = 0; i < cumulativeData.length; i++) {
           if (i === 0) {
@@ -74,49 +62,47 @@ export function VolumeChart({
               day: cumulativeData[i].day,
               VolumeProtonsToNeutrons: cumulativeData[i].VolumeProtonsToNeutrons,
               VolumeNeutronsToProtons: cumulativeData[i].VolumeNeutronsToProtons,
-            })
+            });
           } else {
-            const current = cumulativeData[i]
-            const previous = cumulativeData[i - 1]
+            const current = cumulativeData[i];
+            const previous = cumulativeData[i - 1];
 
             dailyData.push({
               day: current.day,
               VolumeProtonsToNeutrons: Math.max(0, current.VolumeProtonsToNeutrons - previous.VolumeProtonsToNeutrons),
               VolumeNeutronsToProtons: Math.max(0, current.VolumeNeutronsToProtons - previous.VolumeNeutronsToProtons),
-            })
+            });
           }
         }
 
         const reversed = dailyData.reverse().map((entry, index) => ({
           ...entry,
           day: index + 1,
-        }))
+        }));
 
         if (isMounted) {
-          setChartData(reversed)
+          setChartData(reversed);
         }
       } catch (error) {
         if (isMounted) {
-          setChartError(true)
-          setDebugMessage(
-            `Error: ${error instanceof Error ? error.message : String(error)}`
-          )
+          setChartError(true);
+          setDebugMessage(`Error: ${error instanceof Error ? error.message : String(error)}`);
         }
       } finally {
         if (isMounted) {
-          setLoadingChart(false)
+          setLoadingChart(false);
         }
       }
     }
 
-    fetchVolumeData()
+    fetchVolumeData();
     return () => {
-      isMounted = false
-    }
-  }, [])
+      isMounted = false;
+    };
+  }, []);
 
-  const isLoading = externalLoading || loadingChart
-  const hasError = externalError || chartError
+  const isLoading = externalLoading || loadingChart;
+  const hasError = externalError || chartError;
 
   return (
     <motion.div
@@ -124,32 +110,32 @@ export function VolumeChart({
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.5, duration: 0.4 }}
     >
-      <Card className="p-6 bg-card border-border">
-        <div className="flex items-center justify-between gap-2 mb-4">
+      <Card className="border-border bg-card p-6">
+        <div className="mb-4 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <BarChart2 className="h-5 w-5 text-primary" />
-            <span className="font-semibold text-lg">14-Day Volume History</span>
+            <span className="text-lg font-semibold">14-Day Volume History</span>
           </div>
         </div>
 
         {isLoading ? (
-          <div className="flex flex-col items-center justify-center h-[300px]">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground mb-4" />
+          <div className="flex h-[300px] flex-col items-center justify-center">
+            <Loader2 className="mb-4 h-8 w-8 animate-spin text-muted-foreground" />
             <span className="text-sm text-muted-foreground">Loading volume data...</span>
-            <span className="text-xs text-muted-foreground mt-2">{debugMessage}</span>
+            <span className="mt-2 text-xs text-muted-foreground">{debugMessage}</span>
           </div>
         ) : hasError ? (
-          <div className="flex flex-col items-center justify-center h-[300px]">
+          <div className="flex h-[300px] flex-col items-center justify-center">
             <span className="text-sm text-red-500">Error loading volume data</span>
-            <span className="text-xs text-red-400 mt-2">{debugMessage}</span>
+            <span className="mt-2 text-xs text-red-400">{debugMessage}</span>
           </div>
         ) : chartData.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-[300px]">
+          <div className="flex h-[300px] flex-col items-center justify-center">
             <span className="text-sm text-muted-foreground">No volume data available</span>
-            <span className="text-xs text-muted-foreground mt-2">{debugMessage}</span>
+            <span className="mt-2 text-xs text-muted-foreground">{debugMessage}</span>
           </div>
         ) : (
-          <div className="w-full mx-auto" style={{ height: "360px" }}>
+          <div className="mx-auto w-full" style={{ height: "360px" }}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={chartData}
@@ -165,11 +151,7 @@ export function VolumeChart({
                   height={30}
                   padding={{ left: 0, right: 0 }}
                 />
-                <YAxis
-                  tickFormatter={(value) => value.toFixed(1)}
-                  tick={{ fontSize: 9.5 }}
-                  width={45}
-                />
+                <YAxis tickFormatter={(value) => value.toFixed(1)} tick={{ fontSize: 9.5 }} width={45} />
                 <Tooltip
                   formatter={(value: number) => [`${value.toFixed(2)} ERG`]}
                   labelFormatter={(label) => `Day ${label}`}
@@ -183,5 +165,5 @@ export function VolumeChart({
         )}
       </Card>
     </motion.div>
-  )
+  );
 }
