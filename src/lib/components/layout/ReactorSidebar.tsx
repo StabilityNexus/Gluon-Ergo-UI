@@ -26,17 +26,10 @@ export function ReactorSidebar() {
       <nav className="hidden h-fit rounded-lg border border-border bg-card px-6 py-4 font-semibold md:block">
         <ul className="flex flex-col space-y-2">
           {ispoLinks.map((link, index) => (
-            <motion.li
-              key={link.href}
-              initial={mounted ? { opacity: 0, x: -20 } : false}
-              animate={mounted ? { opacity: 1, x: 0 } : false}
-              transition={{ delay: index * 0.1 }}
-            >
+            <motion.li key={link.href} initial={mounted ? { opacity: 0, x: -20 } : false} animate={mounted ? { opacity: 1, x: 0 } : false} transition={{ delay: index * 0.1 }}>
               <Link
                 href={link.href}
-                className={`flex items-center space-x-2 rounded-xl px-4 py-2 transition-colors ${
-                  router.pathname === link.href ? "bg-primary/10 text-primary" : "hover:bg-muted"
-                }`}
+                className={`flex items-center space-x-2 rounded-xl px-4 py-2 transition-colors ${router.pathname === link.href ? "bg-primary/10 text-primary" : "hover:bg-muted"}`}
               >
                 <link.icon size={18} />
                 <span>{link.label}</span>
@@ -47,17 +40,8 @@ export function ReactorSidebar() {
       </nav>
 
       {/* Mobile FAB */}
-      <motion.div
-        className="fixed bottom-20 right-4 z-50 md:hidden"
-        initial={{ opacity: 0, scale: 0.5 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.3 }}
-      >
-        <motion.button
-          className="rounded-full bg-primary p-3 text-primary-foreground shadow-lg"
-          onClick={toggleMenu}
-          whileTap={{ scale: 0.9 }}
-        >
+      <motion.div className="fixed bottom-20 right-4 z-50 md:hidden" initial={{ opacity: 0, scale: 0.5 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.3 }}>
+        <motion.button className="rounded-full bg-primary p-3 text-primary-foreground shadow-lg" onClick={toggleMenu} whileTap={{ scale: 0.9 }}>
           {isOpen ? <X size={24} /> : <Menu size={24} />}
         </motion.button>
 
@@ -75,9 +59,7 @@ export function ReactorSidebar() {
                   <motion.li key={link.href} whileTap={{ scale: 0.95 }}>
                     <Link
                       href={link.href}
-                      className={`flex items-center space-x-2 rounded px-4 py-2 transition-colors ${
-                        router.pathname === link.href ? "bg-primary/10 text-primary" : "hover:bg-muted"
-                      }`}
+                      className={`flex items-center space-x-2 rounded px-4 py-2 transition-colors ${router.pathname === link.href ? "bg-primary/10 text-primary" : "hover:bg-muted"}`}
                       onClick={toggleMenu}
                     >
                       <link.icon size={18} />

@@ -162,16 +162,7 @@ type Uniforms = {
     type: string;
   };
 };
-const ShaderMaterial = ({
-  source,
-  uniforms,
-  maxFps = 60,
-}: {
-  source: string;
-  hovered?: boolean;
-  maxFps?: number;
-  uniforms: Uniforms;
-}) => {
+const ShaderMaterial = ({ source, uniforms, maxFps = 60 }: { source: string; hovered?: boolean; maxFps?: number; uniforms: Uniforms }) => {
   const { size } = useThree();
   const ref = useRef<THREE.Mesh>(undefined);
   let lastFrameTime = 0;

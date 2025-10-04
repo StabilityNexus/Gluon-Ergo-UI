@@ -34,26 +34,10 @@ export interface ErrorDetails {
 // Error patterns for classification
 const ERROR_PATTERNS = {
   // Network related errors
-  network: [
-    /network/i,
-    /connection/i,
-    /timeout/i,
-    /fetch.*failed/i,
-    /failed to get network height/i,
-    /node.*not.*responding/i,
-    /rpc.*error/i,
-  ],
+  network: [/network/i, /connection/i, /timeout/i, /fetch.*failed/i, /failed to get network height/i, /node.*not.*responding/i, /rpc.*error/i],
 
   // Balance related errors
-  insufficientBalance: [
-    /insufficient/i,
-    /not enough/i,
-    /balance.*too.*low/i,
-    /cannot.*afford/i,
-    /exceeds.*balance/i,
-    /maximum possible output/i,
-    /cannot get.*erg/i,
-  ],
+  insufficientBalance: [/insufficient/i, /not enough/i, /balance.*too.*low/i, /cannot.*afford/i, /exceeds.*balance/i, /maximum possible output/i, /cannot get.*erg/i],
 
   // Transaction creation errors
   transactionCreation: [
@@ -82,34 +66,16 @@ const ERROR_PATTERNS = {
   ],
 
   // Transaction submission errors
-  transactionSubmission: [
-    /submit.*failed/i,
-    /submission.*error/i,
-    /broadcast.*failed/i,
-    /mempool.*rejected/i,
-    /transaction.*rejected/i,
-  ],
+  transactionSubmission: [/submit.*failed/i, /submission.*error/i, /broadcast.*failed/i, /mempool.*rejected/i, /transaction.*rejected/i],
 
   // Box initialization errors
-  boxInitialization: [
-    /failed to.*get.*box/i,
-    /box.*not.*found/i,
-    /oracle.*box.*error/i,
-    /gluon.*box.*error/i,
-    /failed to initialize/i,
-  ],
+  boxInitialization: [/failed to.*get.*box/i, /box.*not.*found/i, /oracle.*box.*error/i, /gluon.*box.*error/i, /failed to initialize/i],
 
   // Oracle related errors
   oracle: [/oracle/i, /price.*feed/i, /oracle.*buyback/i, /height.*error/i],
 
   // Amount validation errors
-  invalidAmount: [
-    /amount.*invalid/i,
-    /invalid.*value/i,
-    /must be greater than zero/i,
-    /amount.*too.*small/i,
-    /amount.*too.*large/i,
-  ],
+  invalidAmount: [/amount.*invalid/i, /invalid.*value/i, /must be greater than zero/i, /amount.*too.*small/i, /amount.*too.*large/i],
 
   // SDK specific errors
   sdk: [/fusion.*will.*need/i, /fission.*will.*get/i, /transmute.*will.*get/i, /gluon.*sdk/i, /calculation.*failed/i],
@@ -162,12 +128,7 @@ function classifyError(error: Error | string | any): ErrorType {
     }
   }
 
-  const errorMessage =
-    typeof error === "string"
-      ? error
-      : error instanceof Error
-        ? error.message
-        : error?.info || error?.message || String(error);
+  const errorMessage = typeof error === "string" ? error : error instanceof Error ? error.message : error?.info || error?.message || String(error);
 
   for (const [type, patterns] of Object.entries(ERROR_PATTERNS)) {
     if (patterns.some((pattern) => pattern.test(errorMessage))) {
@@ -204,11 +165,7 @@ function classifyError(error: Error | string | any): ErrorType {
 /**
  * Process and handle errors with appropriate user feedback
  */
-export function handleTransactionError(
-  error: Error | string | unknown,
-  actionType: string = "transaction",
-  showToast: boolean = true
-): ErrorDetails {
+export function handleTransactionError(error: Error | string | unknown, actionType: string = "transaction", showToast: boolean = true): ErrorDetails {
   console.error(`${actionType} error:`, error);
 
   let errorMessage: string;
@@ -342,11 +299,7 @@ export function handleCalculationError(
 /**
  * Handle network/initialization errors
  */
-export function handleInitializationError(
-  error: Error | string | unknown,
-  component: string = "system",
-  showToast: boolean = true
-): ErrorDetails {
+export function handleInitializationError(error: Error | string | unknown, component: string = "system", showToast: boolean = true): ErrorDetails {
   console.error(`${component} initialization error:`, error);
 
   const errorDetails = handleTransactionError(error, `${component} initialization`, false);

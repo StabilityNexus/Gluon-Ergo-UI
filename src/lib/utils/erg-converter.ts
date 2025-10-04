@@ -27,10 +27,7 @@ interface FormattedNumber {
  * @param value - Raw number from blockchain
  * @param decimals - Number of decimals (defaults to TOKEN_ADDRESS.decimals)
  */
-export const convertFromDecimals = (
-  value: number | bigint | string,
-  decimals: number = TOKEN_ADDRESS.decimals
-): BigNumber => {
+export const convertFromDecimals = (value: number | bigint | string, decimals: number = TOKEN_ADDRESS.decimals): BigNumber => {
   const bn = new BigNumber(value.toString());
   return bn.dividedBy(new BigNumber(10).pow(decimals));
 };
@@ -42,13 +39,7 @@ export const convertFromDecimals = (
  */
 export const convertToDecimals = (value: number | string, decimals: number = TOKEN_ADDRESS.decimals): bigint => {
   // Ensure value is a valid number, default to '0' if not
-  const valueStr =
-    (typeof value === "string" && value.trim() === "") ||
-    value === null ||
-    value === undefined ||
-    Number.isNaN(Number(value))
-      ? "0"
-      : value.toString();
+  const valueStr = (typeof value === "string" && value.trim() === "") || value === null || value === undefined || Number.isNaN(Number(value)) ? "0" : value.toString();
 
   const bn = new BigNumber(valueStr);
   const multiplied = bn.times(new BigNumber(10).pow(decimals));

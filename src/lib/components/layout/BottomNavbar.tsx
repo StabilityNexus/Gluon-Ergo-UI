@@ -51,8 +51,7 @@ export function BottomNavbar() {
 
               if (mounted) {
                 const currentTheme = theme === "system" ? systemTheme : theme;
-                iconSrc =
-                  currentTheme === "dark" ? (iconDark ?? iconLight ?? iconSrc) : (iconLight ?? iconDark ?? iconSrc);
+                iconSrc = currentTheme === "dark" ? (iconDark ?? iconLight ?? iconSrc) : (iconLight ?? iconDark ?? iconSrc);
               }
 
               return (
@@ -94,10 +93,7 @@ export function BottomNavbar() {
                 key={item.href}
                 href={item.href}
                 target={item.external ? "_blank" : undefined}
-                className={cn(
-                  "text-sm font-medium transition-colors hover:text-primary",
-                  isActive ? "font-semibold text-primary" : "text-muted-foreground"
-                )}
+                className={cn("text-sm font-medium transition-colors hover:text-primary", isActive ? "font-semibold text-primary" : "text-muted-foreground")}
               >
                 {item.label}
               </Link>

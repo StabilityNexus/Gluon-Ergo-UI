@@ -55,12 +55,7 @@ export class TransactionListener {
   /**
    * Save transaction data to localStorage after submission
    */
-  saveUpTransaction(
-    txHash: string,
-    actionType: string,
-    preTransactionState: WalletState,
-    expectedChanges: ExpectedChanges
-  ): void {
+  saveUpTransaction(txHash: string, actionType: string, preTransactionState: WalletState, expectedChanges: ExpectedChanges): void {
     try {
       const transactionState: TransactionState = {
         txHash,
@@ -157,10 +152,7 @@ export class TransactionListener {
   /**
    * Compare pre/post transaction wallet states
    */
-  private async compareWithWallet(
-    txHash: string,
-    getBalance: () => Promise<Array<{ tokenId: string; balance: string }>>
-  ): Promise<boolean> {
+  private async compareWithWallet(txHash: string, getBalance: () => Promise<Array<{ tokenId: string; balance: string }>>): Promise<boolean> {
     try {
       const pendingTransactions = this.getPendingTransactions();
       const transactionState = pendingTransactions[txHash];
@@ -175,10 +167,7 @@ export class TransactionListener {
       const currentWalletState = await this.getCurrentWalletState(getBalance);
 
       // Calculate expected post-transaction state
-      const expectedState = this.calculateExpectedState(
-        transactionState.preTransactionState,
-        transactionState.expectedChanges
-      );
+      const expectedState = this.calculateExpectedState(transactionState.preTransactionState, transactionState.expectedChanges);
 
       // Compare with tolerance for blockchain precision
       const isWalletUpdated = this.compareStatesWithTolerance(currentWalletState, expectedState);
@@ -200,13 +189,10 @@ export class TransactionListener {
         localStorage.setItem(LISTENER_CONFIG.LOCALSTORAGE_KEY, JSON.stringify(pendingTransactions));
 
         // Show success notification
-        toast.success(
-          `${transactionState.actionType.charAt(0).toUpperCase() + transactionState.actionType.slice(1)} completed!`,
-          {
-            description: "Your wallet balances have been updated.",
-            duration: 8000,
-          }
-        );
+        toast.success(`${transactionState.actionType.charAt(0).toUpperCase() + transactionState.actionType.slice(1)} completed!`, {
+          description: "Your wallet balances have been updated.",
+          duration: 8000,
+        });
 
         return true;
       } else {
@@ -378,9 +364,7 @@ export class TransactionListener {
   /**
    * Get current wallet state
    */
-  private async getCurrentWalletState(
-    getBalance: () => Promise<Array<{ tokenId: string; balance: string }>>
-  ): Promise<WalletState> {
+  private async getCurrentWalletState(getBalance: () => Promise<Array<{ tokenId: string; balance: string }>>): Promise<WalletState> {
     try {
       const balances = await getBalance();
 

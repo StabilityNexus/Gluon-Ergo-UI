@@ -199,8 +199,7 @@ export async function unsignedToEip12Tx(tx: any, ins: any, dataInput: any): Prom
     txJs.inputs[i] = resolvedLib.ErgoBox.from_json(JSONBI.stringify(ins[i])).to_js_eip12();
     if (prevExtension !== undefined) txJs.inputs[i].extension = prevExtension;
   }
-  for (let i = 0; i < txJs.outputs.length; i++)
-    if (txJs.outputs[i].extension === undefined) txJs.outputs[i].extension = {};
+  for (let i = 0; i < txJs.outputs.length; i++) if (txJs.outputs[i].extension === undefined) txJs.outputs[i].extension = {};
 
   txJs.dataInputs[0] = resolvedLib.ErgoBox.from_json(JSONBI.stringify(dataInput)).to_js_eip12();
   txJs.dataInputs[0].extension = {};

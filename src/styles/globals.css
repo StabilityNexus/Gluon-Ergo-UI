@@ -110,13 +110,7 @@
   }
 
   .dark body {
-    background-image: radial-gradient(
-      60% 120% at 50% 50%,
-      transparent 0%,
-      rgba(4, 4, 1, 0.01) 30%,
-      rgba(5, 5, 3, 0.02) 60%,
-      rgba(5, 5, 5, 0.164) 100%
-    );
+    background-image: radial-gradient(60% 120% at 50% 50%, transparent 0%, rgba(4, 4, 1, 0.01) 30%, rgba(5, 5, 3, 0.02) 60%, rgba(5, 5, 5, 0.164) 100%);
   }
 
   /* Global font inheritance for all elements including portal content */

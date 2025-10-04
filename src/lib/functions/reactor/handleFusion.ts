@@ -14,12 +14,7 @@ interface FusionParams {
 /**
  * Calculate the maximum possible ERG output based on available GAU/GAUC balances
  */
-const calculateMaxErgOutput = async (
-  gluonInstance: any,
-  gluonBox: any,
-  gauBalance: string,
-  gaucBalance: string
-): Promise<BigNumber> => {
+const calculateMaxErgOutput = async (gluonInstance: any, gluonBox: any, gauBalance: string, gaucBalance: string): Promise<BigNumber> => {
   try {
     // Convert our balances to blockchain decimals (these are BigInts)
     const gauAmount = BigInt(convertToDecimals(gauBalance));
@@ -38,10 +33,7 @@ const calculateMaxErgOutput = async (
 
     // Get token ratio for 1 ERG
     const oneErg = BigInt(1e9); // 1 ERG in nanoErgs
-    const { neutrons: neutronsForOneErg, protons: protonsForOneErg } = await gluonInstance.fusionWillNeed(
-      gluonBox,
-      Number(oneErg)
-    );
+    const { neutrons: neutronsForOneErg, protons: protonsForOneErg } = await gluonInstance.fusionWillNeed(gluonBox, Number(oneErg));
 
     // Convert to BigInt immediately
     const neutronsNeeded = BigInt(neutronsForOneErg);
@@ -68,13 +60,7 @@ const calculateMaxErgOutput = async (
 /**
  * Calculate the amounts of GAU and GAUC needed for fusion to get the desired ERG amount
  */
-export const calculateFusionAmounts = async ({
-  gluonInstance,
-  gluonBox,
-  value,
-  gauBalance,
-  gaucBalance,
-}: FusionParams): Promise<SwapResult | SwapError> => {
+export const calculateFusionAmounts = async ({ gluonInstance, gluonBox, value, gauBalance, gaucBalance }: FusionParams): Promise<SwapResult | SwapError> => {
   try {
     // Get maximum possible ERG output
     const maxNanoErgs = await calculateMaxErgOutput(gluonInstance, gluonBox, gauBalance, gaucBalance);
@@ -215,12 +201,7 @@ export const handleFusionSwap = async (
     });
 
     // Create unsigned transaction
-    const unsignedTransaction = await gluonInstance.fusionForEip12(
-      gluonBoxJs,
-      oracleBoxJs,
-      userBoxes,
-      Number(nanoErgsToFuse)
-    );
+    const unsignedTransaction = await gluonInstance.fusionForEip12(gluonBoxJs, oracleBoxJs, userBoxes, Number(nanoErgsToFuse));
 
     if (!unsignedTransaction) {
       throw new Error("Failed to create unsigned transaction");

@@ -73,13 +73,7 @@ export class NodeService {
     return this.get(`/blockchain/token/byId/${tokenId}`);
   }
 
-  async getWalletTxsByScanId(
-    scanId: number,
-    minInclusionHeight?: number,
-    maxInclusionHeight?: number,
-    minConfirmations?: number,
-    maxConfirmations?: number
-  ): Promise<any> {
+  async getWalletTxsByScanId(scanId: number, minInclusionHeight?: number, maxInclusionHeight?: number, minConfirmations?: number, maxConfirmations?: number): Promise<any> {
     return this.getAuthorized(`/wallet/transactionsByScanId/${scanId}`, {
       minInclusionHeight,
       maxInclusionHeight,
@@ -88,13 +82,7 @@ export class NodeService {
     });
   }
 
-  async getSpentBoxesByScanId(
-    scanId: number,
-    minInclusionHeight?: number,
-    maxInclusionHeight?: number,
-    minConfirmations?: number,
-    maxConfirmations?: number
-  ): Promise<any> {
+  async getSpentBoxesByScanId(scanId: number, minInclusionHeight?: number, maxInclusionHeight?: number, minConfirmations?: number, maxConfirmations?: number): Promise<any> {
     return this.getAuthorized(`/scan/spentBoxes/${scanId}`, {
       minInclusionHeight,
       maxInclusionHeight,
@@ -103,13 +91,7 @@ export class NodeService {
     });
   }
 
-  async getUnSpentBoxesByScanId(
-    scanId: number,
-    minInclusionHeight?: number,
-    maxInclusionHeight?: number,
-    minConfirmations?: number,
-    maxConfirmations?: number
-  ): Promise<any> {
+  async getUnSpentBoxesByScanId(scanId: number, minInclusionHeight?: number, maxInclusionHeight?: number, minConfirmations?: number, maxConfirmations?: number): Promise<any> {
     return this.getAuthorized(`/scan/unspentBoxes/${scanId}`, {
       minInclusionHeight,
       maxInclusionHeight,
@@ -119,17 +101,13 @@ export class NodeService {
   }
 
   async getUnSpentBoxesByAddress(address: string, offset: number, limit: number, sortDirection = "desc"): Promise<any> {
-    return this.post(
-      `/blockchain/box/unspent/byAddress?offset=${offset}&limit=${limit}&sortDirection=${sortDirection}`,
-      { "Content-Type": "text/plain" },
-      `${address}`
-    ).then((res) => res.data);
+    return this.post(`/blockchain/box/unspent/byAddress?offset=${offset}&limit=${limit}&sortDirection=${sortDirection}`, { "Content-Type": "text/plain" }, `${address}`).then(
+      (res) => res.data
+    );
   }
 
   async getUnconfirmedTxByErgoTree(ergoTree: string, offset: number, limit: number): Promise<any> {
-    return this.post(`/transactions/unconfirmed/byErgoTree?offset=${offset}&limit=${limit}`, {}, `${ergoTree}`).then(
-      (res) => res.data
-    );
+    return this.post(`/transactions/unconfirmed/byErgoTree?offset=${offset}&limit=${limit}`, {}, `${ergoTree}`).then((res) => res.data);
   }
 
   async getInfo(): Promise<any> {

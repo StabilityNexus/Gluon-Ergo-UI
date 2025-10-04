@@ -24,9 +24,7 @@ const robotoMono = Roboto_Mono({
 export default function App({ Component, pageProps }: AppProps) {
   return (
     <Providers>
-      <div
-        className={`${dmSans.variable} ${plusJakartaSans.variable} ${robotoMono.variable} flex min-h-screen flex-col font-sans antialiased`}
-      >
+      <div className={`${dmSans.variable} ${plusJakartaSans.variable} ${robotoMono.variable} flex min-h-screen flex-col font-sans antialiased`}>
         <TopNavbar />
         <div className="mx-auto w-full max-w-[84rem] flex-1 px-4 sm:px-6 lg:px-8">
           <main className="py-8">

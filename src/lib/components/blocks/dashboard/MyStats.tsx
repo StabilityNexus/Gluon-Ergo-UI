@@ -58,7 +58,9 @@ export function MyStats() {
       try {
         // Fetch ERG price, wallet balances, and protocol prices in parallel
         const [ergPriceRes, balances, sdk] = await Promise.all([
-          fetch("/api/getErgPrice").catch(() => ({ json: () => ({ price: null }) })),
+          fetch("/api/getErgPrice").catch(() => ({
+            json: () => ({ price: null }),
+          })),
           getBalance(),
           import("gluon-gold-sdk"),
         ]);
@@ -235,13 +237,7 @@ export function MyStats() {
               {isLoading ? (
                 <Skeleton className="h-8 w-24" />
               ) : (
-                <motion.div
-                  key={balance}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.2 }}
-                  className="text-2xl font-bold text-foreground"
-                >
+                <motion.div key={balance} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }} className="text-2xl font-bold text-foreground">
                   {formatBalance(balance, token === "ERG" ? 4 : 6)}
                 </motion.div>
               )}
@@ -251,13 +247,7 @@ export function MyStats() {
               {isLoading ? (
                 <Skeleton className="h-5 w-20" />
               ) : (
-                <motion.div
-                  key={usdValue}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.2 }}
-                  className="text-sm font-medium text-muted-foreground"
-                >
+                <motion.div key={usdValue} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }} className="text-sm font-medium text-muted-foreground">
                   {formatUSD(usdValue)}
                 </motion.div>
               )}
@@ -270,12 +260,7 @@ export function MyStats() {
 
   if (!isConnected) {
     return (
-      <motion.div
-        className="flex w-full flex-col gap-6 pt-8"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-      >
+      <motion.div className="flex w-full flex-col gap-6 pt-8" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
         <Card className="w-full rounded-2xl border-border bg-card p-8">
           <h2 className="mb-8 mt-4 text-3xl font-bold text-foreground md:text-5xl">My Holdings</h2>
 
@@ -306,12 +291,7 @@ export function MyStats() {
   }
 
   return (
-    <motion.div
-      className="flex w-full flex-col gap-6 pt-8"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4 }}
-    >
+    <motion.div className="flex w-full flex-col gap-6 pt-8" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
       <div className="w-full space-y-6 rounded-2xl border border-border bg-card p-6 md:space-y-8 md:p-8">
         {/* Header */}
         <motion.div
@@ -330,11 +310,7 @@ export function MyStats() {
           </div>
 
           {hasError && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="flex items-center gap-2 text-red-500"
-            >
+            <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} className="flex items-center gap-2 text-red-500">
               <AlertCircle className="h-5 w-5" />
               <span className="text-sm">Error loading data</span>
             </motion.div>
@@ -369,11 +345,7 @@ export function MyStats() {
         </motion.div>
 
         {/* Token Balances Grid - Responsive */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3, duration: 0.4 }}
-        >
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3, duration: 0.4 }}>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 xl:grid-cols-3">
             {renderTokenBalance("ERG", stats.ergBalance, stats.ergBalanceUSD, 0.1)}
             {renderTokenBalance("GAU", stats.gauBalance, stats.gauBalanceUSD, 0.2)}

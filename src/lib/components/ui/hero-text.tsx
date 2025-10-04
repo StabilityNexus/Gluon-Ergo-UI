@@ -3,10 +3,7 @@ import { motion } from "framer-motion";
 
 function HeroText() {
   const [titleNumber, setTitleNumber] = useState(0);
-  const titles = useMemo(
-    () => ["Decentralized", "Autonomous", "Permissionless", "Transparent", "Fully Crypto Backed", "Gold-Pegged"],
-    []
-  );
+  const titles = useMemo(() => ["Decentralized", "Autonomous", "Permissionless", "Transparent", "Fully Crypto Backed", "Gold-Pegged"], []);
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {

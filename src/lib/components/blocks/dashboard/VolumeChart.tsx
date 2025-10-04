@@ -42,10 +42,7 @@ export function VolumeChart({ isLoading: externalLoading = false, hasError: exte
         const cumulativeData: VolumeDataPoint[] = [];
 
         for (const day of days) {
-          const [ProtonsToNeutrons, NeutronsToProtons] = await Promise.all([
-            gluonBox.accumulateVolumeProtonsToNeutrons(day),
-            gluonBox.accumulateVolumeNeutronsToProtons(day),
-          ]);
+          const [ProtonsToNeutrons, NeutronsToProtons] = await Promise.all([gluonBox.accumulateVolumeProtonsToNeutrons(day), gluonBox.accumulateVolumeNeutronsToProtons(day)]);
 
           cumulativeData.push({
             day,
@@ -105,11 +102,7 @@ export function VolumeChart({ isLoading: externalLoading = false, hasError: exte
   const hasError = externalError || chartError;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.5, duration: 0.4 }}
-    >
+    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5, duration: 0.4 }}>
       <Card className="border-border bg-card p-6">
         <div className="mb-4 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
@@ -137,25 +130,11 @@ export function VolumeChart({ isLoading: externalLoading = false, hasError: exte
         ) : (
           <div className="mx-auto w-full" style={{ height: "360px" }}>
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                data={chartData}
-                margin={{ top: 10, right: 0, left: -10, bottom: 10 }}
-                barCategoryGap={8}
-                barSize={20}
-              >
+              <BarChart data={chartData} margin={{ top: 10, right: 0, left: -10, bottom: 10 }} barCategoryGap={8} barSize={20}>
                 <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                <XAxis
-                  dataKey="day"
-                  tick={{ fontSize: 9.5 }}
-                  tickMargin={10}
-                  height={30}
-                  padding={{ left: 0, right: 0 }}
-                />
+                <XAxis dataKey="day" tick={{ fontSize: 9.5 }} tickMargin={10} height={30} padding={{ left: 0, right: 0 }} />
                 <YAxis tickFormatter={(value) => value.toFixed(1)} tick={{ fontSize: 9.5 }} width={45} />
-                <Tooltip
-                  formatter={(value: number) => [`${value.toFixed(2)} ERG`]}
-                  labelFormatter={(label) => `Day ${label}`}
-                />
+                <Tooltip formatter={(value: number) => [`${value.toFixed(2)} ERG`]} labelFormatter={(label) => `Day ${label}`} />
                 <Legend wrapperStyle={{ fontSize: 9.5 }} />
                 <Bar dataKey="VolumeProtonsToNeutrons" name="GAUC → GAU" fill="#facc15" />
                 <Bar dataKey="VolumeNeutronsToProtons" name="GAU → GAUC" fill="#ef4444" />

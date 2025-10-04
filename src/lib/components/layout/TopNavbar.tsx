@@ -12,7 +12,11 @@ import { useTheme } from "next-themes";
 const navItems = [
   { href: "/reactor", label: "Reactor" },
   { href: "/swap", label: "Swap" },
-  { href: "https://docs.stability.nexus/gluon-protocols/gluon-overview", label: "Docs", external: true },
+  {
+    href: "https://docs.stability.nexus/gluon-protocols/gluon-overview",
+    label: "Docs",
+    external: true,
+  },
 ];
 
 export function TopNavbar() {
@@ -31,10 +35,7 @@ export function TopNavbar() {
             key={item.href}
             href={item.href}
             target={item.external ? "_blank" : undefined}
-            className={cn(
-              "text-sm font-medium transition-colors hover:text-primary",
-              isActive ? "font-semibold text-primary" : "text-muted-foreground"
-            )}
+            className={cn("text-sm font-medium transition-colors hover:text-primary", isActive ? "font-semibold text-primary" : "text-muted-foreground")}
           >
             {item.label}
           </Link>
@@ -50,13 +51,7 @@ export function TopNavbar() {
           {/* Left - Logo */}
           <div className="flex items-center">
             <Link href="/" className="flex items-center">
-              <Image
-                src={theme === "dark" ? "/logo/gluon.png" : "/logo/gluon-light.png"}
-                alt="Gluon Logo"
-                width={28}
-                height={28}
-                priority
-              />
+              <Image src={theme === "dark" ? "/logo/gluon.png" : "/logo/gluon-light.png"} alt="Gluon Logo" width={28} height={28} priority />
               {isDesktop && <p className="ml-2 font-sans text-2xl font-medium">GLUON GOLD</p>}
             </Link>
           </div>
@@ -71,9 +66,7 @@ export function TopNavbar() {
               {/* Right - Actions */}
               <div className="flex items-center gap-2">
                 <ThemeToggle />
-                {pathname?.startsWith("/reactor") || pathname?.startsWith("/test") || pathname?.startsWith("/swap") ? (
-                  <WalletConnector />
-                ) : null}
+                {pathname?.startsWith("/reactor") || pathname?.startsWith("/test") || pathname?.startsWith("/swap") ? <WalletConnector /> : null}
               </div>
             </>
           ) : (
@@ -81,9 +74,7 @@ export function TopNavbar() {
               {/* Mobile view */}
               <div className="flex items-center gap-2">
                 <ThemeToggle />
-                {pathname?.startsWith("/reactor") || pathname?.startsWith("/test") || pathname?.startsWith("/swap") ? (
-                  <WalletConnector />
-                ) : null}
+                {pathname?.startsWith("/reactor") || pathname?.startsWith("/test") || pathname?.startsWith("/swap") ? <WalletConnector /> : null}
               </div>
             </>
           )}

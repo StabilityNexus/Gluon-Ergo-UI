@@ -82,16 +82,7 @@ export function GluonStats() {
         ]);
 
         // Fetch protocol metrics
-        const [
-          volume1DayPN,
-          volume1DayNP,
-          volume7DayPN,
-          volume7DayNP,
-          volume14DayPN,
-          volume14DayNP,
-          circProtons,
-          circNeutrons,
-        ] = await Promise.all([
+        const [volume1DayPN, volume1DayNP, volume7DayPN, volume7DayNP, volume14DayPN, volume14DayNP, circProtons, circNeutrons] = await Promise.all([
           gluonBox.accumulateVolumeProtonsToNeutrons(1),
           gluonBox.accumulateVolumeNeutronsToProtons(1),
           gluonBox.accumulateVolumeProtonsToNeutrons(7),
@@ -121,9 +112,18 @@ export function GluonStats() {
         });
 
         setProtocolMetrics({
-          volume1Day: { protonsToNeutrons: volume1DayPN, neutronsToProtons: volume1DayNP },
-          volume7Day: { protonsToNeutrons: volume7DayPN, neutronsToProtons: volume7DayNP },
-          volume14Day: { protonsToNeutrons: volume14DayPN, neutronsToProtons: volume14DayNP },
+          volume1Day: {
+            protonsToNeutrons: volume1DayPN,
+            neutronsToProtons: volume1DayNP,
+          },
+          volume7Day: {
+            protonsToNeutrons: volume7DayPN,
+            neutronsToProtons: volume7DayNP,
+          },
+          volume14Day: {
+            protonsToNeutrons: volume14DayPN,
+            neutronsToProtons: volume14DayNP,
+          },
           volumeArrays,
           circulatingSupply: { protons: circProtons, neutrons: circNeutrons },
         });
@@ -198,37 +198,11 @@ export function GluonStats() {
     );
   };
 
-  const renderStatCard = (
-    title: string,
-    subtitle: string,
-    value: BigNumber | null,
-    icon: React.ReactNode,
-    suffix: string = "",
-    delay: number = 0
-  ) => (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay, duration: 0.4, ease: "easeOut" }}
-    >
-      <Card
-        className={cn(
-          "flex h-full flex-col justify-between p-6",
-          "rounded-xl transition-all duration-300 hover:shadow-lg",
-          "bg-gradient-to-br from-background to-muted/30"
-        )}
-      >
-        <motion.div
-          className="mb-4 flex items-center gap-3"
-          initial={{ opacity: 0, x: -10 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: delay + 0.1, duration: 0.3 }}
-        >
-          <motion.div
-            className="flex items-center justify-center"
-            whileHover={{ scale: 1.1, rotate: 5 }}
-            transition={{ duration: 0.2 }}
-          >
+  const renderStatCard = (title: string, subtitle: string, value: BigNumber | null, icon: React.ReactNode, suffix: string = "", delay: number = 0) => (
+    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay, duration: 0.4, ease: "easeOut" }}>
+      <Card className={cn("flex h-full flex-col justify-between p-6", "rounded-xl transition-all duration-300 hover:shadow-lg", "bg-gradient-to-br from-background to-muted/30")}>
+        <motion.div className="mb-4 flex items-center gap-3" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: delay + 0.1, duration: 0.3 }}>
+          <motion.div className="flex items-center justify-center" whileHover={{ scale: 1.1, rotate: 5 }} transition={{ duration: 0.2 }}>
             {icon}
           </motion.div>
           <div className="flex flex-col">
@@ -268,12 +242,7 @@ export function GluonStats() {
   );
 
   return (
-    <motion.div
-      className="flex w-full flex-col gap-6 xl:flex-row"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.5 }}
-    >
+    <motion.div className="flex w-full flex-col gap-6 xl:flex-row" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
       {/* Left Section */}
       <div className="flex flex-1 flex-col">
         {/* Header */}
@@ -322,34 +291,15 @@ export function GluonStats() {
 
         {/* Token Grid - Responsive */}
         <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
-          {renderStatCard(
-            "1 kg of Gold",
-            "Oracle Gold Price",
-            stats.goldKgPrice,
-            <Scale className="h-8 w-8 text-yellow-700" />,
-            "ERG",
-            0.1
-          )}
+          {renderStatCard("1 kg of Gold", "Oracle Gold Price", stats.goldKgPrice, <Scale className="h-8 w-8 text-yellow-700" />, "ERG", 0.1)}
 
           {renderStatCard("GAU", "Gold Pegged Token", stats.gauPrice, <GauIcon className="h-8 w-8" />, "ERG", 0.2)}
 
-          {renderStatCard(
-            "GAUC",
-            "Leveraged Yield Token",
-            stats.gaucPrice,
-            <GaucIcon className="h-8 w-8" />,
-            "ERG",
-            0.3
-          )}
+          {renderStatCard("GAUC", "Leveraged Yield Token", stats.gaucPrice, <GaucIcon className="h-8 w-8" />, "ERG", 0.3)}
         </div>
 
         {/* Protocol Volume Metrics - Improved */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4, duration: 0.4 }}
-          className="flex-1"
-        >
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4, duration: 0.4 }} className="flex-1">
           <Card className="border-border bg-card p-6">
             <div className="mb-4 flex items-center gap-2">
               <Activity className="h-5 w-5 text-primary" />
@@ -358,49 +308,25 @@ export function GluonStats() {
             <div className="grid grid-cols-1 gap-6 text-center sm:grid-cols-4">
               <div className="space-y-2">
                 <div className="text-2xl font-bold text-foreground">
-                  {isLoading ? (
-                    <Skeleton className="mx-auto h-8 w-16" />
-                  ) : hasError ? (
-                    "—"
-                  ) : (
-                    nanoErgsToErgs(protocolMetrics.volume14Day.neutronsToProtons).toFixed(2)
-                  )}
+                  {isLoading ? <Skeleton className="mx-auto h-8 w-16" /> : hasError ? "—" : nanoErgsToErgs(protocolMetrics.volume14Day.neutronsToProtons).toFixed(2)}
                 </div>
                 <div className="text-sm text-muted-foreground">14d GAU to GAUC Volume (ERG)</div>
               </div>
               <div className="space-y-2">
                 <div className="text-2xl font-bold text-foreground">
-                  {isLoading ? (
-                    <Skeleton className="mx-auto h-8 w-16" />
-                  ) : hasError ? (
-                    "—"
-                  ) : (
-                    nanoErgsToErgs(protocolMetrics.volume14Day.protonsToNeutrons).toFixed(2)
-                  )}
+                  {isLoading ? <Skeleton className="mx-auto h-8 w-16" /> : hasError ? "—" : nanoErgsToErgs(protocolMetrics.volume14Day.protonsToNeutrons).toFixed(2)}
                 </div>
                 <div className="text-sm text-muted-foreground">14d GAUC to GAU Volume (ERG)</div>
               </div>
               <div className="space-y-2">
                 <div className="text-2xl font-bold text-foreground">
-                  {isLoading ? (
-                    <Skeleton className="mx-auto h-8 w-16" />
-                  ) : hasError ? (
-                    "—"
-                  ) : (
-                    convertFromDecimals(protocolMetrics.circulatingSupply.neutrons).toFixed(2)
-                  )}
+                  {isLoading ? <Skeleton className="mx-auto h-8 w-16" /> : hasError ? "—" : convertFromDecimals(protocolMetrics.circulatingSupply.neutrons).toFixed(2)}
                 </div>
                 <div className="text-sm text-muted-foreground">GAU Supply</div>
               </div>
               <div className="space-y-2">
                 <div className="text-2xl font-bold text-foreground">
-                  {isLoading ? (
-                    <Skeleton className="mx-auto h-8 w-16" />
-                  ) : hasError ? (
-                    "—"
-                  ) : (
-                    convertFromDecimals(protocolMetrics.circulatingSupply.protons).toFixed(2)
-                  )}
+                  {isLoading ? <Skeleton className="mx-auto h-8 w-16" /> : hasError ? "—" : convertFromDecimals(protocolMetrics.circulatingSupply.protons).toFixed(2)}
                 </div>
                 <div className="text-sm text-muted-foreground">GAUC Supply</div>
               </div>
@@ -410,32 +336,16 @@ export function GluonStats() {
       </div>
 
       {/* Right Card - Responsive and Properly Aligned */}
-      <motion.div
-        initial={{ opacity: 0, x: 20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ delay: 0.4, duration: 0.4 }}
-        className="w-full xl:w-[320px]"
-      >
+      <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.4, duration: 0.4 }} className="w-full xl:w-[320px]">
         <Card className="flex h-full flex-col border-border bg-gradient-to-b from-background to-muted/20 p-6">
           <div className="flex flex-1 flex-col items-center justify-center space-y-8">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.5, duration: 0.3 }}
-              className="text-center"
-            >
+            <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.5, duration: 0.3 }} className="text-center">
               <div className="mb-4 flex items-center justify-center">
                 <Percent className="mr-2 h-8 w-8 text-amber-600" />
               </div>
               <AnimatePresence mode="wait">
                 {isLoading ? (
-                  <motion.div
-                    key="loading-ratio"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="flex flex-col items-center gap-2"
-                  >
+                  <motion.div key="loading-ratio" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center gap-2">
                     <Skeleton className="h-12 w-20" />
                     <Skeleton className="h-5 w-32" />
                   </motion.div>
@@ -448,33 +358,20 @@ export function GluonStats() {
                     transition={{ duration: 0.3 }}
                     className="text-center"
                   >
-                    <div className="mb-1 text-5xl font-bold text-foreground">
-                      {hasError ? "—" : stats.reserveRatio ? Math.round(stats.reserveRatio) : "—"}%
-                    </div>
+                    <div className="mb-1 text-5xl font-bold text-foreground">{hasError ? "—" : stats.reserveRatio ? Math.round(stats.reserveRatio) : "—"}%</div>
                     <div className="text-sm font-medium text-muted-foreground">Current Reserve Ratio</div>
                   </motion.div>
                 )}
               </AnimatePresence>
             </motion.div>
 
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.6, duration: 0.3 }}
-              className="text-center"
-            >
+            <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.6, duration: 0.3 }} className="text-center">
               <div className="mb-4 flex items-center justify-center">
                 <TrendingUp className="mr-2 h-8 w-8 text-green-600" />
               </div>
               <AnimatePresence mode="wait">
                 {isLoading ? (
-                  <motion.div
-                    key="loading-tvl"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="flex flex-col items-center gap-2"
-                  >
+                  <motion.div key="loading-tvl" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center gap-2">
                     <Skeleton className="h-12 w-24" />
                     <Skeleton className="h-5 w-32" />
                   </motion.div>
@@ -487,9 +384,7 @@ export function GluonStats() {
                     transition={{ duration: 0.3 }}
                     className="text-center"
                   >
-                    <div className="mb-1 text-4xl font-bold text-foreground">
-                      {hasError ? "—" : stats.tvl ? renderTooltip(stats.tvl, "Total Value Locked") : "—"}
-                    </div>
+                    <div className="mb-1 text-4xl font-bold text-foreground">{hasError ? "—" : stats.tvl ? renderTooltip(stats.tvl, "Total Value Locked") : "—"}</div>
                     <div className="text-sm font-medium text-muted-foreground">Total Value Locked</div>
                   </motion.div>
                 )}

@@ -152,7 +152,10 @@ export function ErgoProvider({ children }: { children: React.ReactNode }) {
 
     try {
       // Get ERG balance
-      const balance = (await ergo.get_balance("all")) as Array<{ tokenId: string; balance: string }>;
+      const balance = (await ergo.get_balance("all")) as Array<{
+        tokenId: string;
+        balance: string;
+      }>;
 
       return balance;
     } catch (error) {

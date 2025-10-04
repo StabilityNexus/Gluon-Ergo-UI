@@ -15,21 +15,10 @@ import { convertFromDecimals, formatMicroNumber, nanoErgsToErgs, convertToDecima
 import { createTransactionListener, type WalletState, type ExpectedChanges } from "@/lib/utils/transaction-listener";
 import BigNumber from "bignumber.js";
 import { Token, TokenSymbol, ReceiptDetails } from "@/lib/functions/reactor/types";
-import {
-  defaultTokens,
-  getValidToTokens,
-  getActionType,
-  getDescription,
-  getTitle,
-  formatValue,
-} from "@/lib/functions/reactor/utils";
+import { defaultTokens, getValidToTokens, getActionType, getDescription, getTitle, formatValue } from "@/lib/functions/reactor/utils";
 import { calculateFissionAmounts, handleFissionSwap } from "@/lib/functions/reactor/handleFission";
 import { calculateFusionAmounts, handleFusionSwap } from "@/lib/functions/reactor/handleFusion";
-import {
-  calculateTransmutationAmounts,
-  handleTransmuteToGoldSwap,
-  handleTransmuteFromGoldSwap,
-} from "@/lib/functions/reactor/handleTransmutation";
+import { calculateTransmutationAmounts, handleTransmuteToGoldSwap, handleTransmuteFromGoldSwap } from "@/lib/functions/reactor/handleTransmutation";
 import { debounce } from "lodash";
 import { handleInitializationError } from "@/lib/utils/error-handler";
 import ErgIcon from "@/lib/components/icons/ErgIcon";
@@ -318,10 +307,7 @@ export function ReactorSwap() {
         setGauAmount(result.gauAmount);
         setGaucAmount(result.gaucAmount);
         setReceiptDetails(result.receiptDetails);
-      } else if (
-        (fromToken.symbol === "GAUC" && toToken.symbol === "GAU") ||
-        (fromToken.symbol === "GAU" && toToken.symbol === "GAUC")
-      ) {
+      } else if ((fromToken.symbol === "GAUC" && toToken.symbol === "GAU") || (fromToken.symbol === "GAU" && toToken.symbol === "GAUC")) {
         // Only calculate if we're changing the input amount
         if (!isFromInput) return;
 
@@ -407,7 +393,11 @@ export function ReactorSwap() {
         setGluonBox(gBox);
         setOracleBox(oBox);
         setBoxesReady(true);
-        console.log("Gluon initialized:", { network: gluon.config.NETWORK, gluonBox: gBox, oracleBox: oBox });
+        console.log("Gluon initialized:", {
+          network: gluon.config.NETWORK,
+          gluonBox: gBox,
+          oracleBox: oBox,
+        });
       } catch (error) {
         console.error("Failed to initialize Gluon:", error);
         const errorDetails = handleInitializationError(error, "Gluon", true);
@@ -438,15 +428,12 @@ export function ReactorSwap() {
           if (ergBalanceData && ergBalanceData.balance) {
             const ergRawBalance = BigInt(ergBalanceData.balance);
             const ergAmount = formatErgAmount(nanoErgsToErgs(ergRawBalance));
-            updatedTokens = updatedTokens.map((token) =>
-              token.symbol === "ERG" ? { ...token, balance: ergAmount } : token
-            );
+            updatedTokens = updatedTokens.map((token) => (token.symbol === "ERG" ? { ...token, balance: ergAmount } : token));
           }
 
           balances.forEach((tokenBalance) => {
             if (tokenBalance.tokenId === TOKEN_ADDRESS.gau) {
-              const gauRawBalance =
-                tokenBalance.balance && tokenBalance.balance !== "NaN" ? BigInt(tokenBalance.balance) : BigInt(0);
+              const gauRawBalance = tokenBalance.balance && tokenBalance.balance !== "NaN" ? BigInt(tokenBalance.balance) : BigInt(0);
               const gauDecimalBalance = convertFromDecimals(gauRawBalance);
               updatedTokens = updatedTokens.map((t) =>
                 t.symbol === "GAU"
@@ -457,8 +444,7 @@ export function ReactorSwap() {
                   : t
               );
             } else if (tokenBalance.tokenId === TOKEN_ADDRESS.gauc) {
-              const gaucRawBalance =
-                tokenBalance.balance && tokenBalance.balance !== "NaN" ? BigInt(tokenBalance.balance) : BigInt(0);
+              const gaucRawBalance = tokenBalance.balance && tokenBalance.balance !== "NaN" ? BigInt(tokenBalance.balance) : BigInt(0);
               const gaucDecimalBalance = convertFromDecimals(gaucRawBalance);
               updatedTokens = updatedTokens.map((t) =>
                 t.symbol === "GAUC"
@@ -476,10 +462,7 @@ export function ReactorSwap() {
           if (gauToken && gaucToken) {
             const gauBalanceNum = parseFloat(gauToken.balance);
             const gaucBalanceNum = parseFloat(gaucToken.balance);
-            const pairBalanceVal = Math.min(
-              Number.isNaN(gauBalanceNum) ? 0 : gauBalanceNum,
-              Number.isNaN(gaucBalanceNum) ? 0 : gaucBalanceNum
-            );
+            const pairBalanceVal = Math.min(Number.isNaN(gauBalanceNum) ? 0 : gauBalanceNum, Number.isNaN(gaucBalanceNum) ? 0 : gaucBalanceNum);
             const pairBalance = formatTokenAmount(pairBalanceVal.toString());
             updatedTokens = updatedTokens.map((t) => (t.symbol === "GAU-GAUC" ? { ...t, balance: pairBalance } : t));
           }
@@ -542,7 +525,10 @@ export function ReactorSwap() {
   // Add a separate effect for handling connection state changes
   useEffect(() => {
     if (!isConnected) {
-      const zeroBalanceTokens = defaultTokens.map((t) => ({ ...t, balance: "0" }));
+      const zeroBalanceTokens = defaultTokens.map((t) => ({
+        ...t,
+        balance: "0",
+      }));
       setTokens(zeroBalanceTokens);
       setFromToken(zeroBalanceTokens[0]);
       setToToken(zeroBalanceTokens[3]);
@@ -614,9 +600,7 @@ export function ReactorSwap() {
       // Cancel any pending calculations
       debouncedCalculateAmounts.cancel();
     } else {
-      console.warn(
-        "Cannot swap: current 'To' token cannot be swapped to be the 'From' token leading to current 'From' token as 'To' token"
-      );
+      console.warn("Cannot swap: current 'To' token cannot be swapped to be the 'From' token leading to current 'From' token as 'To' token");
     }
   };
 
@@ -641,7 +625,9 @@ export function ReactorSwap() {
         usingForUI: maxAmount,
       });
       setToAmount(maxAmount);
-      console.log("🔄 Triggering calculation with precise value:", { preciseValue: maxErgOutputPrecise });
+      console.log("🔄 Triggering calculation with precise value:", {
+        preciseValue: maxErgOutputPrecise,
+      });
       await calculateAmounts(maxErgOutputPrecise, false);
       return;
     }
@@ -674,16 +660,7 @@ export function ReactorSwap() {
     }
   };
   const handleSwap = async () => {
-    if (
-      !isConnected ||
-      isInitializing ||
-      !gluonInstance ||
-      !gluonBox ||
-      !oracleBox ||
-      isLoading ||
-      isCalculating ||
-      hasPendingTransactions
-    ) {
+    if (!isConnected || isInitializing || !gluonInstance || !gluonBox || !oracleBox || isLoading || isCalculating || hasPendingTransactions) {
       console.error("Swap prerequisites not met.", {
         isConnected,
         isInitializing,
@@ -727,12 +704,7 @@ export function ReactorSwap() {
       }
 
       // Calculate expected changes for transaction listener
-      const expectedChanges = calculateExpectedChanges(
-        actionType,
-        inputAmount,
-        outputAmounts,
-        receiptDetails.fees.totalFee
-      );
+      const expectedChanges = calculateExpectedChanges(actionType, inputAmount, outputAmounts, receiptDetails.fees.totalFee);
 
       console.log("🚀 Starting transaction with listener:", {
         actionType,
@@ -746,15 +718,7 @@ export function ReactorSwap() {
       const utxos = await getUtxos();
 
       if (fromToken.symbol === "ERG" && toToken.symbol === "GAU-GAUC") {
-        result = await handleFissionSwap(
-          gluonInstance,
-          gluonBox,
-          oracleBox,
-          utxos,
-          nodeService,
-          ergoWallet,
-          fromAmount
-        );
+        result = await handleFissionSwap(gluonInstance, gluonBox, oracleBox, utxos, nodeService, ergoWallet, fromAmount);
       } else if (fromToken.symbol === "GAU-GAUC" && toToken.symbol === "ERG") {
         result = await handleFusionSwap(gluonInstance, gluonBox, oracleBox, utxos, nodeService, ergoWallet, toAmount);
       } else if (fromToken.symbol === "GAUC" && toToken.symbol === "GAU") {
@@ -876,7 +840,10 @@ export function ReactorSwap() {
           />
           <div
             className="h-4 w-24 rounded bg-gradient-to-r from-muted/60 via-muted/80 to-muted/60 bg-[length:200px_100%]"
-            style={{ animation: "shimmer 1.5s ease-in-out infinite", animationDelay: "0.2s" }}
+            style={{
+              animation: "shimmer 1.5s ease-in-out infinite",
+              animationDelay: "0.2s",
+            }}
           />
         </motion.div>
 
@@ -884,33 +851,36 @@ export function ReactorSwap() {
           {/* Token selector skeleton */}
           <div
             className="h-10 w-[200px] rounded bg-gradient-to-r from-muted/60 via-muted/80 to-muted/60 bg-[length:200px_100%]"
-            style={{ animation: "shimmer 1.5s ease-in-out infinite", animationDelay: "0.1s" }}
+            style={{
+              animation: "shimmer 1.5s ease-in-out infinite",
+              animationDelay: "0.1s",
+            }}
           />
 
           {/* Amount input skeleton */}
           <div className="flex flex-1 items-center justify-end gap-2">
             <div
               className="h-12 w-32 rounded bg-gradient-to-r from-muted/60 via-muted/80 to-muted/60 bg-[length:200px_100%]"
-              style={{ animation: "shimmer 1.5s ease-in-out infinite", animationDelay: "0.3s" }}
+              style={{
+                animation: "shimmer 1.5s ease-in-out infinite",
+                animationDelay: "0.3s",
+              }}
             />
             {isFromCard && (
               <div
                 className="h-4 w-8 rounded bg-gradient-to-r from-muted/60 via-muted/80 to-muted/60 bg-[length:200px_100%]"
-                style={{ animation: "shimmer 1.5s ease-in-out infinite", animationDelay: "0.4s" }}
+                style={{
+                  animation: "shimmer 1.5s ease-in-out infinite",
+                  animationDelay: "0.4s",
+                }}
               />
             )}
           </div>
         </motion.div>
 
         {/* Loading pulse indicator */}
-        <motion.div
-          className="mt-2 flex justify-center"
-          animate={{ opacity: [0.5, 1, 0.5] }}
-          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-        >
-          <span className="text-xs text-muted-foreground">
-            {isFromCard ? "Loading reactor..." : "Preparing swap..."}
-          </span>
+        <motion.div className="mt-2 flex justify-center" animate={{ opacity: [0.5, 1, 0.5] }} transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}>
+          <span className="text-xs text-muted-foreground">{isFromCard ? "Loading reactor..." : "Preparing swap..."}</span>
         </motion.div>
       </motion.div>
     );
@@ -1000,12 +970,7 @@ export function ReactorSwap() {
           transition: { duration: 0.2 },
         }}
       >
-        <motion.div
-          className="mb-2 flex justify-between"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.1, duration: 0.2 }}
-        >
+        <motion.div className="mb-2 flex justify-between" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1, duration: 0.2 }}>
           <span className="text-sm text-muted-foreground">{isFromCard ? "From" : "To"}</span>
           <AnimatePresence mode="wait">
             {isFromCard && currentToken.symbol !== "GAU-GAUC" && (
@@ -1041,33 +1006,17 @@ export function ReactorSwap() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.2 }}
         >
-          <Select
-            value={currentToken.symbol}
-            onValueChange={isFromCard ? handleFromTokenChange : handleToTokenChange}
-            disabled={isInputDisabled}
-          >
-            <SelectTrigger
-              className={cn(
-                "w-full px-3 py-2 font-sans font-semibold sm:w-[200px]",
-                tokenColors.trigger,
-                isInputDisabled && "cursor-not-allowed opacity-50"
-              )}
-            >
+          <Select value={currentToken.symbol} onValueChange={isFromCard ? handleFromTokenChange : handleToTokenChange} disabled={isInputDisabled}>
+            <SelectTrigger className={cn("w-full px-3 py-2 font-sans font-semibold sm:w-[200px]", tokenColors.trigger, isInputDisabled && "cursor-not-allowed opacity-50")}>
               <SelectValue className="font-sans" />
             </SelectTrigger>
             <SelectContent className={cn("border bg-background font-sans shadow-lg", tokenColors.content)}>
               {(isFromCard ? tokens : getValidToTokens(fromToken.symbol, tokens)).map((token) => {
                 const itemColors = getTokenColors(token.symbol);
                 return (
-                  <SelectItem
-                    key={token.symbol}
-                    value={token.symbol}
-                    className={cn("cursor-pointer font-sans font-medium", itemColors.item)}
-                  >
+                  <SelectItem key={token.symbol} value={token.symbol} className={cn("cursor-pointer font-sans font-medium", itemColors.item)}>
                     <div className="flex items-center gap-2 font-sans">
-                      <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center">
-                        {getTokenIcon(token.symbol, "w-6 h-6")}
-                      </div>
+                      <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center">{getTokenIcon(token.symbol, "w-6 h-6")}</div>
                       <span className="font-sans">{token.symbol}</span>
                     </div>
                   </SelectItem>
@@ -1078,13 +1027,7 @@ export function ReactorSwap() {
 
           {shouldRenderInputOrDisplay ? (
             <div className="flex min-w-0 flex-1 items-center justify-center pl-8 sm:justify-end">
-              <motion.div
-                key={`${currentToken.symbol}-input`}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.2 }}
-                className="min-w-[80px] flex-1"
-              >
+              <motion.div key={`${currentToken.symbol}-input`} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }} className="min-w-[80px] flex-1">
                 <NumericFormat
                   value={currentAmount}
                   onValueChange={(values) => handleAmountChange(values, isFromCard)}
@@ -1109,10 +1052,7 @@ export function ReactorSwap() {
                         const inputBN = new BigNumber(floatValue || 0);
                         const maxErgBN = new BigNumber(maxErgOutputPrecise || "0");
 
-                        return (
-                          inputBN.isLessThanOrEqualTo(maxErgBN) ||
-                          isUserInputMaxValue(inputBN.toString(), maxErgOutputPrecise)
-                        );
+                        return inputBN.isLessThanOrEqualTo(maxErgBN) || isUserInputMaxValue(inputBN.toString(), maxErgOutputPrecise);
                       } catch (error) {
                         console.error("Precision compare error in isAllowed:", error);
                         return false;
@@ -1170,14 +1110,8 @@ export function ReactorSwap() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1, duration: 0.2 }}
         >
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.2, duration: 0.2 }}
-          >
-            <span className="mb-2 block text-sm text-muted-foreground">
-              Balance: {formatTokenAmount(tokens.find((t) => t.symbol === "GAU")?.balance || "0")} GAU
-            </span>
+          <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2, duration: 0.2 }}>
+            <span className="mb-2 block text-sm text-muted-foreground">Balance: {formatTokenAmount(tokens.find((t) => t.symbol === "GAU")?.balance || "0")} GAU</span>
             <div className="flex items-center gap-2">
               <AnimatePresence mode="wait">
                 <motion.span
@@ -1191,11 +1125,7 @@ export function ReactorSwap() {
                   {formatTokenAmount(gauAmount)}
                 </motion.span>
               </AnimatePresence>
-              <motion.div
-                className="flex items-center gap-1 rounded-lg border bg-muted px-2 py-1 text-xs font-bold"
-                whileHover={{ scale: 1.05 }}
-                transition={{ duration: 0.1 }}
-              >
+              <motion.div className="flex items-center gap-1 rounded-lg border bg-muted px-2 py-1 text-xs font-bold" whileHover={{ scale: 1.05 }} transition={{ duration: 0.1 }}>
                 <div className="flex h-4 w-4 flex-shrink-0 items-center justify-center">
                   <GauIcon className="h-4 w-4 flex-shrink-0" />
                 </div>
@@ -1204,16 +1134,9 @@ export function ReactorSwap() {
             </div>
           </motion.div>
 
-          <motion.div
-            className="flex sm:justify-end"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.2, duration: 0.2 }}
-          >
+          <motion.div className="flex sm:justify-end" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2, duration: 0.2 }}>
             <div>
-              <span className="mb-2 block text-sm text-muted-foreground">
-                Balance: {formatTokenAmount(tokens.find((t) => t.symbol === "GAUC")?.balance || "0")} GAUC
-              </span>
+              <span className="mb-2 block text-sm text-muted-foreground">Balance: {formatTokenAmount(tokens.find((t) => t.symbol === "GAUC")?.balance || "0")} GAUC</span>
               <div className="flex items-center gap-2">
                 <AnimatePresence mode="wait">
                   <motion.span
@@ -1227,11 +1150,7 @@ export function ReactorSwap() {
                     {formatTokenAmount(gaucAmount)}
                   </motion.span>
                 </AnimatePresence>
-                <motion.div
-                  className="flex items-center gap-1 rounded-lg border bg-muted px-2 py-1 text-xs font-bold"
-                  whileHover={{ scale: 1.05 }}
-                  transition={{ duration: 0.1 }}
-                >
+                <motion.div className="flex items-center gap-1 rounded-lg border bg-muted px-2 py-1 text-xs font-bold" whileHover={{ scale: 1.05 }} transition={{ duration: 0.1 }}>
                   <div className="flex h-4 w-4 flex-shrink-0 items-center justify-center">
                     <GaucIcon className="h-4 w-4 flex-shrink-0" />
                   </div>
@@ -1251,15 +1170,7 @@ export function ReactorSwap() {
   // const maxAmount = parseFloat(fromToken?.balance || "0"); // what's allowed
 
   const isSwapDisabled = () => {
-    if (
-      isLoading ||
-      !isConnected ||
-      !boxesReady ||
-      isCalculating ||
-      (isInitializing && !boxesReady) ||
-      hasPendingTransactions
-    )
-      return true;
+    if (isLoading || !isConnected || !boxesReady || isCalculating || (isInitializing && !boxesReady) || hasPendingTransactions) return true;
 
     const fromVal = parseFloat(fromAmount);
     const toVal = parseFloat(toAmount);
@@ -1319,27 +1230,16 @@ export function ReactorSwap() {
   return (
     <div className="flex w-full flex-col gap-6 xl:flex-row xl:items-start xl:justify-evenly">
       {/* Reactor Card - Centered */}
-      <motion.div
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.3, ease: "easeOut" }}
-        className="w-full xl:w-[580px]"
-      >
+      <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3, ease: "easeOut" }} className="w-full xl:w-[580px]">
         <Card className="rounded-2xl">
           <CardHeader className="space-y-1.5 p-6">
             <div className="flex items-start justify-between">
               <div className="space-y-1.5">
                 <h2 className="text-4xl font-bold">Reactor</h2>
-                <p className="text-2xl font-semibold text-primary dark:text-accent-foreground">
-                  {getTitle(currentAction)}
-                </p>
+                <p className="text-2xl font-semibold text-primary dark:text-accent-foreground">{getTitle(currentAction)}</p>
                 <p className="text-sm text-muted-foreground">{getDescription(currentAction)}</p>
                 {initError && <p className="text-sm text-red-500">{initError}</p>}
-                {hasPendingTransactions && (
-                  <p className="animate-pulse text-sm text-blue-500">
-                    🔄 Transaction pending - waiting for wallet update...
-                  </p>
-                )}
+                {hasPendingTransactions && <p className="animate-pulse text-sm text-blue-500">🔄 Transaction pending - waiting for wallet update...</p>}
               </div>
               {/* <Button
                 variant="ghost"
@@ -1354,38 +1254,22 @@ export function ReactorSwap() {
           <CardContent className="space-y-1 p-6 pt-0">
             <AnimatePresence mode="wait">
               {(!boxesReady || isInitializing) && !initError ? (
-                <motion.div
-                  key="loading-skeleton"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.3 }}
-                  className="space-y-1"
-                >
+                <motion.div key="loading-skeleton" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }} className="space-y-1">
                   {renderSkeletonCard(true)}
 
                   <div className="relative flex justify-center">
                     <div className="absolute -bottom-2 -top-2 z-[999] flex items-center justify-center">
                       <motion.div
                         animate={{ rotate: 360 }}
-                        transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                        transition={{
+                          duration: 2,
+                          repeat: Infinity,
+                          ease: "linear",
+                        }}
                       >
                         <div className="rounded-full border-border bg-card p-3 shadow-md">
-                          <motion.svg
-                            width="16"
-                            height="16"
-                            viewBox="0 0 16 16"
-                            fill="none"
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="text-muted-foreground"
-                          >
-                            <path
-                              d="M4 5h8M8 1L4 5l4-4M12 11H4M8 15l4-4-4 4"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
+                          <motion.svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-muted-foreground">
+                            <path d="M4 5h8M8 1L4 5l4-4M12 11H4M8 15l4-4-4 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                           </motion.svg>
                         </div>
                       </motion.div>
@@ -1406,12 +1290,7 @@ export function ReactorSwap() {
 
                   <div className="relative flex justify-center">
                     <div className="pointer-events-none absolute -bottom-2 -top-2 z-[999] flex items-center justify-center">
-                      <motion.div
-                        whileHover={{ scale: 1.1, rotate: 180 }}
-                        whileTap={{ scale: 0.9 }}
-                        transition={{ duration: 0.2 }}
-                        className="pointer-events-auto"
-                      >
+                      <motion.div whileHover={{ scale: 1.1, rotate: 180 }} whileTap={{ scale: 0.9 }} transition={{ duration: 0.2 }} className="pointer-events-auto">
                         <Button
                           variant="outline"
                           size="icon"
@@ -1429,13 +1308,7 @@ export function ReactorSwap() {
                             animate={{ rotate: 0 }}
                             transition={{ duration: 0.2 }}
                           >
-                            <path
-                              d="M4 5h8M8 1L4 5l4-4M12 11H4M8 15l4-4-4 4"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
+                            <path d="M4 5h8M8 1L4 5l4-4M12 11H4M8 15l4-4-4 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                           </motion.svg>
                         </Button>
                       </motion.div>
@@ -1472,7 +1345,11 @@ export function ReactorSwap() {
                       <motion.span
                         className="text-sm text-muted-foreground"
                         animate={{ opacity: [0.5, 1, 0.5] }}
-                        transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+                        transition={{
+                          duration: 1.5,
+                          repeat: Infinity,
+                          ease: "easeInOut",
+                        }}
                       >
                         Connecting to Gluon Network...
                       </motion.span>
@@ -1490,36 +1367,19 @@ export function ReactorSwap() {
                   whileTap={{ scale: isSwapDisabled() ? 1 : 0.98 }}
                 >
                   <Button
-                    className={cn(
-                      "relative mt-4 h-12 w-full overflow-hidden bg-orange-500",
-                      !isSwapDisabled() ? "hover:bg-orange-600" : "cursor-not-allowed opacity-50"
-                    )}
+                    className={cn("relative mt-4 h-12 w-full overflow-hidden bg-orange-500", !isSwapDisabled() ? "hover:bg-orange-600" : "cursor-not-allowed opacity-50")}
                     onClick={handleSwap}
                     disabled={isSwapDisabled()}
                   >
                     <AnimatePresence mode="wait">
                       <motion.span
-                        key={
-                          isLoading
-                            ? "loading"
-                            : isCalculating
-                              ? "calculating"
-                              : hasPendingTransactions
-                                ? "pending"
-                                : "swap"
-                        }
+                        key={isLoading ? "loading" : isCalculating ? "calculating" : hasPendingTransactions ? "pending" : "swap"}
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
                         transition={{ duration: 0.2 }}
                       >
-                        {isLoading
-                          ? "Processing..."
-                          : isCalculating
-                            ? "Calculating..."
-                            : hasPendingTransactions
-                              ? "Transaction Pending..."
-                              : "Swap"}
+                        {isLoading ? "Processing..." : isCalculating ? "Calculating..." : hasPendingTransactions ? "Transaction Pending..." : "Swap"}
                       </motion.span>
                     </AnimatePresence>
 
@@ -1553,18 +1413,8 @@ export function ReactorSwap() {
       >
         <Card className="rounded-2xl">
           <CardContent className="p-6 xl:p-4">
-            <motion.div
-              className="space-y-2 text-sm xl:space-y-1.5 xl:text-xs"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.3, duration: 0.2 }}
-            >
-              <motion.div
-                className="flex justify-between"
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.4, duration: 0.2 }}
-              >
+            <motion.div className="space-y-2 text-sm xl:space-y-1.5 xl:text-xs" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3, duration: 0.2 }}>
+              <motion.div className="flex justify-between" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.4, duration: 0.2 }}>
                 <span className="text-muted-foreground xl:text-xs">Input Amount</span>
                 <AnimatePresence mode="wait">
                   <motion.span
@@ -1585,12 +1435,7 @@ export function ReactorSwap() {
               <Separator className="my-2 xl:my-1 xl:opacity-50" />
 
               {receiptDetails.fees.devFee ? (
-                <motion.div
-                  className="flex justify-between"
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.5, duration: 0.2 }}
-                >
+                <motion.div className="flex justify-between" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.5, duration: 0.2 }}>
                   <span className="text-muted-foreground xl:text-xs">Dev Fee</span>
                   <AnimatePresence mode="wait">
                     <motion.span
@@ -1607,12 +1452,7 @@ export function ReactorSwap() {
                 </motion.div>
               ) : null}
               {receiptDetails.fees.oracleFee ? (
-                <motion.div
-                  className="flex justify-between"
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.55, duration: 0.2 }}
-                >
+                <motion.div className="flex justify-between" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.55, duration: 0.2 }}>
                   <span className="text-muted-foreground xl:text-xs">Oracle Fee</span>
                   <AnimatePresence mode="wait">
                     <motion.span
@@ -1629,12 +1469,7 @@ export function ReactorSwap() {
                 </motion.div>
               ) : null}
               {receiptDetails.fees.minerFee ? (
-                <motion.div
-                  className="flex justify-between"
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.6, duration: 0.2 }}
-                >
+                <motion.div className="flex justify-between" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.6, duration: 0.2 }}>
                   <span className="text-muted-foreground xl:text-xs">Miner Fee</span>
                   <AnimatePresence mode="wait">
                     <motion.span

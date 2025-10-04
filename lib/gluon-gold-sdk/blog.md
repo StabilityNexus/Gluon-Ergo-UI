@@ -117,14 +117,7 @@ This operation involves sending Protons to the reactor to receive Neutrons:
 const protonsToTransmute = 5000000; // Example amount
 const height = await nodeService.getNetworkHeight(); // Get current network height
 const oracleBuyBackJs = await gluonInstance.getOracleBuyBackBoxJs();
-const unsignedTransaction = await gluonInstance.transmuteToGoldForEip12(
-  gluonBoxJs,
-  oracleBoxJs,
-  userBoxes,
-  oracleBuyBackJs,
-  protonsToTransmute,
-  height
-);
+const unsignedTransaction = await gluonInstance.transmuteToGoldForEip12(gluonBoxJs, oracleBoxJs, userBoxes, oracleBuyBackJs, protonsToTransmute, height);
 ```
 
 ### Transmuting from Gold
@@ -133,14 +126,7 @@ This operation involves sending Neutrons to the reactor to receive Protons:
 
 ```javascript
 const neutronsToDecay = 2700000; // Example amount
-const unsignedTransaction = await gluonInstance.transmuteFromGoldForEip12(
-  gluonBoxJs,
-  oracleBoxJs,
-  userBoxes,
-  oracleBuyBackJs,
-  neutronsToDecay,
-  height
-);
+const unsignedTransaction = await gluonInstance.transmuteFromGoldForEip12(gluonBoxJs, oracleBoxJs, userBoxes, oracleBuyBackJs, neutronsToDecay, height);
 ```
 
 ### Signing the Transaction
@@ -169,9 +155,7 @@ For each operation, you can calculate the total fees and their breakdown:
 
 ```javascript
 const fees = await gluonInstance.getTotalFeeAmountFission(gluonBoxJs, amountToFission);
-console.log(
-  `Developer Fee: ${fees.devFee}, UI Fee: ${fees.uiFee}, Oracle Fee: ${fees.oracleFee}, Total Fee: ${fees.totalFee}`
-);
+console.log(`Developer Fee: ${fees.devFee}, UI Fee: ${fees.uiFee}, Oracle Fee: ${fees.oracleFee}, Total Fee: ${fees.totalFee}`);
 ```
 
 These fees can be shown to the user in the UI so they know what to expect in terms of costs for the operation. These fees are in nanoERGs.
@@ -186,9 +170,7 @@ const protonPrice = await gluonInstance.protonPrice(oracleBoxJs);
 const oracleGoldPricePerKg = await oracleBoxJs.getPrice();
 const oracleGoldPricePerGram = await oracleBoxJs.getPricePerGram();
 
-console.log(
-  `Neutron Price: ${neutronPrice}, Proton Price: ${protonPrice}, Gold Price: ${oracleGoldPricePerKg}, Gold Price Per Gram: ${oracleGoldPricePerGram}`
-);
+console.log(`Neutron Price: ${neutronPrice}, Proton Price: ${protonPrice}, Gold Price: ${oracleGoldPricePerKg}, Gold Price Per Gram: ${oracleGoldPricePerGram}`);
 ```
 
 These values should be displayed in the website to users so they know what the current price of the assets are. They can easily be called with the updated oracle box to get the latest price periodically.

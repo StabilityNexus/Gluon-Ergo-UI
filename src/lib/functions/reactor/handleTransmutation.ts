@@ -63,9 +63,7 @@ export const calculateTransmutationAmounts = async ({
       if (fromTokenSymbol === "GAUC") {
         willGet = BigInt(await gluonInstance.transmuteToGoldWillGet(gluonBox, oracleBox, Number(inputAmount), height));
       } else {
-        willGet = BigInt(
-          await gluonInstance.transmuteFromGoldWillGet(gluonBox, oracleBox, Number(inputAmount), height)
-        );
+        willGet = BigInt(await gluonInstance.transmuteFromGoldWillGet(gluonBox, oracleBox, Number(inputAmount), height));
       }
 
       console.log("🔍 [DEBUG] TRANSMUTATION PREDICTION RAW", {
@@ -201,14 +199,7 @@ export const handleTransmuteToGoldSwap = async ({
     });
 
     // Create unsigned transaction
-    const unsignedTransaction = await gluonInstance.transmuteToGoldForEip12(
-      gluonBoxJs,
-      oracleBoxJs,
-      userBoxes,
-      oracleBuyBackJs,
-      Number(protonsToTransmute),
-      height
-    );
+    const unsignedTransaction = await gluonInstance.transmuteToGoldForEip12(gluonBoxJs, oracleBoxJs, userBoxes, oracleBuyBackJs, Number(protonsToTransmute), height);
 
     if (!unsignedTransaction) {
       throw new Error("Failed to create unsigned transaction");
@@ -296,14 +287,7 @@ export const handleTransmuteFromGoldSwap = async ({
     });
 
     // Create unsigned transaction
-    const unsignedTransaction = await gluonInstance.transmuteFromGoldForEip12(
-      gluonBoxJs,
-      oracleBoxJs,
-      userBoxes,
-      oracleBuyBackJs,
-      Number(neutronsToDecay),
-      height
-    );
+    const unsignedTransaction = await gluonInstance.transmuteFromGoldForEip12(gluonBoxJs, oracleBoxJs, userBoxes, oracleBuyBackJs, Number(neutronsToDecay), height);
 
     if (!unsignedTransaction) {
       throw new Error("Failed to create unsigned transaction");

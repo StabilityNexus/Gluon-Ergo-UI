@@ -50,24 +50,13 @@ export class Gluon {
    * @param ergVal - erg value of the transaction
    * @param withOracleFee whether to include oracle fee or not
    */
-  async getFeeBoxes(
-    gluonBox: GluonBox,
-    ergVal: number,
-    withOracleFee: boolean = true
-  ): Promise<{ devFee?: any; uiFee?: any; oracleFee?: any }> {
+  async getFeeBoxes(gluonBox: GluonBox, ergVal: number, withOracleFee: boolean = true): Promise<{ devFee?: any; uiFee?: any; oracleFee?: any }> {
     const fees: { devFee?: any; uiFee?: any; oracleFee?: any } = {};
     const devFee = await this.getDevFee(gluonBox, ergVal);
     fees.devFee = await getOutBoxJs(this.config.DEV_TREE, devFee + this.config.MIN_FEE);
-    if (this.config.UI_FEE > 0)
-      fees.uiFee = await getOutBoxJs(
-        this.config.UI_TREE,
-        Math.floor(Number((this.config.UI_FEE * ergVal) / 1e5)) + this.config.MIN_FEE
-      );
+    if (this.config.UI_FEE > 0) fees.uiFee = await getOutBoxJs(this.config.UI_TREE, Math.floor(Number((this.config.UI_FEE * ergVal) / 1e5)) + this.config.MIN_FEE);
     if (this.config.ORACLE_FEE > 0 && withOracleFee)
-      fees.oracleFee = await getOutBoxJs(
-        this.config.ORACLE_FEE_TREE,
-        Math.floor(Number((this.config.ORACLE_FEE * ergVal) / 1e5)) + this.config.MIN_FEE
-      );
+      fees.oracleFee = await getOutBoxJs(this.config.ORACLE_FEE_TREE, Math.floor(Number((this.config.ORACLE_FEE * ergVal) / 1e5)) + this.config.MIN_FEE);
     return fees;
   }
 
@@ -85,7 +74,13 @@ export class Gluon {
   async getTotalFeeAmountFission(
     gluonBox: GluonBox,
     ergToFission: number
-  ): Promise<{ devFee: number; uiFee: number; oracleFee: number; minerFee: number; totalFee: number }> {
+  ): Promise<{
+    devFee: number;
+    uiFee: number;
+    oracleFee: number;
+    minerFee: number;
+    totalFee: number;
+  }> {
     const feeBoxes = await this.getFeeBoxes(gluonBox, ergToFission, false);
     const devFee = feeBoxes.devFee?.value || 0;
     const uiFee = feeBoxes.uiFee?.value || 0;
@@ -109,7 +104,13 @@ export class Gluon {
   async getFeePercentageFission(
     gluonBox: GluonBox,
     ergToFission: number
-  ): Promise<{ devFee: number; uiFee: number; oracleFee: number; minerFee: number; totalFee: number }> {
+  ): Promise<{
+    devFee: number;
+    uiFee: number;
+    oracleFee: number;
+    minerFee: number;
+    totalFee: number;
+  }> {
     const fees = await this.getTotalFeeAmountFission(gluonBox, ergToFission);
     return {
       devFee: fees.devFee / ergToFission,
@@ -134,7 +135,13 @@ export class Gluon {
   async getTotalFeeAmountFusion(
     gluonBox: GluonBox,
     ergToFusion: number
-  ): Promise<{ devFee: number; uiFee: number; oracleFee: number; minerFee: number; totalFee: number }> {
+  ): Promise<{
+    devFee: number;
+    uiFee: number;
+    oracleFee: number;
+    minerFee: number;
+    totalFee: number;
+  }> {
     const feeBoxes = await this.getFeeBoxes(gluonBox, ergToFusion, false);
     const devFee = feeBoxes.devFee?.value || 0;
     const uiFee = feeBoxes.uiFee?.value || 0;
@@ -158,7 +165,13 @@ export class Gluon {
   async getFeePercentageFusion(
     gluonBox: GluonBox,
     ergToFusion: number
-  ): Promise<{ devFee: number; uiFee: number; oracleFee: number; minerFee: number; totalFee: number }> {
+  ): Promise<{
+    devFee: number;
+    uiFee: number;
+    oracleFee: number;
+    minerFee: number;
+    totalFee: number;
+  }> {
     const fees = await this.getTotalFeeAmountFusion(gluonBox, ergToFusion);
     return {
       devFee: fees.devFee / ergToFusion,
@@ -185,7 +198,13 @@ export class Gluon {
     gluonBox: GluonBox,
     goldOracleBox: GoldOracleBox,
     protonsToTransmute: number
-  ): Promise<{ devFee: number; uiFee: number; oracleFee: number; minerFee: number; totalFee: number }> {
+  ): Promise<{
+    devFee: number;
+    uiFee: number;
+    oracleFee: number;
+    minerFee: number;
+    totalFee: number;
+  }> {
     const protonVol = ((await gluonBox.protonPrice(goldOracleBox)) * BigInt(protonsToTransmute)) / BigInt(1e9);
     const feeBoxes = await this.getFeeBoxes(gluonBox, Number(protonVol), true);
     const devFee = feeBoxes.devFee?.value || 0;
@@ -212,7 +231,13 @@ export class Gluon {
     gluonBox: GluonBox,
     goldOracleBox: GoldOracleBox,
     protonsToTransmute: number
-  ): Promise<{ devFee: number; uiFee: number; oracleFee: number; minerFee: number; totalFee: number }> {
+  ): Promise<{
+    devFee: number;
+    uiFee: number;
+    oracleFee: number;
+    minerFee: number;
+    totalFee: number;
+  }> {
     const fees = await this.getTotalFeeAmountTransmuteToGold(gluonBox, goldOracleBox, protonsToTransmute);
     const protonVol = ((await gluonBox.protonPrice(goldOracleBox)) * BigInt(protonsToTransmute)) / BigInt(1e9);
     return {
@@ -240,7 +265,13 @@ export class Gluon {
     gluonBox: GluonBox,
     goldOracleBox: GoldOracleBox,
     neutronsToDecay: number
-  ): Promise<{ devFee: number; uiFee: number; oracleFee: number; minerFee: number; totalFee: number }> {
+  ): Promise<{
+    devFee: number;
+    uiFee: number;
+    oracleFee: number;
+    minerFee: number;
+    totalFee: number;
+  }> {
     const neutronVol = ((await gluonBox.neutronPrice(goldOracleBox)) * BigInt(neutronsToDecay)) / BigInt(1e9);
     const feeBoxes = await this.getFeeBoxes(gluonBox, Number(neutronVol), true);
     const devFee = feeBoxes.devFee?.value || 0;
@@ -266,7 +297,13 @@ export class Gluon {
     gluonBox: GluonBox,
     goldOracleBox: GoldOracleBox,
     neutronsToDecay: number
-  ): Promise<{ devFee: number; uiFee: number; oracleFee: number; minerFee: number; totalFee: number }> {
+  ): Promise<{
+    devFee: number;
+    uiFee: number;
+    oracleFee: number;
+    minerFee: number;
+    totalFee: number;
+  }> {
     const fees = await this.getTotalFeeAmountTransmuteFromGold(gluonBox, goldOracleBox, neutronsToDecay);
     const neutronVol = ((await gluonBox.neutronPrice(goldOracleBox)) * BigInt(neutronsToDecay)) / BigInt(1e9);
     return {
@@ -287,12 +324,8 @@ export class Gluon {
     const sNeutrons = await gluonBox.getNeutronsCirculatingSupply();
     const sProtons = await gluonBox.getProtonsCirculatingSupply();
     const ergFissioned = gluonBox.getErgFissioned();
-    const outNeutronsAmount = Number(
-      (BigInt(ergToFission) * BigInt(sNeutrons) * (BigInt(1e9) - BigInt(1e6))) / BigInt(ergFissioned) / BigInt(1e9)
-    );
-    const outProtonsAmount = Number(
-      (BigInt(ergToFission) * BigInt(sProtons) * (BigInt(1e9) - BigInt(1e6))) / BigInt(ergFissioned) / BigInt(1e9)
-    );
+    const outNeutronsAmount = Number((BigInt(ergToFission) * BigInt(sNeutrons) * (BigInt(1e9) - BigInt(1e6))) / BigInt(ergFissioned) / BigInt(1e9));
+    const outProtonsAmount = Number((BigInt(ergToFission) * BigInt(sProtons) * (BigInt(1e9) - BigInt(1e6))) / BigInt(ergFissioned) / BigInt(1e9));
     return { neutrons: outNeutronsAmount, protons: outProtonsAmount };
   }
 
@@ -304,12 +337,7 @@ export class Gluon {
    * @param oracle - oracle box
    * @param ergToFission - erg value of the fission transaction (user request)
    */
-  async fission(
-    gluonBox: GluonBox,
-    oracle: GoldOracleBox,
-    userBoxes: any,
-    ergToFission: number
-  ): Promise<UnsignedTransaction> {
+  async fission(gluonBox: GluonBox, oracle: GoldOracleBox, userBoxes: any, ergToFission: number): Promise<UnsignedTransaction> {
     const willGet = await this.fissionWillGet(gluonBox, ergToFission);
     const outNeutronsAmount = willGet.neutrons;
     const outProtonsAmount = willGet.protons;
@@ -325,12 +353,7 @@ export class Gluon {
     outGluonBoxJs.additionalRegisters.R6 = await gluonBox.newFeeRegister(await this.getDevFee(gluonBox, ergToFission));
 
     const feeBoxesArray = Object.values(fees).filter(Boolean);
-    const userOutBox = getChangeBoxJs(
-      userBoxes.concat([gluonBox.boxJs]),
-      feeBoxesArray.concat([outGluonBoxJs]),
-      userBoxes[0].ergoTree,
-      this.config.MINER_FEE
-    );
+    const userOutBox = getChangeBoxJs(userBoxes.concat([gluonBox.boxJs]), feeBoxesArray.concat([outGluonBoxJs]), userBoxes[0].ergoTree, this.config.MINER_FEE);
     const outs = [outGluonBoxJs, userOutBox].concat(feeBoxesArray);
     const ins = [gluonBox.boxJs].concat(userBoxes);
     return await jsToUnsignedTx(ins, outs, [oracle.boxJs], this.config.MINER_FEE);
@@ -373,12 +396,7 @@ export class Gluon {
    * @param userBoxes - user boxes
    * @param ergToRedeem - erg value of the fusion transaction (user request)
    */
-  async fusion(
-    gluonBox: GluonBox,
-    oracle: GoldOracleBox,
-    userBoxes: any,
-    ergToRedeem: number
-  ): Promise<UnsignedTransaction> {
+  async fusion(gluonBox: GluonBox, oracle: GoldOracleBox, userBoxes: any, ergToRedeem: number): Promise<UnsignedTransaction> {
     const willNeed = await this.fusionWillNeed(gluonBox, ergToRedeem);
     const inNeutronsAmount = willNeed.neutrons;
     const inProtonsAmount = willNeed.protons;
@@ -394,12 +412,7 @@ export class Gluon {
     outGluonBoxJs.additionalRegisters.R6 = await gluonBox.newFeeRegister(await this.getDevFee(gluonBox, ergToRedeem));
 
     const feeBoxesArray = Object.values(fees).filter(Boolean);
-    const userOutBox = getChangeBoxJs(
-      userBoxes.concat([gluonBox.boxJs]),
-      feeBoxesArray.concat([outGluonBoxJs]),
-      userBoxes[0].ergoTree,
-      this.config.MINER_FEE
-    );
+    const userOutBox = getChangeBoxJs(userBoxes.concat([gluonBox.boxJs]), feeBoxesArray.concat([outGluonBoxJs]), userBoxes[0].ergoTree, this.config.MINER_FEE);
     const outs = [outGluonBoxJs, userOutBox].concat(feeBoxesArray);
     const ins = [gluonBox.boxJs].concat(userBoxes);
     return await jsToUnsignedTx(ins, outs, [oracle.boxJs], this.config.MINER_FEE);
@@ -424,12 +437,7 @@ export class Gluon {
    * @param protonsToTransmute - number of protons to transmute
    * @param height - current height
    */
-  async transmuteToGoldWillGet(
-    gluonBox: GluonBox,
-    goldOracleBox: GoldOracleBox,
-    protonsToTransmute: number,
-    height: number
-  ): Promise<number> {
+  async transmuteToGoldWillGet(gluonBox: GluonBox, goldOracleBox: GoldOracleBox, protonsToTransmute: number, height: number): Promise<number> {
     const protonVol = ((await gluonBox.protonPrice(goldOracleBox)) * BigInt(protonsToTransmute)) / BigInt(1e9);
     const volPlus = await gluonBox.addVolume(height, Number(protonVol));
     const volMinus = await gluonBox.subVolume(height, 0);
@@ -476,20 +484,13 @@ export class Gluon {
     const outGluonBoxJs = JSONBI.parse(JSONBI.stringify(gluonBox.boxJs));
     outGluonBoxJs.assets[gluonBox.neutronInd()].amount -= BigInt(outNeutronsAmount);
     outGluonBoxJs.assets[gluonBox.protonInd()].amount += BigInt(protonsToTransmute);
-    outGluonBoxJs.additionalRegisters.R6 = await gluonBox.newFeeRegister(
-      await this.getDevFee(gluonBox, Number(protonErgs))
-    );
+    outGluonBoxJs.additionalRegisters.R6 = await gluonBox.newFeeRegister(await this.getDevFee(gluonBox, Number(protonErgs)));
     outGluonBoxJs.additionalRegisters.R7 = await gluonBox.newVolumeRegister(volPlus);
     outGluonBoxJs.additionalRegisters.R8 = await gluonBox.newVolumeRegister(volMinus);
     outGluonBoxJs.additionalRegisters.R9 = await gluonBox.newLastDayRegister(height);
 
     const feeBoxesArray = Object.values(fees).filter(Boolean);
-    const userOutBox = getChangeBoxJs(
-      userBoxes.concat([gluonBox.boxJs, buybackBoxJs]),
-      feeBoxesArray.concat([outGluonBoxJs]),
-      userBoxes[0].ergoTree,
-      this.config.MINER_FEE
-    );
+    const userOutBox = getChangeBoxJs(userBoxes.concat([gluonBox.boxJs, buybackBoxJs]), feeBoxesArray.concat([outGluonBoxJs]), userBoxes[0].ergoTree, this.config.MINER_FEE);
     const outs = [outGluonBoxJs, userOutBox, buyBackFee].concat(feeBoxesArray.filter((box) => box !== fees.oracleFee));
     const ins = [gluonBox.boxJs].concat(userBoxes).concat([buybackBoxJs]);
     const tx = await jsToUnsignedTx(ins, outs, [goldOracleBox.boxJs], this.config.MINER_FEE, height);
@@ -509,14 +510,7 @@ export class Gluon {
    * @param protonsToTransmute - number of protons to transmute
    * @param height - current height of the blockchain
    */
-  async transmuteToGoldForEip12(
-    gluonBox: GluonBox,
-    oracle: GoldOracleBox,
-    userBoxes: any,
-    buybackBoxJs: any,
-    protonsToTransmute: number,
-    height: number
-  ): Promise<any> {
+  async transmuteToGoldForEip12(gluonBox: GluonBox, oracle: GoldOracleBox, userBoxes: any, buybackBoxJs: any, protonsToTransmute: number, height: number): Promise<any> {
     let tx = await this.transmuteToGold(gluonBox, oracle, userBoxes, buybackBoxJs, protonsToTransmute, height);
     return await unsignedToEip12Tx(tx, [gluonBox.boxJs].concat(userBoxes).concat([buybackBoxJs]), oracle.boxJs);
   }
@@ -528,12 +522,7 @@ export class Gluon {
    * @param neutronsToDecay - number of neutrons to decay
    * @param height - current height of the blockchain
    */
-  async transmuteFromGoldWillGet(
-    gluonBox: GluonBox,
-    goldOracleBox: GoldOracleBox,
-    neutronsToDecay: number,
-    height: number
-  ): Promise<number> {
+  async transmuteFromGoldWillGet(gluonBox: GluonBox, goldOracleBox: GoldOracleBox, neutronsToDecay: number, height: number): Promise<number> {
     const neutronVol = ((await gluonBox.neutronPrice(goldOracleBox)) * BigInt(neutronsToDecay)) / BigInt(1e9);
     const volPlus = await gluonBox.addVolume(height, 0);
     const volMinus = await gluonBox.subVolume(height, Number(neutronVol));
@@ -581,19 +570,12 @@ export class Gluon {
     const outGluonBoxJs = JSONBI.parse(JSONBI.stringify(gluonBox.boxJs));
     outGluonBoxJs.assets[gluonBox.neutronInd()].amount += BigInt(neutronsToDecay);
     outGluonBoxJs.assets[gluonBox.protonInd()].amount -= BigInt(outProtonAmount);
-    outGluonBoxJs.additionalRegisters.R6 = await gluonBox.newFeeRegister(
-      await this.getDevFee(gluonBox, Number(neutronsErgs))
-    );
+    outGluonBoxJs.additionalRegisters.R6 = await gluonBox.newFeeRegister(await this.getDevFee(gluonBox, Number(neutronsErgs)));
     outGluonBoxJs.additionalRegisters.R7 = await gluonBox.newVolumeRegister(volPlus);
     outGluonBoxJs.additionalRegisters.R8 = await gluonBox.newVolumeRegister(volMinus);
     outGluonBoxJs.additionalRegisters.R9 = await gluonBox.newLastDayRegister(height);
 
-    const userOutBox = getChangeBoxJs(
-      userBoxes.concat([gluonBox.boxJs, buybackBoxJs]),
-      fees.concat([outGluonBoxJs]),
-      userBoxes[0].ergoTree,
-      this.config.MINER_FEE
-    );
+    const userOutBox = getChangeBoxJs(userBoxes.concat([gluonBox.boxJs, buybackBoxJs]), fees.concat([outGluonBoxJs]), userBoxes[0].ergoTree, this.config.MINER_FEE);
     const outs = [outGluonBoxJs, userOutBox, buyBackFee].concat(fees.slice(0, fees.length - 1));
     const ins = [gluonBox.boxJs].concat(userBoxes).concat([buybackBoxJs]);
     const tx = await jsToUnsignedTx(ins, outs, [goldOracleBox.boxJs], this.config.MINER_FEE, height);
@@ -613,14 +595,7 @@ export class Gluon {
    * @param neutronsToDecay - number of neutrons to decay
    * @param height - current height of the blockchain
    */
-  async transmuteFromGoldForEip12(
-    gluonBox: GluonBox,
-    oracle: GoldOracleBox,
-    userBoxes: any,
-    buybackBoxJs: any,
-    neutronsToDecay: number,
-    height: number
-  ): Promise<any> {
+  async transmuteFromGoldForEip12(gluonBox: GluonBox, oracle: GoldOracleBox, userBoxes: any, buybackBoxJs: any, neutronsToDecay: number, height: number): Promise<any> {
     let tx = await this.transmuteFromGold(gluonBox, oracle, userBoxes, buybackBoxJs, neutronsToDecay, height);
     return await unsignedToEip12Tx(tx, [gluonBox.boxJs].concat(userBoxes).concat([buybackBoxJs]), oracle.boxJs);
   }

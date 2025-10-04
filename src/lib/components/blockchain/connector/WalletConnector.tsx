@@ -2,12 +2,7 @@
 
 import { Button } from "@/lib/components/ui/button";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/lib/components/ui/drawer";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/lib/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/lib/components/ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/lib/components/ui/tabs";
 import { useErgo } from "@/lib/providers/ErgoProvider";
 import { WalletIcon, LogOut, ArrowUpRight } from "lucide-react";
@@ -123,12 +118,7 @@ export function WalletConnector() {
                   <Button
                     variant="ghost"
                     className="mt-2 border shadow-sm hover:bg-white hover:text-black"
-                    onClick={() =>
-                      window.open(
-                        "https://ergoplatform.org/en/blog/2022-03-10-storing-crypto-on-ergo-nautilus-wallet/",
-                        "_blank"
-                      )
-                    }
+                    onClick={() => window.open("https://ergoplatform.org/en/blog/2022-03-10-storing-crypto-on-ergo-nautilus-wallet/", "_blank")}
                   >
                     Get Started with Ergo <ArrowUpRight />
                   </Button>
@@ -136,12 +126,7 @@ export function WalletConnector() {
               ) : (
                 <div className="flex flex-col gap-2">
                   {walletList.map((wallet) => (
-                    <Button
-                      key={wallet.connectName}
-                      variant="outline"
-                      className="mt-3 w-full justify-start gap-2"
-                      onClick={() => handleConnect(wallet.connectName)}
-                    >
+                    <Button key={wallet.connectName} variant="outline" className="mt-3 w-full justify-start gap-2" onClick={() => handleConnect(wallet.connectName)}>
                       <img src={wallet.icon} alt={wallet.name} className="h-6 w-6" />
                       {wallet.name}
                     </Button>

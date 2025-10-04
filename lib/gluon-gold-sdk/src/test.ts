@@ -33,14 +33,7 @@ async function testBetaPlus() {
   const height = await node.getNetworkHeight();
 
   const protonsToTransmute = 5000000;
-  return await gluon.transmuteToGoldForEip12(
-    gluonBoxJs,
-    oracleBoxJs,
-    [userBoxJs],
-    oracleBuyBackJs,
-    protonsToTransmute,
-    height
-  );
+  return await gluon.transmuteToGoldForEip12(gluonBoxJs, oracleBoxJs, [userBoxJs], oracleBuyBackJs, protonsToTransmute, height);
 }
 
 async function testBetaMinus() {
@@ -53,14 +46,7 @@ async function testBetaMinus() {
   const height = await node.getNetworkHeight();
 
   const neutronsToDecay = 2700000;
-  return await gluon.transmuteFromGoldForEip12(
-    gluonBoxJs,
-    oracleBoxJs,
-    [userBoxJs],
-    oracleBuyBackJs,
-    neutronsToDecay,
-    height
-  );
+  return await gluon.transmuteFromGoldForEip12(gluonBoxJs, oracleBoxJs, [userBoxJs], oracleBuyBackJs, neutronsToDecay, height);
 }
 
 async function testTVL() {

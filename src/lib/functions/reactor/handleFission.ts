@@ -9,11 +9,7 @@ interface FissionParams {
   value: string;
 }
 
-export const calculateFissionAmounts = async ({
-  gluonInstance,
-  gluonBox,
-  value,
-}: FissionParams): Promise<SwapResult | SwapError> => {
+export const calculateFissionAmounts = async ({ gluonInstance, gluonBox, value }: FissionParams): Promise<SwapResult | SwapError> => {
   try {
     const numValue = parseFloat(value) || 0;
     console.log("🔍 FISSION INPUT:", {
@@ -132,12 +128,7 @@ export const handleFissionSwap = async (
     }
 
     // Create unsigned transaction
-    const unsignedTransaction = await gluonInstance.fissionForEip12(
-      gluonBox,
-      oracleBox,
-      userBoxes,
-      Number(nanoErgsToFission)
-    );
+    const unsignedTransaction = await gluonInstance.fissionForEip12(gluonBox, oracleBox, userBoxes, Number(nanoErgsToFission));
 
     if (!unsignedTransaction) {
       throw new Error("Failed to create unsigned transaction");

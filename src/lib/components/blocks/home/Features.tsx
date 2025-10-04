@@ -9,21 +9,13 @@ import { useRef, forwardRef, useState, useEffect } from "react";
 import { cn } from "@/lib/utils/utils";
 import { motion } from "framer-motion";
 
-const Circle = forwardRef<HTMLDivElement, { className?: string; children?: React.ReactNode }>(
-  ({ className, children }, ref) => {
-    return (
-      <div
-        ref={ref}
-        className={cn(
-          "relative z-50 flex size-10 items-center justify-center rounded-full border bg-background",
-          className
-        )}
-      >
-        {children}
-      </div>
-    );
-  }
-);
+const Circle = forwardRef<HTMLDivElement, { className?: string; children?: React.ReactNode }>(({ className, children }, ref) => {
+  return (
+    <div ref={ref} className={cn("relative z-50 flex size-10 items-center justify-center rounded-full border bg-background", className)}>
+      {children}
+    </div>
+  );
+});
 
 Circle.displayName = "Circle";
 
@@ -48,12 +40,8 @@ const TokenFlow = ({
   // Check if all refs are populated
   useEffect(() => {
     const checkRefs = () => {
-      const fromRefsReady = fromRefs.current.every((ref, index) =>
-        index < fromTokens.length ? ref !== null && ref !== undefined : true
-      );
-      const toRefsReady = toRefs.current.every((ref, index) =>
-        index < toTokens.length ? ref !== null && ref !== undefined : true
-      );
+      const fromRefsReady = fromRefs.current.every((ref, index) => (index < fromTokens.length ? ref !== null && ref !== undefined : true));
+      const toRefsReady = toRefs.current.every((ref, index) => (index < toTokens.length ? ref !== null && ref !== undefined : true));
 
       if (fromRefsReady && toRefsReady && containerRef.current) {
         setRefsReady(true);
@@ -147,15 +135,7 @@ const TokenFlow = ({
                   containerRef={containerRef}
                   fromRef={{ current: fromRefs.current[fromIndex] }}
                   toRef={{ current: toRefs.current[toIndex] }}
-                  curvature={
-                    fromTokens.length > 1 || toTokens.length > 1
-                      ? fromIndex === 0 && toIndex === 0
-                        ? -8
-                        : fromIndex === 1 || toIndex === 1
-                          ? 8
-                          : 0
-                      : 0
-                  }
+                  curvature={fromTokens.length > 1 || toTokens.length > 1 ? (fromIndex === 0 && toIndex === 0 ? -8 : fromIndex === 1 || toIndex === 1 ? 8 : 0) : 0}
                   reverse={reverse}
                   duration={2.5}
                   delay={(fromIndex + toIndex) * 0.3}
@@ -175,35 +155,17 @@ const TokenFlow = ({
 };
 
 export const Features = () => (
-  <motion.div
-    className="w-full py-10 lg:py-20"
-    initial={{ opacity: 0 }}
-    animate={{ opacity: 1 }}
-    transition={{ duration: 0.6 }}
-  >
+  <motion.div className="w-full py-10 lg:py-20" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6 }}>
     <div className="container mx-auto">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, ease: "easeOut" }}
-      >
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: "easeOut" }}>
         <CardSpotlight
           className="container grid grid-cols-1 items-center gap-8 rounded-xl border-border bg-gradient-to-r from-background to-card p-8 py-8 shadow-lg dark:shadow-neutral-800 lg:grid-cols-2"
           radius={300}
           color="#262626"
         >
-          <motion.div
-            className="flex flex-col gap-10"
-            initial={{ opacity: 0, x: -30 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.2, duration: 0.5 }}
-          >
+          <motion.div className="flex flex-col gap-10" initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2, duration: 0.5 }}>
             <div className="flex flex-col gap-4">
-              <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.3, duration: 0.3 }}
-              >
+              <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.3, duration: 0.3 }}>
                 <Badge variant="outline" className="z-20">
                   Simple to use
                 </Badge>
