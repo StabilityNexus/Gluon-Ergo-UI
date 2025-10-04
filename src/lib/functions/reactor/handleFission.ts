@@ -35,7 +35,7 @@ export const calculateFissionAmounts = async (
             throw new Error("Failed to get fission prediction from SDK")
         }
 
-        // Format the values using our utility - NOTE: neutrons are GAUC, protons are GAU
+        // Format the values using our utility - NOTE: protons are GAUC, neutrons are GAU
         const formattedGau = formatMicroNumber(convertFromDecimals(willGet.neutrons))
         const formattedGauc = formatMicroNumber(convertFromDecimals(willGet.protons))
         console.log("🔍 FISSION FORMATTED:", {
@@ -52,8 +52,8 @@ export const calculateFissionAmounts = async (
         const receiptDetails: ReceiptDetails = {
             inputAmount: numValue,
             outputAmount: {
-                gau: convertFromDecimals(willGet.neutrons), // Swap neutrons/protons here too
-                gauc: convertFromDecimals(willGet.protons),
+                gau: convertFromDecimals(willGet.neutrons), // neutrons are GAU
+                gauc: convertFromDecimals(willGet.protons), // protons are GAUC
                 erg: 0
             },
             fees: {
@@ -109,7 +109,12 @@ export const handleFissionSwap = async (
         }
 
         if (!ergoWallet) {
-            throw new Error("Wallet not connected")
+            throw new Error("Wallet not connected. Please disconnect and reconnect your wallet.")
+        }
+
+        // Additional validation for wallet API methods
+        if (!ergoWallet.sign_tx || !ergoWallet.submit_tx) {
+            throw new Error("Wallet API not fully initialized. Please refresh the page and reconnect.")
         }
 
         const nanoErgsToFission = ergsToNanoErgs(amount)

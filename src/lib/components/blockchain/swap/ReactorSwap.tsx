@@ -41,29 +41,23 @@ const formatTokenAmount = (value: number | string): string => {
   const numValue = typeof value === 'string' ? parseFloat(value) : value;
   if (!numValue) return '0';
 
-  // For ERG values, format with 2 decimal places
+  // Handle scientific notation
   if (typeof value === 'string' && value.includes('e')) {
     const bn = new BigNumber(value);
-    return bn.toFormat(2);
+    return bn.decimalPlaces(9, BigNumber.ROUND_DOWN).toFixed();
   }
 
-  // Format regular numbers with 2 decimal places for ERG, 4 for tokens
-  const parts = value.toString().split('.');
-  if (parts.length === 1) return parts[0];
-
-  const [whole, decimal] = parts;
-  const isErg = decimal.length <= 2;
-
-  if (isErg) {
-    // For ERG, always show 2 decimal places
-    return `${whole}.${decimal.padEnd(2, '0').slice(0, 2)}`;
-  } else {
-    // For other tokens, show up to 4 significant digits
-    const trimmed = decimal.replace(/0+$/, '');
-    if (!trimmed) return whole;
-    const significant = trimmed.slice(0, 4);
-    return `${whole}.${significant}`;
+  // Format all tokens with up to 9 decimal places (removing trailing zeros)
+  const bn = new BigNumber(value.toString());
+  const formatted = bn.decimalPlaces(9, BigNumber.ROUND_DOWN).toFixed();
+  
+  // Remove trailing zeros after decimal point
+  const parts = formatted.split('.');
+  if (parts.length === 2) {
+    const trimmed = parts[1].replace(/0+$/, '');
+    return trimmed ? `${parts[0]}.${trimmed}` : parts[0];
   }
+  return formatted;
 }
 
 // Helper function to check if two values are equal within precision tolerance
@@ -107,15 +101,11 @@ const isUserInputMaxValue = (userInput: string, preciseMax: string): boolean => 
   }
 }
 
-// Add a new function specifically for ERG formatting
+// Add a new function specifically for ERG formatting - no thousand separators for input compatibility
 const formatErgAmount = (value: number | string | BigNumber): string => {
   const bn = new BigNumber(value.toString());
-  return bn.toFormat(2, {
-    groupSize: 3,
-    decimalSeparator: '.',
-    groupSeparator: ',',
-    secondaryGroupSize: 0
-  });
+  // Return plain number string without thousand separators to avoid parsing issues
+  return bn.decimalPlaces(9, BigNumber.ROUND_DOWN).toFixed();
 }
 
 export function ReactorSwap() {
@@ -640,10 +630,16 @@ export function ReactorSwap() {
         debouncedCalculateAmounts("0", true); return;
       }
       if (fromToken.symbol === "ERG") {
-        maxAmount = Math.max(0, balanceNum - 0.1).toFixed(fromToken.decimals || 4);
+        // Pre-calculate fees for better MAX calculation
+        const estimatedTotalFeeERG = 0.011; // Conservative estimate: 0.004 (devFee) + 0.002 (oracle) + 0.003 (miner) + 0.002 buffer
+        const ergReserve = 0.1; // Minimum ERG to keep in wallet
+        const availableErg = Math.max(0, balanceNum - ergReserve - estimatedTotalFeeERG);
+        // Use full precision without rounding
+        maxAmount = availableErg.toString();
       } else if (fromToken.symbol === "GAU" || fromToken.symbol === "GAUC") {
         maxAmount = fromToken.balance;
-      } setFromAmount(maxAmount);
+      } 
+      setFromAmount(maxAmount);
     }
     if (parseFloat(maxAmount) > 0) {
       await calculateAmounts(maxAmount, isFromCard);
@@ -881,14 +877,8 @@ export function ReactorSwap() {
     const currentBalance = parseFloat(currentToken.balance);
     const ergFeeBuffer = 0.1;
 
-    let effectiveDecimalScale = currentToken.decimals || 2;
-    if (currentToken.symbol === "GAU-GAUC") {
-      effectiveDecimalScale = tokens.find(t => t.symbol === "GAU")?.decimals || 6;
-    }
-    // CRITICAL FIX: Use high precision for ERG in fusion (GAU-GAUC → ERG)
-    if (currentToken.symbol === "ERG" && fromToken.symbol === "GAU-GAUC") {
-      effectiveDecimalScale = 9; // Full blockchain precision
-    }
+    // Use full precision (9 decimals) for all tokens
+    let effectiveDecimalScale = 9;
 
     const isInputDisabled = !boxesReady || isCalculating || (isInitializing && !boxesReady);
     const shouldRenderInputOrDisplay = currentToken.symbol !== "GAU-GAUC";
@@ -1084,7 +1074,7 @@ export function ReactorSwap() {
                     return true;
                   }}
                   className={cn(
-                    "w-full min-w-[80px] text-left sm:text-right border-0 bg-transparent text-4xl font-bold focus-visible:ring-0 focus:outline-none",
+                    "w-full min-w-[80px] text-left sm:text-right border-0 bg-transparent text-2xl sm:text-3xl font-bold focus-visible:ring-0 focus:outline-none",
                     isFromCard ? "text-gray-400" : "text-gray-400",
                     isInputDisabled && "opacity-50 cursor-not-allowed"
                   )}
@@ -1118,31 +1108,37 @@ export function ReactorSwap() {
   const renderGauGaucCard = (isFromCard?: boolean) => {
     console.log(isFromCard)
     return <motion.div
-      className="space-y-4 flex-1 w-full py-6"
+      className="space-y-3 flex-1 w-full py-4"
       initial={{ opacity: 0, height: 0 }}
       animate={{ opacity: 1, height: "auto" }}
       exit={{ opacity: 0, height: 0 }}
       transition={{ duration: 0.3, ease: "easeInOut" }}
     >
       <motion.div
-        className="grid grid-cols-1 sm:grid-cols-2 gap-8 px-8 justify-between"
+        className="grid grid-cols-1 gap-3 px-4"
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1, duration: 0.2 }}
       >
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.2, duration: 0.2 }}
-        >
-          <span className="text-sm text-muted-foreground block mb-2">
-            Balance: {formatTokenAmount(tokens.find(t => t.symbol === "GAU")?.balance || '0')} GAU
+        {/* GAU Box with yellow/gold background */}
+        <div>
+          <span className="text-xs text-muted-foreground block mb-1.5 px-1">
+            Balance: {formatTokenAmount(tokens.find(t => t.symbol === "GAU")?.balance || '0')}
           </span>
-          <div className="flex items-center gap-2">
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.2, duration: 0.2 }}
+            className="rounded-lg bg-gradient-to-r from-yellow-600/80 to-yellow-700/80 dark:from-yellow-600/70 dark:to-yellow-700/70 p-4 flex items-center justify-between gap-3"
+            whileHover={{ scale: 1.01 }}
+          >
+            <div className="w-8 h-8 flex items-center justify-center flex-shrink-0">
+              <GauIcon className="w-8 h-8 flex-shrink-0" />
+            </div>
             <AnimatePresence mode="wait">
               <motion.span
                 key={`gau-${gauAmount}`}
-                className="text-3xl font-bold"
+                className="flex-1 text-xl sm:text-2xl font-bold text-white"
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.8 }}
@@ -1152,54 +1148,51 @@ export function ReactorSwap() {
               </motion.span>
             </AnimatePresence>
             <motion.div
-              className="px-2 py-1 rounded-lg font-bold text-xs bg-muted border flex items-center gap-1"
+              className="px-3 py-1.5 rounded-md font-bold text-sm bg-yellow-800/60 dark:bg-yellow-900/60 text-white flex items-center gap-1.5"
               whileHover={{ scale: 1.05 }}
               transition={{ duration: 0.1 }}
             >
-              <div className="w-4 h-4 flex items-center justify-center flex-shrink-0">
-                <GauIcon className="w-4 h-4 flex-shrink-0" />
-              </div>
               GAU
             </motion.div>
-          </div>
-        </motion.div>
+          </motion.div>
+        </div>
 
-        <motion.div
-          className="flex sm:justify-end"
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.2, duration: 0.2 }}
-        >
-          <div>
-            <span className="text-sm text-muted-foreground block mb-2">
-              Balance: {formatTokenAmount(tokens.find(t => t.symbol === "GAUC")?.balance || '0')} GAUC
-            </span>
-            <div className="flex items-center gap-2">
-              <AnimatePresence mode="wait">
-                <motion.span
-                  key={`gauc-${gaucAmount}`}
-                  className="text-3xl font-bold"
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.8 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  {formatTokenAmount(gaucAmount)}
-                </motion.span>
-              </AnimatePresence>
-              <motion.div
-                className="px-2 py-1 rounded-lg font-bold text-xs bg-muted border flex items-center gap-1"
-                whileHover={{ scale: 1.05 }}
-                transition={{ duration: 0.1 }}
-              >
-                <div className="w-4 h-4 flex items-center justify-center flex-shrink-0">
-                  <GaucIcon className="w-4 h-4 flex-shrink-0" />
-                </div>
-                GAUC
-              </motion.div>
+        {/* GAUC Box with red background */}
+        <div>
+          <span className="text-xs text-muted-foreground block mb-1.5 px-1">
+            Balance: {formatTokenAmount(tokens.find(t => t.symbol === "GAUC")?.balance || '0')}
+          </span>
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.25, duration: 0.2 }}
+            className="rounded-lg bg-gradient-to-r from-red-600/80 to-red-700/80 dark:from-red-600/70 dark:to-red-700/70 p-4 flex items-center justify-between gap-3"
+            whileHover={{ scale: 1.01 }}
+          >
+            <div className="w-8 h-8 flex items-center justify-center flex-shrink-0">
+              <GaucIcon className="w-8 h-8 flex-shrink-0" />
             </div>
-          </div>
-        </motion.div>
+            <AnimatePresence mode="wait">
+              <motion.span
+                key={`gauc-${gaucAmount}`}
+                className="flex-1 text-xl sm:text-2xl font-bold text-white"
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                transition={{ duration: 0.2 }}
+              >
+                {formatTokenAmount(gaucAmount)}
+              </motion.span>
+            </AnimatePresence>
+            <motion.div
+              className="px-3 py-1.5 rounded-md font-bold text-sm bg-red-800/60 dark:bg-red-900/60 text-white flex items-center gap-1.5"
+              whileHover={{ scale: 1.05 }}
+              transition={{ duration: 0.1 }}
+            >
+              GAUC
+            </motion.div>
+          </motion.div>
+        </div>
       </motion.div>
     </motion.div>
   }
@@ -1244,17 +1237,20 @@ export function ReactorSwap() {
 
     if (fromToken.symbol === "ERG" && toToken.symbol === "GAU-GAUC") {
       const ergInput = fromVal;
-      const ergBalance = parseFloat(fromToken.balance);
+      const ergBalanceStr = fromToken.balance.replace(/,/g, '');
+      const ergBalance = parseFloat(ergBalanceStr);
       if (isNaN(ergInput) || ergInput <= 0) return true;
       if (ergInput > ergBalance) return true;
       if (ergBalance - ergInput < 0.1) return true;
+      
       return false;
     }
     if (fromToken.symbol === "GAUC" && toToken.symbol === "GAU") {
       const gaucInput = fromVal;
       const gaucBalance = parseFloat(tokens.find(t => t.symbol === "GAUC")?.balance || "0");
       if (Number.isNaN(gaucInput) || gaucInput <= 0) return true;
-      if (gaucInput > gaucBalance) return true; return false;
+      if (gaucInput > gaucBalance) return true; 
+      return false;
     }
     if (fromToken.symbol === "GAU" && toToken.symbol === "GAUC") {
       const gauInput = fromVal;
@@ -1262,7 +1258,8 @@ export function ReactorSwap() {
       if (Number.isNaN(gauInput) || gauInput <= 0) return true;
       if (gauInput > gauBalance) return true;
       return false;
-    } return true;
+    } 
+    return true;
   }
 
   return (
