@@ -9,6 +9,7 @@ npm install gluon-gold-sdk
 ```
 
 ### Implemented Features
+
 - [x] Get Gold oracle box
 - [x] Get Gluon box
 - [x] Calculate amount of Neutrons and Protons user will receive when input `x` amount of ERGs
@@ -23,7 +24,6 @@ npm install gluon-gold-sdk
 - [x] GAUC Price
 - [x] Needed fee for all 4 kinds of transactions
 - [x] Gold Oracle Price
-
 
 ### Usage
 
@@ -56,7 +56,7 @@ const eip12Tx = await gluon.transmuteToGoldForEip12(gluonBox, oracleBox, userBox
 
 // Transmuting from Gold
 const neutronsToTransmute = 5000000
-const eip12Tx = await gluon.transmuteFromGoldForEip12(gluonBox, oracleBox, userBoxesJs, oracleBuyBackJs, neutronsToTransmute, height)    
+const eip12Tx = await gluon.transmuteFromGoldForEip12(gluonBox, oracleBox, userBoxesJs, oracleBuyBackJs, neutronsToTransmute, height)
 
 
 // Gold price
@@ -116,3 +116,4 @@ const tvl = await gluon.getTVL(gluonBox, oracleBox)
 
 // Reserve ratio in percentage
 const reserveRatio = await gluon.getReserveRatio(gluonBox, oracleBox)
+```

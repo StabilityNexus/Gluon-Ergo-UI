@@ -11,7 +11,7 @@ export default function ReactorPage() {
         keywords="Gluon Swap, Token Exchange, ERG to GAU, GAU to GAUC, DeFi Trading, Ergo DEX, Decentralized Exchange"
       />
       <ReactorLayout>
-        <div className='w-full px-4 pb-8'>
+        <div className="w-full px-4 pb-8">
           <ReactorSwap />
         </div>
       </ReactorLayout>

@@ -1,4 +1,4 @@
-import { NextConfig } from 'next'
+import { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
@@ -11,18 +11,18 @@ const nextConfig: NextConfig = {
       layers: true,
       topLevelAwait: true,
       syncWebAssembly: true,
-    }
+    };
 
     // Exclude .map files
     config.module.rules.push({
       test: /\.map$/,
-      use: 'null-loader',
-    })
+      use: "null-loader",
+    });
 
     config.module.rules.push({
       test: /\.d\.ts$/,
-      use: 'null-loader',
-    })
+      use: "null-loader",
+    });
 
     // Add browser fallbacks
     config.resolve.fallback = {
@@ -30,10 +30,10 @@ const nextConfig: NextConfig = {
       fs: false,
       path: false,
       os: false,
-    }
+    };
 
-    return config
+    return config;
   },
-}
+};
 
-export default nextConfig
+export default nextConfig;

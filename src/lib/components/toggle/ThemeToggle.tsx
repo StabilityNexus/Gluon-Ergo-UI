@@ -1,31 +1,31 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { Moon, Sun } from "lucide-react"
-import { useTheme } from "next-themes"
-import { motion } from "framer-motion"
-import { Toggle } from "@/lib/components/ui/toggle"
+import * as React from "react";
+import { Moon, Sun } from "lucide-react";
+import { useTheme } from "next-themes";
+import { motion } from "framer-motion";
+import { Toggle } from "@/lib/components/ui/toggle";
 
 export function ThemeToggle() {
-  const { theme, setTheme } = useTheme()
+  const { theme, setTheme } = useTheme();
 
   return (
     <Toggle
       aria-label="Toggle theme"
       pressed={theme === "dark"}
       onPressedChange={(pressed) => setTheme(pressed ? "dark" : "light")}
-      className=" data-[state=on]:bg-white/15 border shadow-sm transition-colors"
+      className="border shadow-sm transition-colors data-[state=on]:bg-white/15"
     >
-      <div className="relative h-[1.2rem] w-[1.2rem] flex items-center justify-center">
+      <div className="relative flex h-[1.2rem] w-[1.2rem] items-center justify-center">
         <motion.div
           initial={{ scale: 1 }}
-          animate={{ 
+          animate={{
             scale: theme === "dark" ? 0 : 1,
-            rotate: theme === "dark" ? -45 : 0 
+            rotate: theme === "dark" ? -45 : 0,
           }}
-          transition={{ 
+          transition={{
             duration: 0.2,
-            ease: "easeInOut"
+            ease: "easeInOut",
           }}
           style={{ originX: "50%", originY: "50%" }}
           className="absolute"
@@ -36,13 +36,13 @@ export function ThemeToggle() {
         <motion.div
           className="absolute"
           initial={{ scale: 0 }}
-          animate={{ 
+          animate={{
             scale: theme === "dark" ? 1 : 0,
-            rotate: theme === "dark" ? 0 : 45 
+            rotate: theme === "dark" ? 0 : 45,
           }}
-          transition={{ 
+          transition={{
             duration: 0.2,
-            ease: "easeInOut"
+            ease: "easeInOut",
           }}
           style={{ originX: "50%", originY: "50%" }}
         >
@@ -51,5 +51,5 @@ export function ThemeToggle() {
       </div>
       <span className="sr-only">Toggle theme</span>
     </Toggle>
-  )
+  );
 }
