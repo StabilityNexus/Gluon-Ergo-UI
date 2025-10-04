@@ -35,9 +35,9 @@ export const calculateFissionAmounts = async (
             throw new Error("Failed to get fission prediction from SDK")
         }
 
-        // Format the values using our utility - NOTE: protons are GAU, neutrons are GAUC
-        const formattedGau = formatMicroNumber(convertFromDecimals(willGet.protons))
-        const formattedGauc = formatMicroNumber(convertFromDecimals(willGet.neutrons))
+        // Format the values using our utility - NOTE: protons are GAUC, neutrons are GAU
+        const formattedGau = formatMicroNumber(convertFromDecimals(willGet.neutrons))
+        const formattedGauc = formatMicroNumber(convertFromDecimals(willGet.protons))
         console.log("🔍 FISSION FORMATTED:", {
             gau: formattedGau,
             gauc: formattedGauc,
@@ -52,8 +52,8 @@ export const calculateFissionAmounts = async (
         const receiptDetails: ReceiptDetails = {
             inputAmount: numValue,
             outputAmount: {
-                gau: convertFromDecimals(willGet.protons), // protons are GAU
-                gauc: convertFromDecimals(willGet.neutrons), // neutrons are GAUC
+                gau: convertFromDecimals(willGet.neutrons), // neutrons are GAU
+                gauc: convertFromDecimals(willGet.protons), // protons are GAUC
                 erg: 0
             },
             fees: {

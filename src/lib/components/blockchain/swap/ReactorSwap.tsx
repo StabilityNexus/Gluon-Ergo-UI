@@ -1237,19 +1237,11 @@ export function ReactorSwap() {
 
     if (fromToken.symbol === "ERG" && toToken.symbol === "GAU-GAUC") {
       const ergInput = fromVal;
-      // Parse balance without commas for proper comparison
       const ergBalanceStr = fromToken.balance.replace(/,/g, '');
       const ergBalance = parseFloat(ergBalanceStr);
-      
       if (isNaN(ergInput) || ergInput <= 0) return true;
-      
-      // Calculate total required ERG (input + fees + reserve)
-      const estimatedTotalFeeERG = 0.011; // Conservative fee estimate
-      const ergReserve = 0.1; // Minimum ERG to keep
-      const totalRequired = ergInput + estimatedTotalFeeERG + ergReserve;
-      
-      // Check if user has enough ERG including fees and reserve
-      if (totalRequired > ergBalance) return true;
+      if (ergInput > ergBalance) return true;
+      if (ergBalance - ergInput < 0.1) return true;
       
       return false;
     }
