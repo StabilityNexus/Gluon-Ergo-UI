@@ -458,6 +458,47 @@ export function GluonStats() {
             <motion.div
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.5, duration: 0.3 }}
+              className="text-center"
+            >
+              <div className="flex items-center justify-center mb-4">
+                <Percent className="h-8 w-8 text-amber-600 mr-2" />
+              </div>
+              <AnimatePresence mode="wait">
+                {isLoading ? (
+                  <motion.div
+                    key="loading-ratio"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="flex flex-col items-center gap-2"
+                  >
+                    <Skeleton className="w-20 h-12" />
+                    <Skeleton className="w-32 h-5" />
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key={stats.reserveRatio?.toString() || "error"}
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.8 }}
+                    transition={{ duration: 0.3 }}
+                    className="text-center"
+                  >
+                    <div className="text-5xl font-bold text-foreground mb-1">
+                      {hasError ? '—' : stats.reserveRatio ? Math.round(stats.reserveRatio) : '—'}x
+                    </div>
+                    <div className="font-medium text-sm text-muted-foreground">
+                      Current GAUC Leverage
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.6, duration: 0.3 }}
               className="text-center"
             >
