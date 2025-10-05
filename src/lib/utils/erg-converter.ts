@@ -90,39 +90,24 @@ export const formatMicroNumber = (value: number | string | BigNumber): Formatted
   const bn = new BigNumber(value.toString());
   if (bn.isZero()) return { display: "0", tooltip: "0", raw: "0" };
 
-  // For values >= 1, show up to 4 decimal places
-  if (bn.gte(1)) {
-    const truncated = bn.decimalPlaces(4, BigNumber.ROUND_DOWN);
+  // For all values, show up to 9 decimal places (removing trailing zeros)
+  const truncated = bn.decimalPlaces(9, BigNumber.ROUND_DOWN)
+  const formatted = truncated.toFixed()
+  
+  // Remove trailing zeros after decimal point
+  const parts = formatted.split('.')
+  if (parts.length === 2) {
+    const trimmed = parts[1].replace(/0+$/, '')
+    const display = trimmed ? `${parts[0]}.${trimmed}` : parts[0]
     return {
-      display: truncated.toFormat(),
-      tooltip: bn.toFormat(9), // Show full precision in tooltip
-      raw: bn.toString(),
-    };
-  }
-
-  // For small numbers below 1
-  if (bn.lt(1) && bn.gt(0)) {
-    // For very small numbers (< 0.0001), show scientific notation in display
-    if (bn.lt("0.0001")) {
-      const scientific = bn.toExponential(4);
-      return {
-        display: scientific,
-        tooltip: bn.toFormat(9), // Full precision in tooltip
-        raw: bn.toString(),
-      };
+      display,
+      tooltip: bn.toFormat(9),
+      raw: bn.toString()
     }
-
-    // For numbers between 0.0001 and 1, show up to 6 decimal places
-    const truncated = bn.decimalPlaces(6, BigNumber.ROUND_DOWN);
-    return {
-      display: truncated.toFormat(),
-      tooltip: bn.toFormat(9), // Show full precision in tooltip
-      raw: bn.toString(),
-    };
   }
-
+  
   return {
-    display: bn.toString(),
+    display: formatted,
     tooltip: bn.toFormat(9),
     raw: bn.toString(),
   };
