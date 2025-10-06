@@ -4,6 +4,7 @@ import { Button } from "@/lib/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/lib/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/lib/components/ui/select";
 import { Separator } from "@/lib/components/ui/separator";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { Settings2 } from "lucide-react";
 import { useState, useCallback, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils/utils";
@@ -32,7 +33,7 @@ const formatTokenAmount = (value: number | string): string => {
   if (!numValue) return "0";
 
   // Handle scientific notation
-  if (typeof value === 'string' && value.includes('e')) {
+  if (typeof value === "string" && value.includes("e")) {
     const bn = new BigNumber(value);
     return bn.decimalPlaces(9, BigNumber.ROUND_DOWN).toFixed();
   }
@@ -40,15 +41,15 @@ const formatTokenAmount = (value: number | string): string => {
   // Format all tokens with up to 9 decimal places (removing trailing zeros)
   const bn = new BigNumber(value.toString());
   const formatted = bn.decimalPlaces(9, BigNumber.ROUND_DOWN).toFixed();
-  
+
   // Remove trailing zeros after decimal point
-  const parts = formatted.split('.');
+  const parts = formatted.split(".");
   if (parts.length === 2) {
-    const trimmed = parts[1].replace(/0+$/, '');
+    const trimmed = parts[1].replace(/0+$/, "");
     return trimmed ? `${parts[0]}.${trimmed}` : parts[0];
   }
   return formatted;
-}
+};
 
 // Helper function to check if two values are equal within precision tolerance
 /*const isPreciselyEqual = (value1: string, value2: string): boolean => {
@@ -96,7 +97,7 @@ const formatErgAmount = (value: number | string | BigNumber): string => {
   const bn = new BigNumber(value.toString());
   // Return plain number string without thousand separators to avoid parsing issues
   return bn.decimalPlaces(9, BigNumber.ROUND_DOWN).toFixed();
-}
+};
 
 export function ReactorSwap() {
   const { isConnected, getBalance, getUtxos, ergoWallet } = useErgo();
@@ -637,7 +638,7 @@ export function ReactorSwap() {
         maxAmount = availableErg.toString();
       } else if (fromToken.symbol === "GAU" || fromToken.symbol === "GAUC") {
         maxAmount = fromToken.balance;
-      } 
+      }
       setFromAmount(maxAmount);
     }
     if (parseFloat(maxAmount) > 0) {
@@ -884,11 +885,13 @@ export function ReactorSwap() {
   const renderTokenCard = (isFromCard: boolean) => {
     const currentToken = isFromCard ? fromToken : toToken;
     const currentAmount = isFromCard ? fromAmount : toAmount;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const currentBalance = parseFloat(currentToken.balance);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const ergFeeBuffer = 0.1;
 
     // Use full precision (9 decimals) for all tokens
-    let effectiveDecimalScale = 9;
+    const effectiveDecimalScale = 9;
 
     const isInputDisabled = !boxesReady || isCalculating || (isInitializing && !boxesReady);
     const shouldRenderInputOrDisplay = currentToken.symbol !== "GAU-GAUC";
@@ -1053,7 +1056,7 @@ export function ReactorSwap() {
                     return true;
                   }}
                   className={cn(
-                    "w-full min-w-[80px] text-left sm:text-right border-0 bg-transparent text-2xl sm:text-3xl font-bold focus-visible:ring-0 focus:outline-none",
+                    "w-full min-w-[80px] border-0 bg-transparent text-left text-2xl font-bold focus:outline-none focus-visible:ring-0 sm:text-right sm:text-3xl",
                     isFromCard ? "text-gray-400" : "text-gray-400",
                     isInputDisabled && "cursor-not-allowed opacity-50"
                   )}
@@ -1084,93 +1087,86 @@ export function ReactorSwap() {
   };
 
   const renderGauGaucCard = (isFromCard?: boolean) => {
-    console.log(isFromCard)
-    return <motion.div
-      className="space-y-3 flex-1 w-full py-4"
-      initial={{ opacity: 0, height: 0 }}
-      animate={{ opacity: 1, height: "auto" }}
-      exit={{ opacity: 0, height: 0 }}
-      transition={{ duration: 0.3, ease: "easeInOut" }}
-    >
+    console.log(isFromCard);
+    return (
       <motion.div
-        className="grid grid-cols-1 gap-3 px-4"
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1, duration: 0.2 }}
+        className="w-full flex-1 space-y-3 py-4"
+        initial={{ opacity: 0, height: 0 }}
+        animate={{ opacity: 1, height: "auto" }}
+        exit={{ opacity: 0, height: 0 }}
+        transition={{ duration: 0.3, ease: "easeInOut" }}
       >
-        {/* GAU Box with yellow/gold background */}
-        <div>
-          <span className="text-xs text-muted-foreground block mb-1.5 px-1">
-            Balance: {formatTokenAmount(tokens.find(t => t.symbol === "GAU")?.balance || '0')}
-          </span>
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.2, duration: 0.2 }}
-            className="rounded-lg bg-gradient-to-r from-yellow-600/80 to-yellow-700/80 dark:from-yellow-600/70 dark:to-yellow-700/70 p-4 flex items-center justify-between gap-3"
-            whileHover={{ scale: 1.01 }}
-          >
-            <div className="w-8 h-8 flex items-center justify-center flex-shrink-0">
-              <GauIcon className="w-8 h-8 flex-shrink-0" />
-            </div>
-            <AnimatePresence mode="wait">
-              <motion.span
-                key={`gau-${gauAmount}`}
-                className="flex-1 text-xl sm:text-2xl font-bold text-white"
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                transition={{ duration: 0.2 }}
-              >
-                {formatTokenAmount(gauAmount)}
-              </motion.span>
-            </AnimatePresence>
+        <motion.div className="grid grid-cols-1 gap-3 px-4" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.2 }}>
+          {/* GAU Box with yellow/gold background */}
+          <div>
+            <span className="mb-1.5 block px-1 text-xs text-muted-foreground">Balance: {formatTokenAmount(tokens.find((t) => t.symbol === "GAU")?.balance || "0")}</span>
             <motion.div
-              className="px-3 py-1.5 rounded-md font-bold text-sm bg-yellow-800/60 dark:bg-yellow-900/60 text-white flex items-center gap-1.5"
-              whileHover={{ scale: 1.05 }}
-              transition={{ duration: 0.1 }}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2, duration: 0.2 }}
+              className="flex items-center justify-between gap-3 rounded-lg bg-gradient-to-r from-yellow-600/80 to-yellow-700/80 p-4 dark:from-yellow-600/70 dark:to-yellow-700/70"
+              whileHover={{ scale: 1.01 }}
             >
-              GAU
+              <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center">
+                <GauIcon className="h-8 w-8 flex-shrink-0" />
+              </div>
+              <AnimatePresence mode="wait">
+                <motion.span
+                  key={`gau-${gauAmount}`}
+                  className="flex-1 text-xl font-bold text-white sm:text-2xl"
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  {formatTokenAmount(gauAmount)}
+                </motion.span>
+              </AnimatePresence>
+              <motion.div
+                className="flex items-center gap-1.5 rounded-md bg-yellow-800/60 px-3 py-1.5 text-sm font-bold text-white dark:bg-yellow-900/60"
+                whileHover={{ scale: 1.05 }}
+                transition={{ duration: 0.1 }}
+              >
+                GAU
+              </motion.div>
             </motion.div>
-          </motion.div>
-        </div>
+          </div>
 
-        {/* GAUC Box with red background */}
-        <div>
-          <span className="text-xs text-muted-foreground block mb-1.5 px-1">
-            Balance: {formatTokenAmount(tokens.find(t => t.symbol === "GAUC")?.balance || '0')}
-          </span>
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.25, duration: 0.2 }}
-            className="rounded-lg bg-gradient-to-r from-red-600/80 to-red-700/80 dark:from-red-600/70 dark:to-red-700/70 p-4 flex items-center justify-between gap-3"
-            whileHover={{ scale: 1.01 }}
-          >
-            <div className="w-8 h-8 flex items-center justify-center flex-shrink-0">
-              <GaucIcon className="w-8 h-8 flex-shrink-0" />
-            </div>
-            <AnimatePresence mode="wait">
-              <motion.span
-                key={`gauc-${gaucAmount}`}
-                className="flex-1 text-xl sm:text-2xl font-bold text-white"
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                transition={{ duration: 0.2 }}
-              >
-                {formatTokenAmount(gaucAmount)}
-              </motion.span>
-            </AnimatePresence>
+          {/* GAUC Box with red background */}
+          <div>
+            <span className="mb-1.5 block px-1 text-xs text-muted-foreground">Balance: {formatTokenAmount(tokens.find((t) => t.symbol === "GAUC")?.balance || "0")}</span>
             <motion.div
-              className="px-3 py-1.5 rounded-md font-bold text-sm bg-red-800/60 dark:bg-red-900/60 text-white flex items-center gap-1.5"
-              whileHover={{ scale: 1.05 }}
-              transition={{ duration: 0.1 }}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.25, duration: 0.2 }}
+              className="flex items-center justify-between gap-3 rounded-lg bg-gradient-to-r from-red-600/80 to-red-700/80 p-4 dark:from-red-600/70 dark:to-red-700/70"
+              whileHover={{ scale: 1.01 }}
             >
-              GAUC
+              <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center">
+                <GaucIcon className="h-8 w-8 flex-shrink-0" />
+              </div>
+              <AnimatePresence mode="wait">
+                <motion.span
+                  key={`gauc-${gaucAmount}`}
+                  className="flex-1 text-xl font-bold text-white sm:text-2xl"
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  {formatTokenAmount(gaucAmount)}
+                </motion.span>
+              </AnimatePresence>
+              <motion.div
+                className="flex items-center gap-1.5 rounded-md bg-red-800/60 px-3 py-1.5 text-sm font-bold text-white dark:bg-red-900/60"
+                whileHover={{ scale: 1.05 }}
+                transition={{ duration: 0.1 }}
+              >
+                GAUC
+              </motion.div>
             </motion.div>
-          </motion.div>
-        </div>
+          </div>
+        </motion.div>
       </motion.div>
     );
   };
@@ -1215,19 +1211,19 @@ export function ReactorSwap() {
 
     if (fromToken.symbol === "ERG" && toToken.symbol === "GAU-GAUC") {
       const ergInput = fromVal;
-      const ergBalanceStr = fromToken.balance.replace(/,/g, '');
+      const ergBalanceStr = fromToken.balance.replace(/,/g, "");
       const ergBalance = parseFloat(ergBalanceStr);
       if (isNaN(ergInput) || ergInput <= 0) return true;
       if (ergInput > ergBalance) return true;
       if (ergBalance - ergInput < 0.1) return true;
-      
+
       return false;
     }
     if (fromToken.symbol === "GAUC" && toToken.symbol === "GAU") {
       const gaucInput = fromVal;
       const gaucBalance = parseFloat(tokens.find((t) => t.symbol === "GAUC")?.balance || "0");
       if (Number.isNaN(gaucInput) || gaucInput <= 0) return true;
-      if (gaucInput > gaucBalance) return true; 
+      if (gaucInput > gaucBalance) return true;
       return false;
     }
     if (fromToken.symbol === "GAU" && toToken.symbol === "GAUC") {
@@ -1236,9 +1232,9 @@ export function ReactorSwap() {
       if (Number.isNaN(gauInput) || gauInput <= 0) return true;
       if (gauInput > gauBalance) return true;
       return false;
-    } 
+    }
     return true;
-  }
+  };
 
   return (
     <div className="flex w-full flex-col gap-6 xl:flex-row xl:items-start xl:justify-evenly">

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { Button } from "@/lib/components/ui/button";
 import { useMediaQuery } from "usehooks-ts";
 import { ThemeToggle } from "../toggle/ThemeToggle";
@@ -22,6 +23,7 @@ const navItems = [
 export function TopNavbar() {
   const isDesktop = useMediaQuery("(min-width: 768px)");
   const pathname = usePathname();
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const router = useRouter();
   const { theme } = useTheme();
 

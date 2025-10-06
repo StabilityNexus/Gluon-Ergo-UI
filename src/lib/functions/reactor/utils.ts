@@ -10,39 +10,39 @@ export const VALID_PAIRS = [
 ] as const;
 
 export const defaultTokens: Token[] = [
-    {
-        symbol: "ERG",
-        name: "Ergo",
-        color: "bg-blue-500",
-        balance: "0",
-        tokenId: "ERG",
-        decimals: 9,  // Full blockchain precision
-    },
-    {
-        symbol: "GAU",
-        name: "Gluon Gold",
-        color: "bg-yellow-500",
-        balance: "0",
-        tokenId: TOKEN_ADDRESS.gau,
-        decimals: 9,  // Full blockchain precision
-    },
-    {
-        symbol: "GAUC",
-        name: "Gluon Gold Certificate",
-        color: "bg-red-500",
-        balance: "0",
-        tokenId: TOKEN_ADDRESS.gauc,
-        decimals: 9,  // Full blockchain precision
-    },
-    {
-        symbol: "GAU-GAUC",
-        name: "Gluon Pair",
-        color: "bg-purple-500",
-        balance: "0",
-        tokenId: "GAU-GAUC_PAIR_TOKEN_ID_PLACEHOLDER",
-        decimals: 9,  // Full blockchain precision
-    },
-]
+  {
+    symbol: "ERG",
+    name: "Ergo",
+    color: "bg-blue-500",
+    balance: "0",
+    tokenId: "ERG",
+    decimals: 9, // Full blockchain precision
+  },
+  {
+    symbol: "GAU",
+    name: "Gluon Gold",
+    color: "bg-yellow-500",
+    balance: "0",
+    tokenId: TOKEN_ADDRESS.gau,
+    decimals: 9, // Full blockchain precision
+  },
+  {
+    symbol: "GAUC",
+    name: "Gluon Gold Certificate",
+    color: "bg-red-500",
+    balance: "0",
+    tokenId: TOKEN_ADDRESS.gauc,
+    decimals: 9, // Full blockchain precision
+  },
+  {
+    symbol: "GAU-GAUC",
+    name: "Gluon Pair",
+    color: "bg-purple-500",
+    balance: "0",
+    tokenId: "GAU-GAUC_PAIR_TOKEN_ID_PLACEHOLDER",
+    decimals: 9, // Full blockchain precision
+  },
+];
 
 export const getValidToTokens = (fromSymbol: TokenSymbol, tokens: Token[]): Token[] => {
   if (fromSymbol === "ERG") {
