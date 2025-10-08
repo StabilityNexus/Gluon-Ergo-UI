@@ -63,10 +63,10 @@ export function ErgoProvider({ children }: { children: React.ReactNode }) {
     const availableWallets: WalletInfo[] = Object.keys(ergoConnector).map((walletName) => ({
       connectName: walletName,
       icon:
-        walletName.toLowerCase() === 'nautilus'
-          ? 'https://user-images.githubusercontent.com/96133754/196057495-45bcca0f-a4de-4905-85ea-fbcdead01b42.svg'
-          : 'https://example.com/default-wallet-icon.png',
-    }))
+        walletName.toLowerCase() === "nautilus"
+          ? "https://user-images.githubusercontent.com/96133754/196057495-45bcca0f-a4de-4905-85ea-fbcdead01b42.svg"
+          : "https://example.com/default-wallet-icon.png",
+    }));
 
     setWalletList(availableWallets);
   }, []);
@@ -79,32 +79,32 @@ export function ErgoProvider({ children }: { children: React.ReactNode }) {
         throw new Error("Wallet connector not found");
       }
 
-      const connected = await ergoConnector[walletName].connect()
+      const connected = await ergoConnector[walletName].connect();
 
       if (!connected) {
         throw new Error("Failed to connect to wallet");
       }
 
       // Wait for window.ergo to be injected (with retry mechanism)
-      let retries = 0
-      const maxRetries = 10
+      let retries = 0;
+      const maxRetries = 10;
       while (!window.ergo && retries < maxRetries) {
-        await new Promise(resolve => setTimeout(resolve, 100)) // Wait 100ms
-        retries++
+        await new Promise((resolve) => setTimeout(resolve, 100)); // Wait 100ms
+        retries++;
       }
 
       if (!window.ergo) {
-        throw new Error('Wallet API (window.ergo) not available after connection')
+        throw new Error("Wallet API (window.ergo) not available after connection");
       }
 
       // Verify the connection
-      const isWalletConnected = await ergoConnector[walletName].isConnected()
+      const isWalletConnected = await ergoConnector[walletName].isConnected();
 
-      console.log('✅ Wallet connected successfully:', {
+      console.log("✅ Wallet connected successfully:", {
         walletName,
         isConnected: isWalletConnected,
-        ergoAvailable: !!window.ergo
-      })
+        ergoAvailable: !!window.ergo,
+      });
 
       setIsConnected(isWalletConnected);
       setErgoWallet(window.ergo);
@@ -117,9 +117,9 @@ export function ErgoProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const disconnect = useCallback(() => {
-    setIsConnected(false)
-    setErgoWallet(undefined)
-  }, [])
+    setIsConnected(false);
+    setErgoWallet(undefined);
+  }, []);
 
   const signMessage = useCallback(async (address: string, message: string): Promise<string> => {
     const { ergo } = window;

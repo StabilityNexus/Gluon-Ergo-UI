@@ -174,83 +174,14 @@ export const handleTransmuteToGoldSwap = async ({
     if (!gluonInstance || !gluonBoxJs || !oracleBoxJs) {
       throw new Error("Required boxes not initialized");
     }
-): Promise<{ txHash?: string; error?: string }> => {
-    try {
-        console.log("🔍 TRANSMUTE TO GOLD SWAP INPUT:", {
-            amount,
-            type: typeof amount
-        })
-
-        // Validate inputs
-        if (!gluonInstance || !gluonBoxJs || !oracleBoxJs) {
-            throw new Error("Required boxes not initialized")
-        }
-
-        if (!ergoWallet) {
-            throw new Error("Wallet not connected. Please disconnect and reconnect your wallet.")
-        }
-
-        // Additional validation for wallet API methods
-        if (!ergoWallet.sign_tx || !ergoWallet.submit_tx) {
-            throw new Error("Wallet API not fully initialized. Please refresh the page and reconnect.")
-        }
-
-        if (!amount || parseFloat(amount) <= 0) {
-            throw new Error("Invalid amount entered")
-        }
-
-        const height = await nodeService.getNetworkHeight()
-        if (!height) {
-            throw new Error("Failed to get network height")
-        }
-
-        const oracleBuyBackJs = await gluonInstance.getOracleBuyBackBoxJs()
-        if (!oracleBuyBackJs) {
-            throw new Error("Failed to get oracle buyback box")
-        }
-
-        const protonsToTransmute = convertToDecimals(amount)
-        console.log("🔍 TRANSMUTE TO GOLD AMOUNT:", {
-            protonsToTransmute: protonsToTransmute.toString()
-        })
-
-        // Create unsigned transaction
-        const unsignedTransaction = await gluonInstance.transmuteToGoldForEip12(
-            gluonBoxJs,
-            oracleBoxJs,
-            userBoxes,
-            oracleBuyBackJs,
-            Number(protonsToTransmute),
-            height
-        )
-
-        if (!unsignedTransaction) {
-            throw new Error("Failed to create unsigned transaction")
-        }
-
-        console.log("Signing and submitting transaction...")
-
-        // Sign transaction
-        const signature = await ergoWallet?.sign_tx(unsignedTransaction)
-        if (!signature) {
-            throw new Error("Failed to sign transaction")
-        }
-
-        // Submit transaction
-        const txHash = await ergoWallet?.submit_tx(signature)
-        if (!txHash) {
-            throw new Error("Failed to submit transaction")
-        }
-
-        console.log("Transaction submitted successfully. TxId:", txHash)
-
-        // Handle success with toast notification
-        handleTransactionSuccess(txHash, 'transmute to gold')
-
-        return { txHash }
 
     if (!ergoWallet) {
-      throw new Error("Wallet not connected");
+      throw new Error("Wallet not connected. Please disconnect and reconnect your wallet.");
+    }
+
+    // Additional validation for wallet API methods
+    if (!ergoWallet.sign_tx || !ergoWallet.submit_tx) {
+      throw new Error("Wallet API not fully initialized. Please refresh the page and reconnect.");
     }
 
     if (!amount || parseFloat(amount) <= 0) {
@@ -266,80 +197,6 @@ export const handleTransmuteToGoldSwap = async ({
     if (!oracleBuyBackJs) {
       throw new Error("Failed to get oracle buyback box");
     }
-): Promise<{ txHash?: string; error?: string }> => {
-    try {
-        console.log("🔍 TRANSMUTE FROM GOLD SWAP INPUT:", {
-            amount,
-            type: typeof amount
-        })
-
-        // Validate inputs
-        if (!gluonInstance || !gluonBoxJs || !oracleBoxJs) {
-            throw new Error("Required boxes not initialized")
-        }
-
-        if (!ergoWallet) {
-            throw new Error("Wallet not connected. Please disconnect and reconnect your wallet.")
-        }
-
-        // Additional validation for wallet API methods
-        if (!ergoWallet.sign_tx || !ergoWallet.submit_tx) {
-            throw new Error("Wallet API not fully initialized. Please refresh the page and reconnect.")
-        }
-
-        if (!amount || parseFloat(amount) <= 0) {
-            throw new Error("Invalid amount entered")
-        }
-
-        const height = await nodeService.getNetworkHeight()
-        if (!height) {
-            throw new Error("Failed to get network height")
-        }
-
-        const oracleBuyBackJs = await gluonInstance.getOracleBuyBackBoxJs()
-        if (!oracleBuyBackJs) {
-            throw new Error("Failed to get oracle buyback box")
-        }
-
-        const neutronsToDecay = convertToDecimals(amount)
-        console.log("🔍 TRANSMUTE FROM GOLD AMOUNT:", {
-            neutronsToDecay: neutronsToDecay.toString()
-        })
-
-        // Create unsigned transaction
-        const unsignedTransaction = await gluonInstance.transmuteFromGoldForEip12(
-            gluonBoxJs,
-            oracleBoxJs,
-            userBoxes,
-            oracleBuyBackJs,
-            Number(neutronsToDecay),
-            height
-        )
-
-        if (!unsignedTransaction) {
-            throw new Error("Failed to create unsigned transaction")
-        }
-
-        console.log("Signing and submitting transaction...")
-
-        // Sign transaction
-        const signature = await ergoWallet?.sign_tx(unsignedTransaction)
-        if (!signature) {
-            throw new Error("Failed to sign transaction")
-        }
-
-        // Submit transaction
-        const txHash = await ergoWallet?.submit_tx(signature)
-        if (!txHash) {
-            throw new Error("Failed to submit transaction")
-        }
-
-        console.log("Transaction submitted successfully. TxId:", txHash)
-
-        // Handle success with toast notification
-        handleTransactionSuccess(txHash, 'transmute from gold')
-
-        return { txHash }
 
     const protonsToTransmute = convertToDecimals(amount);
     console.log("🔍 TRANSMUTE TO GOLD AMOUNT:", {

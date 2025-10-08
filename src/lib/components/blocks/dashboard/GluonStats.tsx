@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Card } from "@/lib/components/ui/card";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { Button } from "@/lib/components/ui/button";
 import { Skeleton } from "@/lib/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/lib/components/ui/tooltip";
@@ -59,6 +60,7 @@ export function GluonStats() {
   const [protocolMetrics, setProtocolMetrics] = useState<ProtocolMetrics>(initialMetrics);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const router = useRouter();
 
   useEffect(() => {

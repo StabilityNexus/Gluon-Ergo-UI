@@ -141,114 +141,21 @@ export const handleFusionSwap = async (
   ergoWallet: any,
   amount: string
 ): Promise<{ txHash?: string; error?: string }> => {
-    try {
-        console.log("amount being passed", amount)
+  try {
+    console.log("amount being passed", amount);
 
-        // Validate inputs
-        if (!gluonInstance || !gluonBox || !oracleBox) {
-            throw new Error("Required boxes not initialized")
-        }
-
-        if (!ergoWallet) {
-            throw new Error("Wallet not connected. Please disconnect and reconnect your wallet.")
-        }
-
-        // Additional validation for wallet API methods
-        if (!ergoWallet.sign_tx || !ergoWallet.submit_tx) {
-            throw new Error("Wallet API not fully initialized. Please refresh the page and reconnect.")
-        }
-
-        if (!amount || parseFloat(amount) <= 0) {
-            throw new Error("Invalid amount entered")
-        }
-
-        const height = await nodeService.getNetworkHeight()
-        if (!height) {
-            throw new Error("Failed to get network height")
-        }
-
-        const oracleBoxJs = await gluonInstance.getGoldOracleBox()
-        const gluonBoxJs = await gluonInstance.getGluonBox()
-
-        if (!oracleBoxJs || !gluonBoxJs) {
-            throw new Error("Failed to get required boxes")
-        }
-
-        // Convert the desired ERG output amount to nanoERGs
-        const nanoErgsToFuse = ergsToNanoErgs(amount)
-        console.log("amount to nano ergs", nanoErgsToFuse)
-
-        // Get required token amounts for verification
-        const { neutrons, protons } = await gluonInstance.fusionWillNeed(gluonBox, Number(nanoErgsToFuse))
-        console.log("neutrons", neutrons)
-        console.log("protons", protons)
-
-        // Verify we have valid amounts
-        if (!neutrons || !protons || neutrons <= 0 || protons <= 0) {
-            throw new Error("Invalid fusion amounts - insufficient tokens required")
-        }
-
-        // Convert to proper display values
-        const requiredGau = convertFromDecimals(BigInt(neutrons)).toString()
-        const requiredGauc = convertFromDecimals(BigInt(protons)).toString()
-
-        console.log("Transaction Value Verification:", {
-            input: {
-                requestedErg: amount,
-                nanoErgsToFuse: nanoErgsToFuse.toString(),
-            },
-            tokensToBeConsumed: {
-                rawNeutrons: neutrons.toString(),
-                rawProtons: protons.toString(),
-                displayGau: requiredGau,
-                displayGauc: requiredGauc
-            }
-        })
-
-        // Create unsigned transaction
-        const unsignedTransaction = await gluonInstance.fusionForEip12(
-            gluonBoxJs,
-            oracleBoxJs,
-            userBoxes,
-            Number(nanoErgsToFuse)
-        )
-
-        if (!unsignedTransaction) {
-            throw new Error("Failed to create unsigned transaction")
-        }
-
-        console.log("Signing and submitting transaction...")
-
-        // Sign transaction
-        const signature = await ergoWallet?.sign_tx(unsignedTransaction)
-        if (!signature) {
-            throw new Error("Failed to sign transaction")
-        }
-
-        // Submit transaction
-        const txHash = await ergoWallet?.submit_tx(signature)
-        if (!txHash) {
-            throw new Error("Failed to submit transaction")
-        }
-
-        console.log("Transaction submitted successfully. TxId:", txHash)
-
-        // Handle success with toast notification
-        handleTransactionSuccess(txHash, 'fusion')
-
-        return { txHash }
-
-    } catch (error) {
-        console.error("Fusion failed:", error)
-
-        // Use the error handler for proper classification and toast notification
-        const errorDetails = handleTransactionError(error, 'fusion')
-
-        return { error: errorDetails.userMessage }
+    // Validate inputs
+    if (!gluonInstance || !gluonBox || !oracleBox) {
+      throw new Error("Required boxes not initialized");
     }
 
     if (!ergoWallet) {
-      throw new Error("Wallet not connected");
+      throw new Error("Wallet not connected. Please disconnect and reconnect your wallet.");
+    }
+
+    // Additional validation for wallet API methods
+    if (!ergoWallet.sign_tx || !ergoWallet.submit_tx) {
+      throw new Error("Wallet API not fully initialized. Please refresh the page and reconnect.");
     }
 
     if (!amount || parseFloat(amount) <= 0) {

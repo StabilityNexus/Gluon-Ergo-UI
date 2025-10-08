@@ -91,21 +91,21 @@ export const formatMicroNumber = (value: number | string | BigNumber): Formatted
   if (bn.isZero()) return { display: "0", tooltip: "0", raw: "0" };
 
   // For all values, show up to 9 decimal places (removing trailing zeros)
-  const truncated = bn.decimalPlaces(9, BigNumber.ROUND_DOWN)
-  const formatted = truncated.toFixed()
-  
+  const truncated = bn.decimalPlaces(9, BigNumber.ROUND_DOWN);
+  const formatted = truncated.toFixed();
+
   // Remove trailing zeros after decimal point
-  const parts = formatted.split('.')
+  const parts = formatted.split(".");
   if (parts.length === 2) {
-    const trimmed = parts[1].replace(/0+$/, '')
-    const display = trimmed ? `${parts[0]}.${trimmed}` : parts[0]
+    const trimmed = parts[1].replace(/0+$/, "");
+    const display = trimmed ? `${parts[0]}.${trimmed}` : parts[0];
     return {
       display,
       tooltip: bn.toFormat(9),
-      raw: bn.toString()
-    }
+      raw: bn.toString(),
+    };
   }
-  
+
   return {
     display: formatted,
     tooltip: bn.toFormat(9),
