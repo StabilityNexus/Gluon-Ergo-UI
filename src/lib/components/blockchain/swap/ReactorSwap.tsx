@@ -12,7 +12,7 @@ import { useErgo } from "@/lib/providers/ErgoProvider";
 import { NumericFormat, type NumberFormatValues } from "react-number-format";
 import { NodeService } from "@/lib/utils/node-service";
 import { TOKEN_ADDRESS } from "@/lib/constants/token";
-import { convertFromDecimals, formatMicroNumber, nanoErgsToErgs, convertToDecimals } from "@/lib/utils/erg-converter";
+import { convertFromDecimals, formatMicroNumber, nanoErgsToErgs, convertToDecimals, ergsToNanoErgs } from "@/lib/utils/erg-converter";
 import { createTransactionListener, type WalletState, type ExpectedChanges } from "@/lib/utils/transaction-listener";
 import BigNumber from "bignumber.js";
 import { Token, TokenSymbol, ReceiptDetails } from "@/lib/functions/reactor/types";
@@ -630,12 +630,38 @@ export function ReactorSwap() {
         return;
       }
       if (fromToken.symbol === "ERG") {
-        // Pre-calculate fees for better MAX calculation
-        const estimatedTotalFeeERG = 0.011; // Conservative estimate: 0.004 (devFee) + 0.002 (oracle) + 0.003 (miner) + 0.002 buffer
-        const ergReserve = 0.1; // Minimum ERG to keep in wallet
-        const availableErg = Math.max(0, balanceNum - ergReserve - estimatedTotalFeeERG);
-        // Use full precision without rounding
-        maxAmount = availableErg.toString();
+        try {
+          // Calculate actual fees for the current balance
+          const balanceNanoErgs = ergsToNanoErgs(balanceNum);
+          
+          // Get actual fees from the SDK
+          const fees = await gluonInstance.getTotalFeeAmountFission(gluonBox, Number(balanceNanoErgs));
+          
+          // Convert fees to ERG
+          const actualTotalFee = parseFloat(nanoErgsToErgs(fees.totalFee).toString());
+          
+          // Small buffer for wallet operations (0.01 ERG)
+          const walletBuffer = 0.01;
+          
+          // Calculate available ERG
+          const availableErg = Math.max(0, balanceNum - actualTotalFee - walletBuffer);
+          maxAmount = availableErg.toString();
+          
+          console.log("🔍 MAX CALCULATION:", {
+            balance: balanceNum,
+            actualTotalFee,
+            walletBuffer,
+            availableErg,
+            maxAmount
+          });
+        } catch (error) {
+          console.error("Error calculating max amount:", error);
+          // Fallback to conservative estimate
+          const estimatedTotalFeeERG = 0.011;
+          const walletBuffer = 0.01;
+          const availableErg = Math.max(0, balanceNum - estimatedTotalFeeERG - walletBuffer);
+          maxAmount = availableErg.toString();
+        }
       } else if (fromToken.symbol === "GAU" || fromToken.symbol === "GAUC") {
         maxAmount = fromToken.balance;
       }
