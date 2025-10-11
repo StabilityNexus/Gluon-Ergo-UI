@@ -36,6 +36,7 @@ interface WalletInfo {
 interface ErgoContextType {
   walletList: WalletInfo[];
   isConnected: boolean;
+  isInitialized: boolean;
   connect: (walletName: string) => Promise<boolean>;
   disconnect: () => void;
   getChangeAddress: () => Promise<string>;
@@ -52,13 +53,17 @@ export function ErgoProvider({ children }: { children: React.ReactNode }) {
   const [walletList, setWalletList] = useState<WalletInfo[]>([]);
   const [isConnected, setIsConnected] = useState(false);
   const [ergoWallet, setErgoWallet] = useState<typeof window.ergo>();
+  const [isInitialized, setIsInitialized] = useState(false);
 
-  // Initialize available wallets
+  // Initialize available wallets and check for existing connection
   React.useEffect(() => {
     if (typeof window === "undefined") return;
 
     const { ergoConnector } = window;
-    if (!ergoConnector) return;
+    if (!ergoConnector) {
+      setIsInitialized(true);
+      return;
+    }
 
     const availableWallets: WalletInfo[] = Object.keys(ergoConnector).map((walletName) => ({
       connectName: walletName,
@@ -69,7 +74,69 @@ export function ErgoProvider({ children }: { children: React.ReactNode }) {
     }));
 
     setWalletList(availableWallets);
+
+    // Check for existing wallet connection on page load
+    const checkExistingConnection = async () => {
+      try {
+        const savedWallet = localStorage.getItem("connectedWallet");
+        
+        if (savedWallet && ergoConnector[savedWallet]) {
+          const isStillConnected = await ergoConnector[savedWallet].isConnected();
+          
+          if (isStillConnected) {
+            // Wait for window.ergo to be injected
+            let retries = 0;
+            while (!window.ergo && retries < 20) {
+              await new Promise((resolve) => setTimeout(resolve, 200));
+              retries++;
+            }
+
+            if (window.ergo) {
+              setIsConnected(true);
+              setErgoWallet(window.ergo);
+            }
+          }
+        }
+      } catch (error) {
+        localStorage.removeItem("connectedWallet");
+      } finally {
+        setIsInitialized(true);
+      }
+    };
+
+    checkExistingConnection();
   }, []);
+
+  // Periodic check for wallet restoration
+  React.useEffect(() => {
+    if (!isInitialized) return;
+
+    const checkForWalletRestoration = async () => {
+      const savedWallet = localStorage.getItem("connectedWallet");
+      
+      if (savedWallet && window.ergoConnector?.[savedWallet]) {
+        try {
+          const walletIsConnected = await window.ergoConnector[savedWallet].isConnected();
+          
+          if (walletIsConnected && window.ergo) {
+            // Always update wallet state if window.ergo is available
+            setIsConnected(true);
+            setErgoWallet(window.ergo);
+          } else if (!walletIsConnected) {
+            // Wallet is no longer connected, disconnect
+            setIsConnected(false);
+            setErgoWallet(undefined);
+            localStorage.removeItem("connectedWallet");
+          }
+        } catch (error) {
+          // Wallet not available, continue checking
+        }
+      }
+    };
+
+    const interval = setInterval(checkForWalletRestoration, 2000);
+    return () => clearInterval(interval);
+  }, [isInitialized]);
 
   const connect = useCallback(async (walletName: string): Promise<boolean> => {
     try {
@@ -108,6 +175,11 @@ export function ErgoProvider({ children }: { children: React.ReactNode }) {
 
       setIsConnected(isWalletConnected);
       setErgoWallet(window.ergo);
+      
+      if (isWalletConnected) {
+        localStorage.setItem("connectedWallet", walletName);
+      }
+      
       return isWalletConnected;
     } catch (error) {
       console.error("Error connecting to wallet:", error);
@@ -119,6 +191,7 @@ export function ErgoProvider({ children }: { children: React.ReactNode }) {
   const disconnect = useCallback(() => {
     setIsConnected(false);
     setErgoWallet(undefined);
+    localStorage.removeItem("connectedWallet");
   }, []);
 
   const signMessage = useCallback(async (address: string, message: string): Promise<string> => {
@@ -217,6 +290,7 @@ export function ErgoProvider({ children }: { children: React.ReactNode }) {
       value={{
         walletList,
         isConnected,
+        isInitialized,
         connect,
         disconnect,
         getChangeAddress,
