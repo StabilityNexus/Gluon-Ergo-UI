@@ -115,7 +115,7 @@ export function ReactorSwap() {
   const [oracleBox, setOracleBox] = useState<any>(null);
   const [isInitializing, setIsInitializing] = useState(true);
   const [initError, setInitError] = useState<string | null>(null);
-  const [nodeService] = useState(() => new NodeService(process.env.NEXT_PUBLIC_NODE || ""));
+  const [nodeService] = useState(() => new NodeService(process.env.NEXT_PUBLIC_NODE || "https://node.sigmaspace.io/"));
   const [balanceUpdateTrigger] = useState(0);
   const [boxesReady, setBoxesReady] = useState(false);
   const [receiptDetails, setReceiptDetails] = useState<ReceiptDetails>({
