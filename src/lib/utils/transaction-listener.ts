@@ -101,7 +101,25 @@ export class TransactionListener {
     try {
       console.log("🔍 Checking transaction status:", txHash.slice(0, 8) + "...");
 
-      // First try to get the transaction directly (if it's confirmed, it won't be in unconfirmed)
+      // Check mempool first (faster and more efficient)
+      try {
+        const mempoolTx = await this.nodeService.getUnconfirmedTransactionById(txHash);
+        
+        if (mempoolTx) {
+          console.log("Transaction still in mempool, waiting...");
+          return false;
+        }
+      } catch (mempoolError: any) {
+        if (mempoolError.response?.status === 404) {
+          console.log("Transaction not in mempool, checking blockchain...");
+          // Only check blockchain when mempool says it's gone
+        } else {
+          console.log("Error checking mempool, will retry:", mempoolError);
+          return false; // Network error - keep trying
+        }
+      }
+
+      // Only check blockchain if not in mempool
       try {
         const confirmedTx = await this.nodeService.getTxsById(txHash);
 
@@ -122,27 +140,8 @@ export class TransactionListener {
           return true;
         }
       } catch (confirmedError) {
-        // Transaction not confirmed yet, check if it's still in mempool
-        console.log("Transaction not confirmed yet, checking mempool...", confirmedError);
-      }
-
-      // Check if transaction is still in unconfirmed mempool
-      try {
-        const mempoolTx = await this.nodeService.getUnconfirmedTransactionById(txHash);
-        
-        if (mempoolTx) {
-          console.log("Transaction still in mempool, waiting...");
-          return false;
-        }
-      } catch (mempoolError: any) {
-        // 404 means transaction is not in mempool anymore
-        if (mempoolError.response?.status === 404) {
-          console.log("Transaction not in mempool and not confirmed - may have failed");
-          // Don't return false here - let it continue to check if we should cleanup
-        } else {
-          console.log("Error checking mempool, will retry:", mempoolError);
-          return false; // Network error - keep trying
-        }
+        // Transaction not confirmed yet
+        console.log("Transaction not confirmed yet, will retry...");
       }
 
       // Transaction not found in blockchain or mempool
