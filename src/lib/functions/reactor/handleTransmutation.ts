@@ -170,6 +170,10 @@ export const handleTransmuteToGoldSwap = async ({
       type: typeof amount,
     });
 
+    // Fetch fresh boxes to avoid stale data issues
+    const oracleBoxJs = await gluonInstance.getGoldOracleBox();
+    const gluonBoxJs = await gluonInstance.getGluonBox();
+
     // Validate inputs
     if (!gluonInstance || !gluonBoxJs || !oracleBoxJs) {
       throw new Error("Required boxes not initialized");
@@ -192,10 +196,6 @@ export const handleTransmuteToGoldSwap = async ({
     if (!height) {
       throw new Error("Failed to get network height");
     }
-
-    // Fetch fresh boxes to avoid stale data issues
-    const oracleBoxJs = await gluonInstance.getGoldOracleBox();
-    const gluonBoxJs = await gluonInstance.getGluonBox();
 
     if (!oracleBoxJs || !gluonBoxJs) {
       throw new Error("Failed to get fresh protocol boxes");
@@ -271,6 +271,10 @@ export const handleTransmuteFromGoldSwap = async ({
       type: typeof amount,
     });
 
+    // Fetch fresh boxes to avoid stale data issues
+    const oracleBoxJs = await gluonInstance.getGoldOracleBox();
+    const gluonBoxJs = await gluonInstance.getGluonBox();
+
     // Validate inputs
     if (!gluonInstance || !gluonBoxJs || !oracleBoxJs) {
       throw new Error("Required boxes not initialized");
@@ -288,10 +292,6 @@ export const handleTransmuteFromGoldSwap = async ({
     if (!height) {
       throw new Error("Failed to get network height");
     }
-
-    // Fetch fresh boxes to avoid stale data issues
-    const oracleBoxJs = await gluonInstance.getGoldOracleBox();
-    const gluonBoxJs = await gluonInstance.getGluonBox();
 
     if (!oracleBoxJs || !gluonBoxJs) {
       throw new Error("Failed to get fresh protocol boxes");
