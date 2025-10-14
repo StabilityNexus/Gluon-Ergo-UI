@@ -193,6 +193,14 @@ export const handleTransmuteToGoldSwap = async ({
       throw new Error("Failed to get network height");
     }
 
+    // Fetch fresh boxes to avoid stale data issues
+    const oracleBoxJs = await gluonInstance.getGoldOracleBox();
+    const gluonBoxJs = await gluonInstance.getGluonBox();
+
+    if (!oracleBoxJs || !gluonBoxJs) {
+      throw new Error("Failed to get fresh protocol boxes");
+    }
+
     const oracleBuyBackJs = await gluonInstance.getOracleBuyBackBoxJs();
     if (!oracleBuyBackJs) {
       throw new Error("Failed to get oracle buyback box");
@@ -279,6 +287,14 @@ export const handleTransmuteFromGoldSwap = async ({
     const height = await nodeService.getNetworkHeight();
     if (!height) {
       throw new Error("Failed to get network height");
+    }
+
+    // Fetch fresh boxes to avoid stale data issues
+    const oracleBoxJs = await gluonInstance.getGoldOracleBox();
+    const gluonBoxJs = await gluonInstance.getGluonBox();
+
+    if (!oracleBoxJs || !gluonBoxJs) {
+      throw new Error("Failed to get fresh protocol boxes");
     }
 
     const oracleBuyBackJs = await gluonInstance.getOracleBuyBackBoxJs();
