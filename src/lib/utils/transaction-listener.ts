@@ -432,7 +432,10 @@ export class TransactionListener {
       const gauDiff = BigInt(current.gau) - BigInt(expected.gau);
       const gaucDiff = BigInt(current.gauc) - BigInt(expected.gauc);
 
-      return Math.abs(Number(ergDiff)) <= Number(tolerance) && gauDiff === BigInt(0) && gaucDiff === BigInt(0);
+      // Edge-safe absolute value calculation using pure BigInt operations
+      const ergDiffAbs = ergDiff < BigInt(0) ? -ergDiff : ergDiff;
+      
+      return ergDiffAbs <= tolerance && gauDiff === BigInt(0) && gaucDiff === BigInt(0);
     } catch (error) {
       console.error("Error comparing states:", error);
       return false;
