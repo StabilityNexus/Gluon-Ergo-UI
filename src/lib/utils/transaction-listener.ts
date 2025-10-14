@@ -128,20 +128,37 @@ export class TransactionListener {
 
       // Check if transaction is still in unconfirmed mempool
       try {
-        const txStatus = await this.nodeService.checkUnconfirmedTx(txHash);
-
-        if (txStatus === 200) {
+        const mempoolTx = await this.nodeService.getUnconfirmedTransactionById(txHash);
+        
+        if (mempoolTx) {
           console.log("Transaction still in mempool, waiting...");
           return false;
-        } else if (txStatus === 404) {
-          // Not in mempool and not confirmed - might be processing
-          console.log("Transaction not in mempool, might be confirming...");
-          return false;
         }
-      } catch (mempoolError) {
-        console.log("Error checking mempool, will retry:", mempoolError);
+      } catch (mempoolError: any) {
+        // 404 means transaction is not in mempool anymore
+        if (mempoolError.response?.status === 404) {
+          console.log("Transaction not in mempool and not confirmed - may have failed");
+          // Don't return false here - let it continue to check if we should cleanup
+        } else {
+          console.log("Error checking mempool, will retry:", mempoolError);
+          return false; // Network error - keep trying
+        }
       }
 
+      // Transaction not found in blockchain or mempool
+      // Check if we should cleanup based on retry count
+      const pendingTransactions = this.getPendingTransactions();
+      const transactionState = pendingTransactions[txHash];
+      
+      if (transactionState && transactionState.retryCount >= 5) {
+        console.warn("⚠️ Transaction not found in blockchain or mempool after multiple attempts, cleaning up:", txHash.slice(0, 8) + "...");
+        toast.error("Transaction not found", {
+          description: "Transaction may have failed. Please check manually.",
+          duration: 8000,
+        });
+        return true; // Signal to cleanup
+      }
+      
       return false;
     } catch (error) {
       console.error("Error checking transaction status:", error);
@@ -315,13 +332,20 @@ export class TransactionListener {
 
         // Check for blockchain confirmation
         if (!transactionState.isConfirmed) {
-          const isConfirmed = await this.listenForTransaction(txHash);
+          const result = await this.listenForTransaction(txHash);
 
-          if (isConfirmed) {
-            toast.success("Transaction confirmed!", {
-              description: "Waiting for wallet to update...",
-              duration: 5000,
-            });
+          if (result === true) {
+            // Transaction confirmed or should be cleaned up
+            if (transactionState.isConfirmed) {
+              toast.success("Transaction confirmed!", {
+                description: "Waiting for wallet to update...",
+                duration: 5000,
+              });
+            } else {
+              // Transaction should be cleaned up (not found in blockchain or mempool)
+              this.cleanUpTransaction(txHash);
+              continue;
+            }
           } else {
             // Increment retry count for failed checks
             const pendingTxs = this.getPendingTransactions();
