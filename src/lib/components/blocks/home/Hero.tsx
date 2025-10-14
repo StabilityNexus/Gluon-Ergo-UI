@@ -28,7 +28,7 @@ export default function Hero() {
 
             <motion.div className="mt-8 flex justify-center gap-3" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6, duration: 0.6 }}>
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Button size={"lg"} onClick={() => router.push("/reactor")}>
+                <Button size={"lg"} onClick={() => router.push("/swap")}>
                   Start Trading
                 </Button>
               </motion.div>

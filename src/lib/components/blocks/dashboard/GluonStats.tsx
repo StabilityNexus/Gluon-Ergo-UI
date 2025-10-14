@@ -341,7 +341,7 @@ export function GluonStats() {
           <div className="flex flex-1 flex-col items-center justify-center space-y-8">
             <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.5, duration: 0.3 }} className="text-center">
               <div className="mb-4 flex items-center justify-center">
-                <Percent className="mr-2 h-8 w-8 text-amber-600" />
+                <Percent className="mr-2 h-6 w-6 text-amber-600" />
               </div>
               <AnimatePresence mode="wait">
                 {isLoading ? (
@@ -358,7 +358,7 @@ export function GluonStats() {
                     transition={{ duration: 0.3 }}
                     className="text-center"
                   >
-                    <div className="mb-1 text-5xl font-bold text-foreground">{hasError ? "—" : stats.reserveRatio ? Math.round(stats.reserveRatio) : "—"}%</div>
+                    <div className="mb-1 text-4xl font-bold text-foreground">{hasError ? "—" : stats.reserveRatio ? Math.round(stats.reserveRatio) : "—"}%</div>
                     <div className="text-sm font-medium text-muted-foreground">Current Reserve Ratio</div>
                   </motion.div>
                 )}
@@ -372,7 +372,7 @@ export function GluonStats() {
               className="text-center"
             >
               <div className="flex items-center justify-center mb-4">
-                <Expand className="h-8 w-8 text-amber-600 mr-2" />
+                <Expand className="h-6 w-6 text-amber-600 mr-2" />
               </div>
               <AnimatePresence mode="wait">
                 {isLoading ? (
@@ -389,7 +389,7 @@ export function GluonStats() {
                     transition={{ duration: 0.3 }}
                     className="text-center"
                   >
-                    <div className="text-5xl font-bold text-foreground mb-1">
+                    <div className="text-4xl font-bold text-foreground mb-1">
                       {hasError ? '—' : stats.reserveRatio ? Math.round(- (100 / (100 - stats.reserveRatio)) * 100)/100 : '—'}x <br />
                     </div>
                     <div className="font-medium text-sm text-muted-foreground">
@@ -400,10 +400,9 @@ export function GluonStats() {
               </AnimatePresence>
             </motion.div>
 
-
             <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.6, duration: 0.3 }} className="text-center">
               <div className="mb-4 flex items-center justify-center">
-                <TrendingUp className="mr-2 h-8 w-8 text-green-600" />
+                <TrendingUp className="mr-2 h-6 w-6 text-green-600" />
               </div>
               <AnimatePresence mode="wait">
                 {isLoading ? (
@@ -428,30 +427,6 @@ export function GluonStats() {
             </motion.div>
           </div>
 
-          {/* <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.7, duration: 0.3 }}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            className="mt-8"
-          >
-            <Button
-              size="lg"
-              className="w-full h-12 text-white text-lg font-semibold bg-primary hover:bg-amber-600 dark:bg-primary dark:hover:bg-amber-700 transition-all duration-200 shadow-lg rounded-2xl"
-              onClick={() => router.push('/reactor/swap')}
-              disabled={isLoading || hasError}
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                  Loading...
-                </>
-              ) : (
-                'Swap Now'
-              )}
-            </Button>
-          </motion.div> */}
         </Card>
       </motion.div>
     </motion.div>
