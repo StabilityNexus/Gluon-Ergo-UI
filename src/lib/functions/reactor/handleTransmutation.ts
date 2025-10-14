@@ -194,10 +194,10 @@ export const handleTransmuteToGoldSwap = async ({
     }
 
     // Fetch fresh boxes to avoid stale data issues
-    const freshOracleBox = await gluonInstance.getGoldOracleBox();
-    const freshGluonBox = await gluonInstance.getGluonBox();
+    const oracleBoxJs = await gluonInstance.getGoldOracleBox();
+    const gluonBoxJs = await gluonInstance.getGluonBox();
 
-    if (!freshOracleBox || !freshGluonBox) {
+    if (!oracleBoxJs || !gluonBoxJs) {
       throw new Error("Failed to get fresh protocol boxes");
     }
 
@@ -211,8 +211,8 @@ export const handleTransmuteToGoldSwap = async ({
       protonsToTransmute: protonsToTransmute.toString(),
     });
 
-    // Create unsigned transaction with fresh boxes
-    const unsignedTransaction = await gluonInstance.transmuteToGoldForEip12(freshGluonBox, freshOracleBox, userBoxes, oracleBuyBackJs, Number(protonsToTransmute), height);
+    // Create unsigned transaction
+    const unsignedTransaction = await gluonInstance.transmuteToGoldForEip12(gluonBoxJs, oracleBoxJs, userBoxes, oracleBuyBackJs, Number(protonsToTransmute), height);
 
     if (!unsignedTransaction) {
       throw new Error("Failed to create unsigned transaction");
@@ -290,10 +290,10 @@ export const handleTransmuteFromGoldSwap = async ({
     }
 
     // Fetch fresh boxes to avoid stale data issues
-    const freshOracleBox = await gluonInstance.getGoldOracleBox();
-    const freshGluonBox = await gluonInstance.getGluonBox();
+    const oracleBoxJs = await gluonInstance.getGoldOracleBox();
+    const gluonBoxJs = await gluonInstance.getGluonBox();
 
-    if (!freshOracleBox || !freshGluonBox) {
+    if (!oracleBoxJs || !gluonBoxJs) {
       throw new Error("Failed to get fresh protocol boxes");
     }
 
@@ -307,8 +307,8 @@ export const handleTransmuteFromGoldSwap = async ({
       neutronsToDecay: neutronsToDecay.toString(),
     });
 
-    // Create unsigned transaction with fresh boxes
-    const unsignedTransaction = await gluonInstance.transmuteFromGoldForEip12(freshGluonBox, freshOracleBox, userBoxes, oracleBuyBackJs, Number(neutronsToDecay), height);
+    // Create unsigned transaction
+    const unsignedTransaction = await gluonInstance.transmuteFromGoldForEip12(gluonBoxJs, oracleBoxJs, userBoxes, oracleBuyBackJs, Number(neutronsToDecay), height);
 
     if (!unsignedTransaction) {
       throw new Error("Failed to create unsigned transaction");

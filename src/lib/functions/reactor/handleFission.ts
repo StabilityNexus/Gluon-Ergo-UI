@@ -133,15 +133,15 @@ export const handleFissionSwap = async (
     }
 
     // Fetch fresh boxes to avoid stale data issues
-    const freshOracleBox = await gluonInstance.getGoldOracleBox();
-    const freshGluonBox = await gluonInstance.getGluonBox();
+    const oracleBoxJs = await gluonInstance.getGoldOracleBox();
+    const gluonBoxJs = await gluonInstance.getGluonBox();
 
-    if (!freshOracleBox || !freshGluonBox) {
+    if (!oracleBoxJs || !gluonBoxJs) {
       throw new Error("Failed to get fresh protocol boxes");
     }
 
-    // Create unsigned transaction with fresh boxes
-    const unsignedTransaction = await gluonInstance.fissionForEip12(freshGluonBox, freshOracleBox, userBoxes, Number(nanoErgsToFission));
+    // Create unsigned transaction
+    const unsignedTransaction = await gluonInstance.fissionForEip12(gluonBoxJs, oracleBoxJs, userBoxes, Number(nanoErgsToFission));
 
     if (!unsignedTransaction) {
       throw new Error("Failed to create unsigned transaction");
