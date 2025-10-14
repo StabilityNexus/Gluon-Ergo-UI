@@ -2,12 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { Card } from "@/lib/components/ui/card";
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { Button } from "@/lib/components/ui/button";
 import { Skeleton } from "@/lib/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/lib/components/ui/tooltip";
 import { nanoErgsToErgs, convertFromDecimals, formatNumber } from "@/lib/utils/erg-converter";
-import { Scale, Percent, Loader2, TrendingUp, Activity } from "lucide-react";
+import { Scale, Percent, Loader2, Expand, TrendingUp, Activity } from "lucide-react";
 import { cn } from "@/lib/utils/utils";
 import { useRouter } from "next/navigation";
 import BigNumber from "bignumber.js";
@@ -233,7 +231,7 @@ export function GluonStats() {
                 transition={{ duration: 0.2 }}
                 className="text-center"
               >
-                <div className="text-4xl font-bold">{value ? renderTooltip(value, title) : "—"}</div>
+                <div className="text-4xl font-bold">{value ? renderTooltip(value, title + " Price") : "—"}</div>
                 <div className="mt-1 text-sm text-muted-foreground">{suffix}</div>
               </motion.div>
             </AnimatePresence>
@@ -374,7 +372,7 @@ export function GluonStats() {
               className="text-center"
             >
               <div className="flex items-center justify-center mb-4">
-                <Percent className="h-8 w-8 text-amber-600 mr-2" />
+                <Expand className="h-8 w-8 text-amber-600 mr-2" />
               </div>
               <AnimatePresence mode="wait">
                 {isLoading ? (
@@ -392,7 +390,7 @@ export function GluonStats() {
                     className="text-center"
                   >
                     <div className="text-5xl font-bold text-foreground mb-1">
-                      {hasError ? '—' : stats.reserveRatio ? Math.round(stats.reserveRatio) : '—'}x
+                      {hasError ? '—' : stats.reserveRatio ? Math.round(- (100 / (100 - stats.reserveRatio)) * 100)/100 : '—'}x <br />
                     </div>
                     <div className="font-medium text-sm text-muted-foreground">
                       Current GAUC Leverage
@@ -402,46 +400,6 @@ export function GluonStats() {
               </AnimatePresence>
             </motion.div>
 
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.5, duration: 0.3 }}
-              className="text-center"
-            >
-              <div className="flex items-center justify-center mb-4">
-                <Percent className="h-8 w-8 text-amber-600 mr-2" />
-              </div>
-              <AnimatePresence mode="wait">
-                {isLoading ? (
-                  <motion.div
-                    key="loading-ratio"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="flex flex-col items-center gap-2"
-                  >
-                    <Skeleton className="w-20 h-12" />
-                    <Skeleton className="w-32 h-5" />
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    key={stats.reserveRatio?.toString() || "error"}
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.8 }}
-                    transition={{ duration: 0.3 }}
-                    className="text-center"
-                  >
-                    <div className="text-5xl font-bold text-foreground mb-1">
-                      {hasError ? '—' : stats.reserveRatio ? Math.round(stats.reserveRatio) : '—'}x
-                    </div>
-                    <div className="font-medium text-sm text-muted-foreground">
-                      Current GAUC Leverage
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </motion.div>
 
             <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.6, duration: 0.3 }} className="text-center">
               <div className="mb-4 flex items-center justify-center">
