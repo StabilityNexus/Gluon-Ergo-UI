@@ -132,8 +132,16 @@ export const handleFissionSwap = async (
       throw new Error("Invalid fission amount - no tokens will be generated");
     }
 
-    // Create unsigned transaction
-    const unsignedTransaction = await gluonInstance.fissionForEip12(gluonBox, oracleBox, userBoxes, Number(nanoErgsToFission));
+    // Fetch fresh boxes to avoid stale data issues
+    const freshOracleBox = await gluonInstance.getGoldOracleBox();
+    const freshGluonBox = await gluonInstance.getGluonBox();
+
+    if (!freshOracleBox || !freshGluonBox) {
+      throw new Error("Failed to get fresh protocol boxes");
+    }
+
+    // Create unsigned transaction with fresh boxes
+    const unsignedTransaction = await gluonInstance.fissionForEip12(freshGluonBox, freshOracleBox, userBoxes, Number(nanoErgsToFission));
 
     if (!unsignedTransaction) {
       throw new Error("Failed to create unsigned transaction");

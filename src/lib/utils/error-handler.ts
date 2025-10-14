@@ -14,6 +14,7 @@ export enum ErrorType {
   WALLET_CONNECTION = "WALLET_CONNECTION",
   WALLET_SIGNING = "WALLET_SIGNING",
   TRANSACTION_SUBMISSION = "TRANSACTION_SUBMISSION",
+  UTXO_VALIDATION = "UTXO_VALIDATION",
   BOX_INITIALIZATION = "BOX_INITIALIZATION",
   ORACLE_ERROR = "ORACLE_ERROR",
   INVALID_AMOUNT = "INVALID_AMOUNT",
@@ -68,6 +69,9 @@ const ERROR_PATTERNS = {
   // Transaction submission errors
   transactionSubmission: [/submit.*failed/i, /submission.*error/i, /broadcast.*failed/i, /mempool.*rejected/i, /transaction.*rejected/i],
 
+  // UTXO validation errors
+  utxoValidation: [/malformed transaction.*every input.*should be in utxo/i, /missing inputs/i, /input.*not.*in.*utxo/i],
+
   // Box initialization errors
   boxInitialization: [/failed to.*get.*box/i, /box.*not.*found/i, /oracle.*box.*error/i, /gluon.*box.*error/i, /failed to initialize/i],
 
@@ -89,6 +93,7 @@ const USER_MESSAGES = {
   [ErrorType.WALLET_CONNECTION]: "Wallet not connected. Please connect your wallet first.",
   [ErrorType.WALLET_SIGNING]: "Transaction was cancelled by user or signing failed. Please try again.",
   [ErrorType.TRANSACTION_SUBMISSION]: "Failed to submit transaction to the network. Please try again.",
+  [ErrorType.UTXO_VALIDATION]: "Transaction failed due to stale blockchain data. Please try again.",
   [ErrorType.BOX_INITIALIZATION]: "Failed to initialize blockchain data. Please refresh and try again.",
   [ErrorType.ORACLE_ERROR]: "Oracle data unavailable. Please try again in a moment.",
   [ErrorType.INVALID_AMOUNT]: "Invalid amount entered. Please check your input.",
@@ -145,6 +150,8 @@ function classifyError(error: Error | string | any): ErrorType {
           return ErrorType.WALLET_SIGNING;
         case "transactionSubmission":
           return ErrorType.TRANSACTION_SUBMISSION;
+        case "utxoValidation":
+          return ErrorType.UTXO_VALIDATION;
         case "boxInitialization":
           return ErrorType.BOX_INITIALIZATION;
         case "oracle":
