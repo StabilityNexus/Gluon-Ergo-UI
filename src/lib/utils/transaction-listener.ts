@@ -335,7 +335,9 @@ export class TransactionListener {
 
           if (result === true) {
             // Transaction confirmed or should be cleaned up
-            if (transactionState.isConfirmed) {
+            // Get fresh state after listenForTransaction updates it
+            const refreshed = this.getPendingTransactions()[txHash];
+            if (refreshed?.isConfirmed) {
               toast.success("Transaction confirmed!", {
                 description: "Waiting for wallet to update...",
                 duration: 5000,
