@@ -43,18 +43,15 @@ export function BottomNavbar() {
 
   if (!isMobile) {
     return (
-      <div className="w-full dark:shadow-lg shadow-sm backdrop-blur-xl">
+      <div className="w-full shadow-sm backdrop-blur-xl dark:shadow-lg">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-center py-4 space-x-6">
+          <div className="flex justify-center space-x-6 py-4">
             {socialLinks.map(({ href, label, iconLight, iconDark }) => {
               let iconSrc = "/logo/default.svg";
 
               if (mounted) {
                 const currentTheme = theme === "system" ? systemTheme : theme;
-                iconSrc =
-                  currentTheme === "dark"
-                    ? iconDark ?? iconLight ?? iconSrc
-                    : iconLight ?? iconDark ?? iconSrc;
+                iconSrc = currentTheme === "dark" ? (iconDark ?? iconLight ?? iconSrc) : (iconLight ?? iconDark ?? iconSrc);
               }
 
               return (
@@ -63,16 +60,10 @@ export function BottomNavbar() {
                   href={href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="hover:text-primary transition-colors flex items-center justify-center w-8 h-8"
+                  className="flex h-8 w-8 items-center justify-center transition-colors hover:text-primary"
                   aria-label={label}
                 >
-                  <Image
-                    src={iconSrc}
-                    alt={label}
-                    width={24}
-                    height={24}
-                    className="w-6 h-6 object-contain"
-                  />
+                  <Image src={iconSrc} alt={label} width={24} height={24} className="h-6 w-6 object-contain" />
                 </Link>
               );
             })}
@@ -83,9 +74,9 @@ export function BottomNavbar() {
   }
 
   return (
-    <div className="w-full dark:shadow-lg shadow-sm bg-background fixed bottom-0 left-0 right-0 z-[9999]">
+    <div className="fixed bottom-0 left-0 right-0 z-[9999] w-full bg-background shadow-sm dark:shadow-lg">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-around py-4 items-center">
+        <div className="flex items-center justify-around py-4">
           {[
             { href: "/reactor", label: "Reactor" },
             { href: "/swap", label: "Swap" },
@@ -102,10 +93,7 @@ export function BottomNavbar() {
                 key={item.href}
                 href={item.href}
                 target={item.external ? "_blank" : undefined}
-                className={cn(
-                  "text-sm font-medium transition-colors hover:text-primary",
-                  isActive ? "text-primary font-semibold" : "text-muted-foreground"
-                )}
+                className={cn("text-sm font-medium transition-colors hover:text-primary", isActive ? "font-semibold text-primary" : "text-muted-foreground")}
               >
                 {item.label}
               </Link>

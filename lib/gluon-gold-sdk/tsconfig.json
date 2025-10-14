@@ -9,18 +9,10 @@
     "forceConsistentCasingInFileNames": true,
     "outDir": "dist",
     "rootDir": "src",
-    "types": [
-      "@nautilus-js/eip12-types",
-      "@types/node"
-    ],
+    "types": ["@nautilus-js/eip12-types", "@types/node"],
     "declaration": true,
     "declarationMap": true
   },
-  "include": [
-    "src"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist"
-  ]
+  "include": ["src"],
+  "exclude": ["node_modules", "dist"]
 }
