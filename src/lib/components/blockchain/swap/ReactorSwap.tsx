@@ -1065,17 +1065,17 @@ export function ReactorSwap() {
 
                     // Special-case: when converting GAU-GAUC -> ERG we must enforce the precise max output
                     // (allow small display rounding via isUserInputMaxValue).
-                    if (!isFromCard && fromToken.symbol === "GAU-GAUC" && currentToken.symbol === "ERG") {
-                      try {
-                        const inputBN = new BigNumber(floatValue || 0);
-                        const maxErgBN = new BigNumber(maxErgOutputPrecise || "0");
+                    // if (!isFromCard && fromToken.symbol === "GAU-GAUC" && currentToken.symbol === "ERG") {
+                    //   try {
+                    //     const inputBN = new BigNumber(floatValue || 0);
+                    //     const maxErgBN = new BigNumber(maxErgOutputPrecise || "0");
 
-                        return inputBN.isLessThanOrEqualTo(maxErgBN) || isUserInputMaxValue(inputBN.toString(), maxErgOutputPrecise);
-                      } catch (error) {
-                        console.error("Precision compare error in isAllowed:", error);
-                        return false;
-                      }
-                    }
+                    //     return inputBN.isLessThanOrEqualTo(maxErgBN) || isUserInputMaxValue(inputBN.toString(), maxErgOutputPrecise);
+                    //   } catch (error) {
+                    //     console.error("Precision compare error in isAllowed:", error);
+                    //     return false;
+                    //   }
+                    // }
 
                     // For all other cases, be permissive: allow any non-negative number.
                     // (isSwapDisabled will be the authoritative gate for disabling the Swap button.)
