@@ -242,8 +242,16 @@ export function handleTransactionError(error: Error | string | unknown, actionTy
 /**
  * Handle successful transactions
  */
-export function handleTransactionSuccess(txHash: string, actionType: string, showToast: boolean = true): void {
-  const successMessage = `${actionType.charAt(0).toUpperCase() + actionType.slice(1)} transaction submitted successfully!`;
+export function handleTransactionSuccess(
+  txHash: string,
+  actionType: string,
+  showToast: boolean = true
+): void {
+  const capitalizedAction = actionType.charAt(0).toUpperCase() + actionType.slice(1);
+  const successMessage = `${capitalizedAction} transaction submitted successfully!`;
+
+  const explorerService = process.env.NEXT_PUBLIC_EXPLORER || "https://sigmaspace.io";
+  const explorerUrl = `${explorerService}/en/transaction/${txHash}`;
 
   console.log(`${actionType} success:`, { txHash });
 
@@ -251,6 +259,12 @@ export function handleTransactionSuccess(txHash: string, actionType: string, sho
     toast.success(successMessage, {
       description: `Transaction ID: ${txHash.slice(0, 8)}...${txHash.slice(-8)}`,
       duration: 10000,
+      action: {
+        label: "View on Explorer",
+        onClick: () => {
+          window.open(explorerUrl, "_blank", "noopener,noreferrer");
+        },
+      },
     });
   }
 }

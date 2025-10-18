@@ -1402,7 +1402,7 @@ export function ReactorSwap() {
                   whileTap={{ scale: isSwapDisabled() ? 1 : 0.98 }}
                 >
                   <Button
-                    className={cn("relative mt-4 h-12 w-full overflow-hidden bg-orange-500", !isSwapDisabled() ? "hover:bg-orange-600" : "cursor-not-allowed opacity-50")}
+                    className={cn("relative mt-4 h-12 w-full overflow-hidden bg-yellow-500", !isSwapDisabled() ? "hover:bg-yellow-600" : "cursor-not-allowed opacity-50")}
                     onClick={handleSwap}
                     disabled={isSwapDisabled()}
                   >
