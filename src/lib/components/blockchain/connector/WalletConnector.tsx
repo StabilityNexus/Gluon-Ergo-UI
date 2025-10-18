@@ -127,8 +127,8 @@ export function WalletConnector() {
                 <div className="flex flex-col gap-2">
                   {walletList.map((wallet) => (
                     <Button key={wallet.connectName} variant="outline" className="mt-3 w-full justify-start gap-2" onClick={() => handleConnect(wallet.connectName)}>
-                      <img src={wallet.icon} alt={wallet.name} className="h-6 w-6" />
-                      {wallet.name}
+                      <img src={wallet.icon} alt={wallet.connectName} className="h-6 w-6" />
+                      {wallet.connectName}
                     </Button>
                   ))}
                 </div>

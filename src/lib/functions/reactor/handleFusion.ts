@@ -70,17 +70,6 @@ export const calculateFusionAmounts = async ({ gluonInstance, gluonBox, value, g
     // Convert desired ERG to nanoERGs (as BigInt for comparison)
     const desiredNanoErgs = BigInt(ergsToNanoErgs(value));
 
-    // Validate desired amount
-    if (desiredNanoErgs > BigInt(maxNanoErgs.toString())) {
-      return {
-        error: `Cannot get ${value} ERG. Maximum possible output is ${maxErgStr} ERG`,
-        resetValues: {
-          gauAmount: "0",
-          gaucAmount: "0",
-        },
-      };
-    }
-
     // Calculate required token amounts using SDK's function
     const { neutrons, protons } = await gluonInstance.fusionWillNeed(gluonBox, Number(desiredNanoErgs));
 

@@ -68,11 +68,11 @@ const createValuePair = (preciseValue: string) => {
   const bn = new BigNumber(preciseValue || "0");
   if (bn.isZero()) return { display: "0", precise: "0" };
 
-  // For display: Clean formatting with reasonable decimals
-  const displayValue = bn.decimalPlaces(4, BigNumber.ROUND_DOWN).toFixed();
+  // For display: Use standard 9 decimal places (ERG standard) and remove trailing zeros
+  const formatted = formatMicroNumber(bn);
 
   return {
-    display: displayValue,
+    display: formatted.display,
     precise: preciseValue,
   };
 };
@@ -1063,22 +1063,7 @@ export function ReactorSwap() {
                     // block NaN and negatives
                     if (isNaN(floatValue) || floatValue < 0) return false;
 
-                    // Special-case: when converting GAU-GAUC -> ERG we must enforce the precise max output
-                    // (allow small display rounding via isUserInputMaxValue).
-                    if (!isFromCard && fromToken.symbol === "GAU-GAUC" && currentToken.symbol === "ERG") {
-                      try {
-                        const inputBN = new BigNumber(floatValue || 0);
-                        const maxErgBN = new BigNumber(maxErgOutputPrecise || "0");
 
-                        return inputBN.isLessThanOrEqualTo(maxErgBN) || isUserInputMaxValue(inputBN.toString(), maxErgOutputPrecise);
-                      } catch (error) {
-                        console.error("Precision compare error in isAllowed:", error);
-                        return false;
-                      }
-                    }
-
-                    // For all other cases, be permissive: allow any non-negative number.
-                    // (isSwapDisabled will be the authoritative gate for disabling the Swap button.)
                     return true;
                   }}
                   className={cn(
