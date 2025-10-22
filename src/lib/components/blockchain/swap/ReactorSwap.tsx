@@ -1068,7 +1068,7 @@ export function ReactorSwap() {
                   }}
                   className={cn(
                     "w-full min-w-[80px] border-0 bg-transparent text-left text-2xl font-bold focus:outline-none focus-visible:ring-0 sm:text-right sm:text-3xl",
-                    isFromCard ? "text-gray-400" : "text-gray-400",
+                    isFromCard ? "text-white placeholder:text-white" : "text-muted-foreground",
                     isInputDisabled && "cursor-not-allowed opacity-50"
                   )}
                   disabled={isInputDisabled}
