@@ -173,14 +173,24 @@ export function ErgoProvider({ children }: { children: React.ReactNode }) {
                 
                 if (isAuthorized) {
                   // User is still authorized, attempt silent reconnect
-                  console.log("🔄 Periodic check: Wallet authorized but not connected, attempting reconnect...");
+                  console.log("Periodic check: Wallet authorized but not connected, attempting reconnect...");
                   const reconnected = await wallet.connect();
                   
-                  if (reconnected && window.ergo) {
-                    setIsConnected(true);
-                    setErgoWallet(window.ergo);
-                    console.log(" Wallet reconnected via periodic check");
-                    return; // Successfully reconnected, don't disconnect
+                  if (reconnected) {
+                    // Wait for window.ergo to be injected, same as other connect paths
+                    let retries = 0;
+                    const maxRetries = 20;
+                    while (!window.ergo && retries < maxRetries) {
+                      await new Promise((resolve) => setTimeout(resolve, 200));
+                      retries++;
+                    }
+
+                    if (window.ergo) {
+                      setIsConnected(true);
+                      setErgoWallet(window.ergo);
+                      console.log("Wallet reconnected via periodic check");
+                      return; // Successfully reconnected, don't disconnect
+                    }
                   }
                 }
               }
@@ -189,8 +199,8 @@ export function ErgoProvider({ children }: { children: React.ReactNode }) {
               console.log("isAuthorized() check failed in periodic check:", authError);
             }
             
-            // Only disconnect if not authorized or reconnect failed
-            console.log(" Wallet no longer connected and not authorized, disconnecting...");
+            // Only disconnect if not authorized or reconnect failed / API unavailable
+            console.log("Wallet no longer connected and not authorized or reconnect failed, disconnecting...");
             setIsConnected(false);
             setErgoWallet(undefined);
             localStorage.removeItem("connectedWallet");
