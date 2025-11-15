@@ -16,6 +16,19 @@ interface FusionParams {
  */
 const calculateMaxErgOutput = async (gluonInstance: any, gluonBox: any, gauBalance: string, gaucBalance: string): Promise<BigNumber> => {
   try {
+    // Debug incoming balances and environment
+    console.log("DEBUG: gauBalance:", gauBalance);
+    console.log("DEBUG: gaucBalance:", gaucBalance);
+
+    console.log("DEBUG: convertToDecimals(gauBalance) =", convertToDecimals(gauBalance));
+    console.log("DEBUG: convertToDecimals(gaucBalance) =", convertToDecimals(gaucBalance));
+
+    console.log("DEBUG ENV:", {
+      deployment: process.env.NEXT_PUBLIC_DEPLOYMENT,
+      node: process.env.NEXT_PUBLIC_NODE_URL,
+      explorer: process.env.NEXT_PUBLIC_ERG_EXPLORER,
+    });
+
     // Convert our balances to blockchain decimals (these are BigInts)
     const gauAmount = BigInt(convertToDecimals(gauBalance));
     const gaucAmount = BigInt(convertToDecimals(gaucBalance));
@@ -33,7 +46,13 @@ const calculateMaxErgOutput = async (gluonInstance: any, gluonBox: any, gauBalan
 
     // Get token ratio for 1 ERG
     const oneErg = BigInt(1e9); // 1 ERG in nanoErgs
-    const { neutrons: neutronsForOneErg, protons: protonsForOneErg } = await gluonInstance.fusionWillNeed(gluonBox, Number(oneErg));
+    console.log("DEBUG calling fusionWillNeed with 1 ERG");
+    const _fusionNeedRes = await gluonInstance.fusionWillNeed(gluonBox, Number(oneErg));
+    const { neutrons: neutronsForOneErg, protons: protonsForOneErg } = _fusionNeedRes;
+    console.log("DEBUG fusionWillNeed response:", {
+      neutronsForOneErg,
+      protonsForOneErg,
+    });
 
     // Convert to BigInt immediately
     const neutronsNeeded = BigInt(neutronsForOneErg);
