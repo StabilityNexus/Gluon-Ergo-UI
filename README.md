@@ -70,10 +70,18 @@ If you don't want to use bun, you can always use NPM or PNPM.
 bun install
 ```
 
-2. Start the development server:
+2. Build the local Gluon SDK (required once after cloning or whenever SDK code changes):
 
 ```bash
-bun dev
+# builds lib/gluon-gold-sdk/dist so the frontend can resolve the local package
+bun run custom
+```
+
+3. Start the development server:
+
+```bash
+# starts Next.js dev; the dev script runs the SDK build first when needed
+bun run dev
 ```
 
 ### Adding Shadcn Components
