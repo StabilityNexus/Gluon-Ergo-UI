@@ -100,12 +100,12 @@ export function GluonStats() {
         const goldKgPriceBN = nanoErgsToErgs(goldKgPrice);
         const gaucPriceBN = nanoErgsToErgs(gaucPrice);
         const tvlBN = nanoErgsToErgs(tvl);
+        const gauPriceBN = tvlBN.minus(convertFromDecimals(circProtons).multipliedBy(gaucPriceBN)).dividedBy(convertFromDecimals(circNeutrons));
 
         setStats({
           ergPrice,
           goldKgPrice: goldKgPriceBN,
-          // Convert from kg to gram by dividing by 1000
-          gauPrice: goldKgPriceBN.dividedBy(1000),
+          gauPrice: gauPriceBN,
           gaucPrice: gaucPriceBN,
           reserveRatio,
           tvl: tvlBN,
@@ -142,7 +142,7 @@ export function GluonStats() {
           volumeArrays: volumeArrays,
           prices: {
             goldKg: goldKgPriceBN.toNumber(),
-            gau: goldKgPriceBN.dividedBy(1000).toNumber(),
+            gau: gauPriceBN.toNumber(),
             gauc: gaucPriceBN.toNumber(),
             erg: ergPrice,
           },
@@ -291,7 +291,7 @@ export function GluonStats() {
 
         {/* Token Grid - Responsive */}
         <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
-          {renderStatCard("1 kg of Gold", "Oracle Gold Price", stats.goldKgPrice, <Scale className="h-8 w-8 text-yellow-700" />, "ERG", 0.1)}
+          {renderStatCard("1 gram of Gold", "Oracle Gold Price", stats.goldKgPrice?.dividedBy(1000) || null, <Scale className="h-8 w-8 text-yellow-700" />, "ERG", 0.1)}
 
           {renderStatCard("GAU", "Gold Pegged Token", stats.gauPrice, <GauIcon className="h-8 w-8" />, "ERG", 0.2)}
 
