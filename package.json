@@ -3,19 +3,18 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "check:sdk": "node -e \"const fs=require('fs'); if(!fs.existsSync('lib/gluon-gold-sdk/dist')){ process.exit(1) }\" || bun run build:sdk",
+    "dev": "bun run check:sdk && next dev",
     "buildtest": "next build",
-    "build": "bun run custom && next build",
+    "build": "bun run build:sdk && next build",
     "start": "next start",
     "lint": "next lint",
-    "custom": "cd lib/gluon-gold-sdk && bun install && bun run build",
+    "build:sdk": "cd lib/gluon-gold-sdk && bun install && bun run build",
     "test": "vitest",
     "format": "prettier --write .",
     "prepare": "husky"
   },
-  "workspaces": [
-    "lib/*"
-  ],
+  "workspaces": ["lib/*"],
   "dependencies": {
     "@fleet-sdk/core": "^0.8.1",
     "@radix-ui/react-dialog": "^1.1.4",
