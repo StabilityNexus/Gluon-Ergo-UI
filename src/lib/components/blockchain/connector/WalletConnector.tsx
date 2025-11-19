@@ -9,17 +9,47 @@ import { WalletIcon, LogOut, ArrowUpRight } from "lucide-react";
 import { useEffect, useState } from "react";
 
 export function WalletConnector() {
-  const { walletList, isConnected, connect, disconnect, getChangeAddress, getBalance } = useErgo();
+  const { walletList, isConnected, isInitialized, connect, disconnect, getChangeAddress, getBalance, ergoWallet } = useErgo();
   const [isOpen, setIsOpen] = useState(false);
   const [ergoAddress, setErgoAddress] = useState<string | null>(null);
   const [ergBalance, setErgoBalance] = useState<string | null>("0");
 
   console.log(ergBalance); // To avoid linting error
 
+  // Fetch address and balance when wallet becomes connected (including after auto-reconnect)
+  useEffect(() => {
+    if (isConnected && ergoWallet && !ergoAddress) {
+      // Wallet is connected but address not fetched yet - fetch it now
+      getChangeAddress()
+        .then(async (address) => {
+          setErgoAddress(address);
+          try {
+            const ergoTokens = await getBalance();
+            const ergBalance = ergoTokens.find((item: any) => item.tokenId === "ERG");
+            if (ergBalance) {
+              const balance = parseInt(ergBalance.balance) / 1000000000;
+              setErgoBalance(balance.toString());
+            }
+          } catch (error) {
+            console.error("Error fetching balance:", error);
+          }
+        })
+        .catch((error) => {
+          console.error("Error fetching address:", error);
+        });
+    } else if (!isConnected && ergoAddress) {
+      // Wallet disconnected - clear address and balance
+      setErgoAddress(null);
+      setErgoBalance("0");
+    }
+  }, [isConnected, ergoWallet, ergoAddress, getChangeAddress, getBalance]);
+
+  // Legacy effect for manual connection (kept for backward compatibility)
   useEffect(() => {
     const savedWallet = localStorage.getItem("connectedWallet");
     const isLoaded = walletList.find((wallet) => wallet.connectName === savedWallet);
-    if (savedWallet && isLoaded) {
+    // Only try to connect if not already connected and wallet is loaded
+    if (savedWallet && isLoaded && !isConnected) {
       connect(savedWallet)
         .then(async (success) => {
           if (success) {
@@ -49,15 +79,27 @@ export function WalletConnector() {
       const success = await connect(walletName);
       console.log("Connection result:", success);
 
-      const address = await getChangeAddress();
-      console.log(address);
-      setErgoAddress(address);
-      const balance = await getBalance();
-      console.log("Reconnected balance:", balance);
-      setErgoBalance(balance);
       if (success) {
-        localStorage.setItem("connectedWallet", walletName);
-        setIsOpen(false);
+        try {
+          const address = await getChangeAddress();
+          console.log("Connected address:", address);
+          setErgoAddress(address);
+          
+          const ergoTokens = await getBalance();
+          console.log("Connected balance:", ergoTokens);
+          const ergBalance = ergoTokens.find((item: any) => item.tokenId === "ERG");
+          if (ergBalance) {
+            const balance = parseInt(ergBalance.balance) / 1000000000;
+            setErgoBalance(balance.toString());
+          }
+          
+          localStorage.setItem("connectedWallet", walletName);
+          setIsOpen(false);
+        } catch (error) {
+          console.error("Error fetching address/balance after connection:", error);
+          // Still close the drawer even if fetching fails
+          setIsOpen(false);
+        }
       }
     } catch (error) {
       console.error("Failed to connect:", error);
@@ -111,7 +153,11 @@ export function WalletConnector() {
               </TabsTrigger>
             </TabsList>
             <TabsContent value="browser">
-              {walletList.length === 0 ? (
+              {!isInitialized ? (
+                <div className="flex flex-col items-center justify-center gap-2 p-4 text-muted-foreground">
+                  <p className="w-60 text-center">Loading wallets...</p>
+                </div>
+              ) : walletList.length === 0 ? (
                 <div className="flex flex-col items-center justify-center gap-2 p-4 text-muted-foreground">
                   <p className="w-60 text-center">No Ergo wallets installed, learn how to setup your Nautilus Wallet</p>
 
