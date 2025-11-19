@@ -5,14 +5,15 @@ import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from 
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/lib/components/ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/lib/components/ui/tabs";
 import { useErgo } from "@/lib/providers/ErgoProvider";
-import { WalletIcon, LogOut, ArrowUpRight } from "lucide-react";
+import { WalletIcon, LogOut, ArrowUpRight, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
 export function WalletConnector() {
-  const { walletList, isConnected, isInitialized, connect, disconnect, getChangeAddress, getBalance, ergoWallet } = useErgo();
+  const { walletList, isConnected, isInitialized, isRestoringConnection, connect, disconnect, getChangeAddress, getBalance, ergoWallet } = useErgo();
   const [isOpen, setIsOpen] = useState(false);
   const [ergoAddress, setErgoAddress] = useState<string | null>(null);
   const [ergBalance, setErgoBalance] = useState<string | null>("0");
+  const [connectingWallet, setConnectingWallet] = useState<string | null>(null);
 
   console.log(ergBalance); // To avoid linting error
 
@@ -69,6 +70,7 @@ export function WalletConnector() {
 
   const handleConnect = async (walletName: string) => {
     try {
+      setConnectingWallet(walletName);
       console.log("Attempting to connect to wallet:", walletName);
 
       if (!window.ergoConnector) {
@@ -103,6 +105,8 @@ export function WalletConnector() {
       }
     } catch (error) {
       console.error("Failed to connect:", error);
+    } finally {
+      setConnectingWallet(null);
     }
   };
 
@@ -132,12 +136,15 @@ export function WalletConnector() {
     );
   }
 
+  const showLoadingState = !isInitialized || (isRestoringConnection && !isConnected);
+  const triggerLabel = !isInitialized ? "Detecting wallets..." : isRestoringConnection && !isConnected ? "Reconnecting..." : "Connect Wallet";
+
   return (
     <Drawer open={isOpen} onOpenChange={setIsOpen}>
       <DrawerTrigger asChild>
-        <Button variant="outline" className="gap-2">
-          <WalletIcon className="h-4 w-4" />
-          Connect Wallet
+        <Button variant="outline" className="gap-2" aria-busy={showLoadingState} disabled={!isInitialized}>
+          {showLoadingState ? <Loader2 className="h-4 w-4 animate-spin" /> : <WalletIcon className="h-4 w-4" />}
+          {triggerLabel}
         </Button>
       </DrawerTrigger>
       <DrawerContent className="z-[9999]">
@@ -172,9 +179,24 @@ export function WalletConnector() {
               ) : (
                 <div className="flex flex-col gap-2">
                   {walletList.map((wallet) => (
-                    <Button key={wallet.connectName} variant="outline" className="mt-3 w-full justify-start gap-2" onClick={() => handleConnect(wallet.connectName)}>
-                      <img src={wallet.icon} alt={wallet.connectName} className="h-6 w-6" />
-                      {wallet.connectName}
+                    <Button
+                      key={wallet.connectName}
+                      variant="outline"
+                      className="mt-3 w-full justify-start gap-2"
+                      onClick={() => handleConnect(wallet.connectName)}
+                      disabled={!!connectingWallet && connectingWallet !== wallet.connectName}
+                    >
+                      {connectingWallet === wallet.connectName ? (
+                        <>
+                          <Loader2 className="h-5 w-5 animate-spin" />
+                          Connecting...
+                        </>
+                      ) : (
+                        <>
+                          <img src={wallet.icon} alt={wallet.connectName} className="h-6 w-6" />
+                          {wallet.connectName}
+                        </>
+                      )}
                     </Button>
                   ))}
                 </div>

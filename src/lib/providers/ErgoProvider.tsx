@@ -38,6 +38,7 @@ interface ErgoContextType {
   walletList: WalletInfo[];
   isConnected: boolean;
   isInitialized: boolean;
+  isRestoringConnection: boolean;
   connect: (walletName: string) => Promise<boolean>;
   disconnect: () => void;
   getChangeAddress: () => Promise<string>;
@@ -55,40 +56,42 @@ export function ErgoProvider({ children }: { children: React.ReactNode }) {
   const [isConnected, setIsConnected] = useState(false);
   const [ergoWallet, setErgoWallet] = useState<typeof window.ergo>();
   const [isInitialized, setIsInitialized] = useState(false);
+  const [isRestoringConnection, setIsRestoringConnection] = useState(true);
 
   // Initialize available wallets and check for existing connection
   React.useEffect(() => {
     if (typeof window === "undefined") return;
 
-    const { ergoConnector } = window;
-    if (!ergoConnector) {
-      setIsInitialized(true);
-      return;
-    }
+    let isMounted = true;
 
-    const availableWallets: WalletInfo[] = Object.keys(ergoConnector).map((walletName) => ({
-      connectName: walletName,
-      icon:
-        walletName.toLowerCase() === "nautilus"
-          ? "https://user-images.githubusercontent.com/96133754/196057495-45bcca0f-a4de-4905-85ea-fbcdead01b42.svg"
-          : "https://example.com/default-wallet-icon.png",
-    }));
+    const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-    setWalletList(availableWallets);
+    const waitForErgoConnector = async () => {
+      let attempts = 0;
+      const maxAttempts = 25;
+      while (attempts < maxAttempts) {
+        if (window.ergoConnector && Object.keys(window.ergoConnector).length > 0) {
+          return window.ergoConnector;
+        }
+        await wait(200);
+        attempts++;
+      }
+      return undefined;
+    };
 
     // Check for existing wallet connection on page load
     // Fix for Issue #51: Use isAuthorized() to check for prior authorization,
     // then silently reconnect if authorized but not connected
-    const checkExistingConnection = async () => {
+    const checkExistingConnection = async (ergoConnector: typeof window.ergoConnector) => {
       try {
         const savedWallet = localStorage.getItem("connectedWallet");
-        
-        if (savedWallet && ergoConnector[savedWallet]) {
+
+        if (savedWallet && ergoConnector?.[savedWallet]) {
           const wallet = ergoConnector[savedWallet];
-          
+
           // First check if already connected
           const isStillConnected = await wallet.isConnected();
-          
+
           if (isStillConnected) {
             // Wait for window.ergo to be injected
             let retries = 0;
@@ -106,15 +109,15 @@ export function ErgoProvider({ children }: { children: React.ReactNode }) {
             // If authorized, silently reconnect without user interaction
             try {
               // Check if isAuthorized method exists (may not be available in all wallet versions)
-              if (wallet.isAuthorized && typeof wallet.isAuthorized === 'function') {
+              if (wallet.isAuthorized && typeof wallet.isAuthorized === "function") {
                 const isAuthorized = await wallet.isAuthorized();
-                
+
                 if (isAuthorized) {
                   console.log(" Wallet authorized but not connected, attempting silent reconnect...");
-                  
+
                   // Silently reconnect since user has already authorized
                   const reconnected = await wallet.connect();
-                  
+
                   if (reconnected) {
                     // Wait for window.ergo to be injected
                     let retries = 0;
@@ -140,12 +143,45 @@ export function ErgoProvider({ children }: { children: React.ReactNode }) {
       } catch (error) {
         console.error("Error checking existing connection:", error);
         localStorage.removeItem("connectedWallet");
-      } finally {
-        setIsInitialized(true);
       }
     };
 
-    checkExistingConnection();
+    const initializeWallets = async () => {
+      setIsRestoringConnection(true);
+      const ergoConnector = await waitForErgoConnector();
+
+      if (!isMounted) {
+        return;
+      }
+
+      if (!ergoConnector) {
+        setIsInitialized(true);
+        setIsRestoringConnection(false);
+        return;
+      }
+
+      const availableWallets: WalletInfo[] = Object.keys(ergoConnector).map((walletName) => ({
+        connectName: walletName,
+        icon:
+          walletName.toLowerCase() === "nautilus"
+            ? "https://user-images.githubusercontent.com/96133754/196057495-45bcca0f-a4de-4905-85ea-fbcdead01b42.svg"
+            : "https://example.com/default-wallet-icon.png",
+      }));
+
+      setWalletList(availableWallets);
+      await checkExistingConnection(ergoConnector);
+
+      if (isMounted) {
+        setIsInitialized(true);
+        setIsRestoringConnection(false);
+      }
+    };
+
+    initializeWallets();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   // Periodic check for wallet restoration
@@ -165,6 +201,7 @@ export function ErgoProvider({ children }: { children: React.ReactNode }) {
             // Always update wallet state if window.ergo is available
             setIsConnected(true);
             setErgoWallet(window.ergo);
+            setIsRestoringConnection(false);
           } else if (!walletIsConnected) {
             // Not connected - check if still authorized before disconnecting (Issue #51 fix)
             try {
@@ -174,6 +211,7 @@ export function ErgoProvider({ children }: { children: React.ReactNode }) {
                 if (isAuthorized) {
                   // User is still authorized, attempt silent reconnect
                   console.log("Periodic check: Wallet authorized but not connected, attempting reconnect...");
+                  setIsRestoringConnection(true);
                   const reconnected = await wallet.connect();
                   
                   if (reconnected) {
@@ -189,6 +227,7 @@ export function ErgoProvider({ children }: { children: React.ReactNode }) {
                       setIsConnected(true);
                       setErgoWallet(window.ergo);
                       console.log("Wallet reconnected via periodic check");
+                      setIsRestoringConnection(false);
                       return; // Successfully reconnected, don't disconnect
                     }
                   }
@@ -204,11 +243,15 @@ export function ErgoProvider({ children }: { children: React.ReactNode }) {
             setIsConnected(false);
             setErgoWallet(undefined);
             localStorage.removeItem("connectedWallet");
+            setIsRestoringConnection(false);
           }
         } catch (error) {
           // Wallet not available, continue checking
           console.log("Error in wallet restoration check:", error);
+          setIsRestoringConnection(false);
         }
+      } else {
+        setIsRestoringConnection(false);
       }
     };
 
@@ -369,6 +412,7 @@ export function ErgoProvider({ children }: { children: React.ReactNode }) {
         walletList,
         isConnected,
         isInitialized,
+        isRestoringConnection,
         connect,
         disconnect,
         getChangeAddress,
