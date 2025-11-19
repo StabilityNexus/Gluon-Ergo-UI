@@ -16,19 +16,6 @@ interface FusionParams {
  */
 const calculateMaxErgOutput = async (gluonInstance: any, gluonBox: any, gauBalance: string, gaucBalance: string): Promise<BigNumber> => {
   try {
-    // Debug incoming balances and environment
-    console.log("DEBUG: gauBalance:", gauBalance);
-    console.log("DEBUG: gaucBalance:", gaucBalance);
-
-    console.log("DEBUG: convertToDecimals(gauBalance) =", convertToDecimals(gauBalance));
-    console.log("DEBUG: convertToDecimals(gaucBalance) =", convertToDecimals(gaucBalance));
-
-    console.log("DEBUG ENV:", {
-      deployment: process.env.NEXT_PUBLIC_DEPLOYMENT,
-      node: process.env.NEXT_PUBLIC_NODE_URL,
-      explorer: process.env.NEXT_PUBLIC_ERG_EXPLORER,
-    });
-
     // Convert our balances to blockchain decimals (these are BigInts)
     const gauAmount = BigInt(convertToDecimals(gauBalance));
     const gaucAmount = BigInt(convertToDecimals(gaucBalance));
