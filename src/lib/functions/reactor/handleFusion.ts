@@ -33,13 +33,8 @@ const calculateMaxErgOutput = async (gluonInstance: any, gluonBox: any, gauBalan
 
     // Get token ratio for 1 ERG
     const oneErg = BigInt(1e9); // 1 ERG in nanoErgs
-    console.log("DEBUG calling fusionWillNeed with 1 ERG");
     const _fusionNeedRes = await gluonInstance.fusionWillNeed(gluonBox, Number(oneErg));
     const { neutrons: neutronsForOneErg, protons: protonsForOneErg } = _fusionNeedRes;
-    console.log("DEBUG fusionWillNeed response:", {
-      neutronsForOneErg,
-      protonsForOneErg,
-    });
 
     // Convert to BigInt immediately
     const neutronsNeeded = BigInt(neutronsForOneErg);
