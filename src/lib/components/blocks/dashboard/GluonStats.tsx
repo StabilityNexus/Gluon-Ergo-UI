@@ -17,6 +17,7 @@ interface GluonStats {
   ergPrice: number | null;
   goldKgPrice: BigNumber | null;
   gauPrice: BigNumber | null;
+  gauProtocolPrice: BigNumber | null;
   gaucPrice: BigNumber | null;
   reserveRatio: number | null;
   tvl: BigNumber | null;
@@ -40,6 +41,7 @@ const initialStats: GluonStats = {
   ergPrice: null,
   goldKgPrice: null,
   gauPrice: null,
+  gauProtocolPrice: null,
   gaucPrice: null,
   reserveRatio: null,
   tvl: null,
@@ -100,12 +102,14 @@ export function GluonStats() {
         const goldKgPriceBN = nanoErgsToErgs(goldKgPrice);
         const gaucPriceBN = nanoErgsToErgs(gaucPrice);
         const tvlBN = nanoErgsToErgs(tvl);
+        const gauProtocolPriceBN =tvlBN.minus(convertFromDecimals(circProtons).multipliedBy(gaucPriceBN)).dividedBy(convertFromDecimals(circNeutrons));
 
         setStats({
           ergPrice,
           goldKgPrice: goldKgPriceBN,
           // Convert from kg to gram by dividing by 1000
           gauPrice: goldKgPriceBN.dividedBy(1000),
+          gauProtocolPrice: gauProtocolPriceBN,
           gaucPrice: gaucPriceBN,
           reserveRatio,
           tvl: tvlBN,
@@ -143,6 +147,7 @@ export function GluonStats() {
           prices: {
             goldKg: goldKgPriceBN.toNumber(),
             gau: goldKgPriceBN.dividedBy(1000).toNumber(),
+            gauProtocolPrice: gauProtocolPriceBN.toNumber(),
             gauc: gaucPriceBN.toNumber(),
             erg: ergPrice,
           },
@@ -291,9 +296,9 @@ export function GluonStats() {
 
         {/* Token Grid - Responsive */}
         <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
-          {renderStatCard("1 kg of Gold", "Oracle Gold Price", stats.goldKgPrice, <Scale className="h-8 w-8 text-yellow-700" />, "ERG", 0.1)}
+          {renderStatCard("1 G of Gold", "Oracle Gold Price", stats.gauPrice, <Scale className="h-8 w-8 text-yellow-700" />, "ERG", 0.1)}
 
-          {renderStatCard("GAU", "Gold Pegged Token", stats.gauPrice, <GauIcon className="h-8 w-8" />, "ERG", 0.2)}
+          {renderStatCard("GAU", "Gold Pegged Token", stats.gauProtocolPrice, <GauIcon className="h-8 w-8" />, "ERG", 0.2)}
 
           {renderStatCard("GAUC", "Leveraged Yield Token", stats.gaucPrice, <GaucIcon className="h-8 w-8" />, "ERG", 0.3)}
         </div>
