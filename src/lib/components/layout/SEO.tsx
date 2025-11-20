@@ -10,9 +10,9 @@ interface SEOProps {
 }
 
 export function SEO({
-  title = "Gluon | Gold Protocol on Ergo",
-  description = "Gluon is a decentralized finance protocol on Ergo blockchain that enables users to trade, swap, and manage gold-pegged tokens.",
-  keywords = "Gluon, Ergo, DeFi, Blockchain, Cryptocurrency, Gold-pegged tokens, GAU, GAUC, Digital Assets",
+  title = "Gluon Gold | Gold-Pegged Stablecoin on the Ergo Blockchain",
+  description = "Gluon Gold on Ergo is a fully autonomous stablecoin based on the novel Gluon Stablecoin Protocol, pegged to Gold, backed by the ERG cryptocurrency and running in a fully decentralized manner on the Ergo blockchain. Mint, swap and trade gold-pegged stable tokens or leveraged yield tokens according to your stability or volatility needs.",
+  keywords = "Blockchain, Cryptocurrency, Stablecoin, DeFi, Decentralized Finance, Digital Assets, Tokens, Gold, Gluon, Stability, GAU, CAUC, Gold-Pegged Stablecoin, Gold-Pegged Token, Crypto-Backed Stablecoin",
   image = "/logo/gluon.png",
   url = "https://www.gluon.gold/",
   type = "website",
