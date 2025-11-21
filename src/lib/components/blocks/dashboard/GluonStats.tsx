@@ -15,7 +15,7 @@ import GaucIcon from "@/lib/components/icons/GaucIcon";
 
 interface GluonStats {
   ergPrice: number | null;
-  goldKgPrice: BigNumber | null;
+  goldPrice: BigNumber | null;
   gauPrice: BigNumber | null;
   gaucPrice: BigNumber | null;
   reserveRatio: number | null;
@@ -38,7 +38,7 @@ interface ProtocolMetrics {
 
 const initialStats: GluonStats = {
   ergPrice: null,
-  goldKgPrice: null,
+  goldPrice: null,
   gauPrice: null,
   gaucPrice: null,
   reserveRatio: null,
@@ -74,7 +74,7 @@ export function GluonStats() {
         const oracleBox = await gluon.getGoldOracleBox();
 
         // Fetch basic stats
-        const [gaucPrice, goldKgPrice, reserveRatio, tvl] = await Promise.all([
+        const [gaucPrice, goldPrice, reserveRatio, tvl] = await Promise.all([
           gluonBox.protonPrice(oracleBox),
           oracleBox.getPrice(),
           gluon.getReserveRatio(gluonBox, oracleBox),
@@ -97,14 +97,14 @@ export function GluonStats() {
         const volumeArrays = { protonsToNeutrons: [], neutronsToProtons: [] };
 
         // Convert values to proper format
-        const goldKgPriceBN = nanoErgsToErgs(goldKgPrice);
+        const goldPriceBN = nanoErgsToErgs(goldPrice).dividedBy(1000);
         const gaucPriceBN = nanoErgsToErgs(gaucPrice);
         const tvlBN = nanoErgsToErgs(tvl);
         const gauPriceBN = tvlBN.minus(convertFromDecimals(circProtons).multipliedBy(gaucPriceBN)).dividedBy(convertFromDecimals(circNeutrons));
 
         setStats({
           ergPrice,
-          goldKgPrice: goldKgPriceBN,
+          goldPrice: goldPriceBN,
           gauPrice: gauPriceBN,
           gaucPrice: gaucPriceBN,
           reserveRatio,
@@ -141,7 +141,7 @@ export function GluonStats() {
           },
           volumeArrays: volumeArrays,
           prices: {
-            goldKg: goldKgPriceBN.toNumber(),
+            gold: goldPriceBN.toNumber(),
             gau: gauPriceBN.toNumber(),
             gauc: gaucPriceBN.toNumber(),
             erg: ergPrice,
@@ -291,7 +291,7 @@ export function GluonStats() {
 
         {/* Token Grid - Responsive */}
         <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
-          {renderStatCard("1 gram of Gold", "Oracle Gold Price", stats.goldKgPrice?.dividedBy(1000) || null, <Scale className="h-8 w-8 text-yellow-700" />, "ERG", 0.1)}
+          {renderStatCard("1 gram of Gold", "Oracle Gold Price", stats.goldPrice, <Scale className="h-8 w-8 text-yellow-700" />, "ERG", 0.1)}
 
           {renderStatCard("GAU", "Gold Pegged Token", stats.gauPrice, <GauIcon className="h-8 w-8" />, "ERG", 0.2)}
 
@@ -358,7 +358,7 @@ export function GluonStats() {
                     transition={{ duration: 0.3 }}
                     className="text-center"
                   >
-                    <div className="mb-1 text-4xl font-bold text-foreground">{hasError ? "—" : stats.tvl ? stats.goldKgPrice ? Math.round(1e14 * +stats.tvl  / (+BigNumber(protocolMetrics.circulatingSupply.neutrons) * +stats.goldKgPrice) ) : "—" : "-" }%</div>
+                    <div className="mb-1 text-4xl font-bold text-foreground">{hasError ? "—" : stats.tvl ? stats.goldPrice ? Math.round(1e11 * +stats.tvl  / (+BigNumber(protocolMetrics.circulatingSupply.neutrons) * +stats.goldPrice) ) : "—" : "-" }%</div>
                     <div className="text-sm font-medium text-muted-foreground">Reserve Ratio</div>
                   </motion.div>
                 )}
