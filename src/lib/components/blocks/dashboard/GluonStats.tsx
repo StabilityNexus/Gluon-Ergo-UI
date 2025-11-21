@@ -310,7 +310,37 @@ export function GluonStats() {
           {renderStatCard("GAUC", "Leveraged Yield Token", stats.gaucPrice, <GaucIcon className="h-8 w-8" />, "ERG", 0.3)}
         </div>
 
-        {/* Protocol Volume Metrics - Improved */}
+        {/* Stats */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4, duration: 0.4 }} className="flex-1">
+          <Card className="border-border bg-card p-6">
+            <div className="mb-4 flex items-center gap-2">
+              <Percent className="h-5 w-5 text-primary" />
+              <span className="text-lg font-semibold">Ratios</span>
+            </div>
+            <div className="grid grid-cols-1 gap-6 text-center sm:grid-cols-3">
+              <div className="space-y-2">
+                <div className="text-2xl font-bold text-foreground">
+                  {isLoading ? <Skeleton className="mx-auto h-8 w-16" /> : hasError ? "—" : stats.fusionRatio ? +stats.fusionRatio : "—"}%
+                </div>
+                <div className="text-sm text-muted-foreground">Fusion Ratio</div>
+              </div>
+              <div className="space-y-2">
+                <div className="text-2xl font-bold text-foreground">
+                  {isLoading ? <Skeleton className="mx-auto h-8 w-16" /> : hasError ? "—" : stats.normalizedReserveRatio ? Math.round(stats.normalizedReserveRatio) : "—"}%
+                </div>
+                <div className="text-sm text-muted-foreground">Normalized Reserve Ratio</div>
+              </div>
+              <div className="space-y-2">
+                <div className="text-2xl font-bold text-foreground">
+                  {isLoading ? <Skeleton className="mx-auto h-8 w-16" /> : hasError ? "—" : stats.reserveRatio ? Math.round(+stats.reserveRatio) : "—" }%
+                </div>
+                <div className="text-sm text-muted-foreground">Reserve Ratio</div>
+              </div>
+            </div>
+          </Card>
+        </motion.div>
+
+        {/* Supplies and Volumes */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4, duration: 0.4 }} className="flex-1">
           <Card className="border-border bg-card p-6">
             <div className="mb-4 flex items-center gap-2">
@@ -372,58 +402,6 @@ export function GluonStats() {
                   >
                     <div className="mb-1 text-4xl font-bold text-foreground">{hasError ? "—" : stats.reserveRatio ? Math.round(+stats.reserveRatio) : "—" }%</div>
                     <div className="text-sm font-medium text-muted-foreground">Reserve Ratio</div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </motion.div>
-
-            <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.5, duration: 0.3 }} className="text-center">
-              <div className="mb-4 flex items-center justify-center">
-                <Percent className="mr-2 h-6 w-6 text-amber-600" />
-              </div>
-              <AnimatePresence mode="wait">
-                {isLoading ? (
-                  <motion.div key="loading-ratio" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center gap-2">
-                    <Skeleton className="h-12 w-20" />
-                    <Skeleton className="h-5 w-32" />
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    key={stats.normalizedReserveRatio?.toString() || "error"}
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.8 }}
-                    transition={{ duration: 0.3 }}
-                    className="text-center"
-                  >
-                    <div className="mb-1 text-4xl font-bold text-foreground">{hasError ? "—" : stats.fusionRatio ? +stats.fusionRatio : "—"}%</div>
-                    <div className="text-sm font-medium text-muted-foreground">Fusion Ratio</div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </motion.div>
-
-            <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.5, duration: 0.3 }} className="text-center">
-              <div className="mb-4 flex items-center justify-center">
-                <Percent className="mr-2 h-6 w-6 text-amber-600" />
-              </div>
-              <AnimatePresence mode="wait">
-                {isLoading ? (
-                  <motion.div key="loading-ratio" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center gap-2">
-                    <Skeleton className="h-12 w-20" />
-                    <Skeleton className="h-5 w-32" />
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    key={stats.normalizedReserveRatio?.toString() || "error"}
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.8 }}
-                    transition={{ duration: 0.3 }}
-                    className="text-center"
-                  >
-                    <div className="mb-1 text-4xl font-bold text-foreground">{hasError ? "—" : stats.normalizedReserveRatio ? Math.round(stats.normalizedReserveRatio) : "—"}%</div>
-                    <div className="text-sm font-medium text-muted-foreground">Normalized Reserve Ratio</div>
                   </motion.div>
                 )}
               </AnimatePresence>
