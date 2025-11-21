@@ -21,6 +21,7 @@ interface GluonStats {
   fusionRatio: BigNumber | null;
   normalizedReserveRatio: number | null;
   reserveRatio: BigNumber | null;
+  priceCrashCushion: BigNumber | null;
   gaucLeverage: BigNumber | null;
   tvl: BigNumber | null;
 }
@@ -47,6 +48,7 @@ const initialStats: GluonStats = {
   fusionRatio: null,
   normalizedReserveRatio: null,
   reserveRatio: null,
+  priceCrashCushion: null,
   gaucLeverage: null,
   tvl: null,
 };
@@ -109,6 +111,7 @@ export function GluonStats() {
         const gauPriceBN = tvlBN.minus(convertFromDecimals(circProtons).multipliedBy(gaucPriceBN)).dividedBy(convertFromDecimals(circNeutrons));
         const fusionRatioBN = BigNumber(Math.round(10000 / normalizedReserveRatio));
         const reserveRatioBN = BigNumber(+BigNumber(tvl) * 1e14 / (+BigNumber(circNeutrons) * goldPrice));
+        const priceCrashCushionBN = BigNumber(Math.max(0, 100 * (+reserveRatioBN - 100/0.66)/ +reserveRatioBN));
         const gaucLeverageBN = BigNumber(Math.round(- (100 / (100 - normalizedReserveRatio)) * 100)/100); 
 
         setStats({
@@ -119,6 +122,7 @@ export function GluonStats() {
           fusionRatio: fusionRatioBN,
           normalizedReserveRatio,
           reserveRatio: reserveRatioBN,
+          priceCrashCushion: priceCrashCushionBN,
           gaucLeverage: gaucLeverageBN,
           tvl: tvlBN,
         });
@@ -400,8 +404,8 @@ export function GluonStats() {
                     transition={{ duration: 0.3 }}
                     className="text-center"
                   >
-                    <div className="mb-1 text-4xl font-bold text-foreground">{hasError ? "—" : stats.reserveRatio ? Math.round(+stats.reserveRatio) : "—" }%</div>
-                    <div className="text-sm font-medium text-muted-foreground">Reserve Ratio</div>
+                    <div className="mb-1 text-4xl font-bold text-foreground">{hasError ? "—" : stats.priceCrashCushion ? Math.round(+stats.priceCrashCushion) : "—" }%</div>
+                    <div className="text-sm font-medium text-muted-foreground">Price Crash Cushion</div>
                   </motion.div>
                 )}
               </AnimatePresence>
