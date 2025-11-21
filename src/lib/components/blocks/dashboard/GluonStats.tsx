@@ -18,7 +18,7 @@ interface GluonStats {
   goldPrice: BigNumber | null;
   gauPrice: BigNumber | null;
   gaucPrice: BigNumber | null;
-  reserveRatio: number | null;
+  normalizedReserveRatio: number | null;
   tvl: BigNumber | null;
 }
 
@@ -41,7 +41,7 @@ const initialStats: GluonStats = {
   goldPrice: null,
   gauPrice: null,
   gaucPrice: null,
-  reserveRatio: null,
+  normalizedReserveRatio: null,
   tvl: null,
 };
 
@@ -74,7 +74,7 @@ export function GluonStats() {
         const oracleBox = await gluon.getGoldOracleBox();
 
         // Fetch basic stats
-        const [gaucPrice, goldPrice, reserveRatio, tvl] = await Promise.all([
+        const [gaucPrice, goldPrice, normalizedReserveRatio, tvl] = await Promise.all([
           gluonBox.protonPrice(oracleBox),
           oracleBox.getPrice(),
           gluon.getReserveRatio(gluonBox, oracleBox),
@@ -107,7 +107,7 @@ export function GluonStats() {
           goldPrice: goldPriceBN,
           gauPrice: gauPriceBN,
           gaucPrice: gaucPriceBN,
-          reserveRatio,
+          normalizedReserveRatio,
           tvl: tvlBN,
         });
 
@@ -148,7 +148,7 @@ export function GluonStats() {
           },
           protocolHealth: {
             tvl: tvlBN.toNumber(),
-            reserveRatio: reserveRatio,
+            normalizedReserveRatio: normalizedReserveRatio,
           },
         });
       } catch (error) {
@@ -351,7 +351,7 @@ export function GluonStats() {
                   </motion.div>
                 ) : (
                   <motion.div
-                    key={stats.reserveRatio?.toString() || "error"}
+                    key={stats.normalizedReserveRatio?.toString() || "error"}
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.8 }}
@@ -377,14 +377,14 @@ export function GluonStats() {
                   </motion.div>
                 ) : (
                   <motion.div
-                    key={stats.reserveRatio?.toString() || "error"}
+                    key={stats.normalizedReserveRatio?.toString() || "error"}
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.8 }}
                     transition={{ duration: 0.3 }}
                     className="text-center"
                   >
-                    <div className="mb-1 text-4xl font-bold text-foreground">{hasError ? "—" : stats.reserveRatio ? Math.round(10000 / stats.reserveRatio) : "—"}%</div>
+                    <div className="mb-1 text-4xl font-bold text-foreground">{hasError ? "—" : stats.normalizedReserveRatio ? Math.round(10000 / stats.normalizedReserveRatio) : "—"}%</div>
                     <div className="text-sm font-medium text-muted-foreground">Fusion Ratio</div>
                   </motion.div>
                 )}
@@ -403,14 +403,14 @@ export function GluonStats() {
                   </motion.div>
                 ) : (
                   <motion.div
-                    key={stats.reserveRatio?.toString() || "error"}
+                    key={stats.normalizedReserveRatio?.toString() || "error"}
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.8 }}
                     transition={{ duration: 0.3 }}
                     className="text-center"
                   >
-                    <div className="mb-1 text-4xl font-bold text-foreground">{hasError ? "—" : stats.reserveRatio ? Math.round(stats.reserveRatio) : "—"}%</div>
+                    <div className="mb-1 text-4xl font-bold text-foreground">{hasError ? "—" : stats.normalizedReserveRatio ? Math.round(stats.normalizedReserveRatio) : "—"}%</div>
                     <div className="text-sm font-medium text-muted-foreground">Normalized Reserve Ratio</div>
                   </motion.div>
                 )}
@@ -434,7 +434,7 @@ export function GluonStats() {
                   </motion.div>
                 ) : (
                   <motion.div
-                    key={stats.reserveRatio?.toString() || "error"}
+                    key={stats.normalizedReserveRatio?.toString() || "error"}
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.8 }}
@@ -442,7 +442,7 @@ export function GluonStats() {
                     className="text-center"
                   >
                     <div className="text-4xl font-bold text-foreground mb-1">
-                      {hasError ? '—' : stats.reserveRatio ? Math.round(- (100 / (100 - stats.reserveRatio)) * 100)/100 : '—'}x <br />
+                      {hasError ? '—' : stats.normalizedReserveRatio ? Math.round(- (100 / (100 - stats.normalizedReserveRatio)) * 100)/100 : '—'}x <br />
                     </div>
                     <div className="font-medium text-sm text-muted-foreground">
                       GAUC Leverage
