@@ -315,7 +315,7 @@ export function GluonStats() {
           <Card className="border-border bg-card p-6">
             <div className="mb-4 flex items-center gap-2">
               <Activity className="h-5 w-5 text-primary" />
-              <span className="text-lg font-semibold">Protocol Activity</span>
+              <span className="text-lg font-semibold">Activity</span>
             </div>
             <div className="grid grid-cols-1 gap-6 text-center sm:grid-cols-4">
               <div className="space-y-2">
