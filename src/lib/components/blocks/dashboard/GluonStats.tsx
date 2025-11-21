@@ -18,7 +18,10 @@ interface GluonStats {
   goldPrice: BigNumber | null;
   gauPrice: BigNumber | null;
   gaucPrice: BigNumber | null;
+  fusionRatio: BigNumber | null;
   normalizedReserveRatio: number | null;
+  reserveRatio: BigNumber | null;
+  gaucLeverage: BigNumber | null;
   tvl: BigNumber | null;
 }
 
@@ -41,7 +44,10 @@ const initialStats: GluonStats = {
   goldPrice: null,
   gauPrice: null,
   gaucPrice: null,
+  fusionRatio: null,
   normalizedReserveRatio: null,
+  reserveRatio: null,
+  gaucLeverage: null,
   tvl: null,
 };
 
@@ -101,13 +107,19 @@ export function GluonStats() {
         const gaucPriceBN = nanoErgsToErgs(gaucPrice);
         const tvlBN = nanoErgsToErgs(tvl);
         const gauPriceBN = tvlBN.minus(convertFromDecimals(circProtons).multipliedBy(gaucPriceBN)).dividedBy(convertFromDecimals(circNeutrons));
+        const fusionRatioBN = BigNumber(Math.round(10000 / normalizedReserveRatio));
+        const reserveRatioBN = BigNumber(+BigNumber(tvl) * 1e14 / (+BigNumber(circNeutrons) * goldPrice));
+        const gaucLeverageBN = BigNumber(Math.round(- (100 / (100 - normalizedReserveRatio)) * 100)/100); 
 
         setStats({
           ergPrice,
           goldPrice: goldPriceBN,
           gauPrice: gauPriceBN,
           gaucPrice: gaucPriceBN,
+          fusionRatio: fusionRatioBN,
           normalizedReserveRatio,
+          reserveRatio: reserveRatioBN,
+          gaucLeverage: gaucLeverageBN,
           tvl: tvlBN,
         });
 
@@ -358,7 +370,7 @@ export function GluonStats() {
                     transition={{ duration: 0.3 }}
                     className="text-center"
                   >
-                    <div className="mb-1 text-4xl font-bold text-foreground">{hasError ? "—" : stats.tvl ? stats.goldPrice ? Math.round(1e11 * +stats.tvl  / (+BigNumber(protocolMetrics.circulatingSupply.neutrons) * +stats.goldPrice) ) : "—" : "-" }%</div>
+                    <div className="mb-1 text-4xl font-bold text-foreground">{hasError ? "—" : stats.reserveRatio ? Math.round(+stats.reserveRatio) : "—" }%</div>
                     <div className="text-sm font-medium text-muted-foreground">Reserve Ratio</div>
                   </motion.div>
                 )}
@@ -384,7 +396,7 @@ export function GluonStats() {
                     transition={{ duration: 0.3 }}
                     className="text-center"
                   >
-                    <div className="mb-1 text-4xl font-bold text-foreground">{hasError ? "—" : stats.normalizedReserveRatio ? Math.round(10000 / stats.normalizedReserveRatio) : "—"}%</div>
+                    <div className="mb-1 text-4xl font-bold text-foreground">{hasError ? "—" : stats.fusionRatio ? +stats.fusionRatio : "—"}%</div>
                     <div className="text-sm font-medium text-muted-foreground">Fusion Ratio</div>
                   </motion.div>
                 )}
@@ -442,7 +454,7 @@ export function GluonStats() {
                     className="text-center"
                   >
                     <div className="text-4xl font-bold text-foreground mb-1">
-                      {hasError ? '—' : stats.normalizedReserveRatio ? Math.round(- (100 / (100 - stats.normalizedReserveRatio)) * 100)/100 : '—'}x <br />
+                      {hasError ? '—' : stats.gaucLeverage ? +stats.gaucLeverage : '—'}x <br />
                     </div>
                     <div className="font-medium text-sm text-muted-foreground">
                       GAUC Leverage
