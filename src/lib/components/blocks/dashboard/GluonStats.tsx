@@ -245,7 +245,7 @@ export function GluonStats() {
                 transition={{ duration: 0.2 }}
                 className="text-center"
               >
-                <div className="text-4xl font-bold">{value ? renderTooltip(formatApprox(value), title + " Exact Price: " + format(value)) : "—"}</div>
+                <div className="text-4xl font-bold">{value ? renderTooltip(formatApprox(value), "Price of 1 " + title + ": " + format(value) + " ERG") : "—"}</div>
                 <div className="mt-1 text-sm text-muted-foreground">{suffix}</div>
               </motion.div>
             </AnimatePresence>
@@ -305,7 +305,7 @@ export function GluonStats() {
 
         {/* Token Grid - Responsive */}
         <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
-          {renderStatCard("1 gram of Gold", "Oracle Gold Price", stats.goldPrice, <Scale className="h-8 w-8 text-yellow-700" />, "ERG", 0.1)}
+          {renderStatCard("Gram of Gold", "Gold (from Oracle)", stats.goldPrice, <Scale className="h-8 w-8 text-yellow-700" />, "ERG", 0.1)}
 
           {renderStatCard("GAU", "Gold Pegged Token", stats.gauPrice, <GauIcon className="h-8 w-8" />, "ERG", 0.2)}
 
@@ -434,7 +434,7 @@ export function GluonStats() {
                     transition={{ duration: 0.3 }}
                     className="text-center"
                   >
-                    <div className="mb-1 text-4xl font-bold text-foreground">{hasError ? "—" : stats.priceCrashCushion ? renderTooltip("" + Math.round(+stats.priceCrashCushion),"test") : "—" }%</div>
+                    <div className="mb-1 text-4xl font-bold text-foreground">{hasError ? "—" : stats.priceCrashCushion ? Math.round(+stats.priceCrashCushion) : "—" }%</div>
                     <div className="text-sm font-medium text-muted-foreground">{renderTooltip("Price Crash Cushion", "Maximum drop in the price of ERG w.r.t. Gold that can be tolerated for GAU to remain pegged to Gold. When 0%, GAU depegs to prevent bank runs and maintain non-zero GAUC price.")}</div>
                   </motion.div>
                 )}
