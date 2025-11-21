@@ -321,12 +321,18 @@ export function GluonStats() {
               <Percent className="h-5 w-5 text-primary" />
               <span className="text-lg font-semibold">Ratios</span>
             </div>
-            <div className="grid grid-cols-1 gap-6 text-center sm:grid-cols-3">
+            <div className="grid grid-cols-1 gap-6 text-center sm:grid-cols-4">
               <div className="space-y-2">
                 <div className="text-2xl font-bold text-foreground">
                   {isLoading ? <Skeleton className="mx-auto h-8 w-16" /> : hasError ? "—" : stats.fusionRatio ? +stats.fusionRatio : "—"}%
                 </div>
-                <div className="text-sm text-muted-foreground">Fusion Ratio</div>
+                <div className="text-sm text-muted-foreground">GAU Reserve Allocation</div>
+              </div>
+              <div className="space-y-2">
+                <div className="text-2xl font-bold text-foreground">
+                  {isLoading ? <Skeleton className="mx-auto h-8 w-16" /> : hasError ? "—" : stats.fusionRatio ? 100 - +stats.fusionRatio : "—"}%
+                </div>
+                <div className="text-sm text-muted-foreground">GAUC Reserve Allocation</div>
               </div>
               <div className="space-y-2">
                 <div className="text-2xl font-bold text-foreground">
