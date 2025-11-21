@@ -358,8 +358,60 @@ export function GluonStats() {
                     transition={{ duration: 0.3 }}
                     className="text-center"
                   >
+                    <div className="mb-1 text-4xl font-bold text-foreground">{hasError ? "—" : stats.tvl ? stats.goldKgPrice ? Math.round(1e14 * +stats.tvl  / (+BigNumber(protocolMetrics.circulatingSupply.neutrons) * +stats.goldKgPrice) ) : "—" : "-" }%</div>
+                    <div className="text-sm font-medium text-muted-foreground">Reserve Ratio</div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+
+            <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.5, duration: 0.3 }} className="text-center">
+              <div className="mb-4 flex items-center justify-center">
+                <Percent className="mr-2 h-6 w-6 text-amber-600" />
+              </div>
+              <AnimatePresence mode="wait">
+                {isLoading ? (
+                  <motion.div key="loading-ratio" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center gap-2">
+                    <Skeleton className="h-12 w-20" />
+                    <Skeleton className="h-5 w-32" />
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key={stats.reserveRatio?.toString() || "error"}
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.8 }}
+                    transition={{ duration: 0.3 }}
+                    className="text-center"
+                  >
+                    <div className="mb-1 text-4xl font-bold text-foreground">{hasError ? "—" : stats.reserveRatio ? Math.round(10000 / stats.reserveRatio) : "—"}%</div>
+                    <div className="text-sm font-medium text-muted-foreground">Fusion Ratio</div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+
+            <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.5, duration: 0.3 }} className="text-center">
+              <div className="mb-4 flex items-center justify-center">
+                <Percent className="mr-2 h-6 w-6 text-amber-600" />
+              </div>
+              <AnimatePresence mode="wait">
+                {isLoading ? (
+                  <motion.div key="loading-ratio" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center gap-2">
+                    <Skeleton className="h-12 w-20" />
+                    <Skeleton className="h-5 w-32" />
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key={stats.reserveRatio?.toString() || "error"}
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.8 }}
+                    transition={{ duration: 0.3 }}
+                    className="text-center"
+                  >
                     <div className="mb-1 text-4xl font-bold text-foreground">{hasError ? "—" : stats.reserveRatio ? Math.round(stats.reserveRatio) : "—"}%</div>
-                    <div className="text-sm font-medium text-muted-foreground">Current Reserve Ratio</div>
+                    <div className="text-sm font-medium text-muted-foreground">Normalized Reserve Ratio</div>
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -393,7 +445,7 @@ export function GluonStats() {
                       {hasError ? '—' : stats.reserveRatio ? Math.round(- (100 / (100 - stats.reserveRatio)) * 100)/100 : '—'}x <br />
                     </div>
                     <div className="font-medium text-sm text-muted-foreground">
-                      Current GAUC Leverage
+                      GAUC Leverage
                     </div>
                   </motion.div>
                 )}
@@ -420,7 +472,7 @@ export function GluonStats() {
                     className="text-center"
                   >
                     <div className="mb-1 text-4xl font-bold text-foreground">{hasError ? "—" : stats.tvl ? renderTooltip(stats.tvl, "Total Value Locked") : "—"}</div>
-                    <div className="text-sm font-medium text-muted-foreground">Total Value Locked</div>
+                    <div className="text-sm font-medium text-muted-foreground">Reserve (TVL)</div>
                   </motion.div>
                 )}
               </AnimatePresence>
