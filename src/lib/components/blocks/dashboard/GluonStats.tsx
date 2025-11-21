@@ -324,25 +324,25 @@ export function GluonStats() {
                 <div className="text-2xl font-bold text-foreground">
                   {isLoading ? <Skeleton className="mx-auto h-8 w-16" /> : hasError ? "—" : stats.fusionRatio ? +stats.fusionRatio : "—"}%
                 </div>
-                <div className="text-sm text-muted-foreground">GAU Reserve Allocation</div>
+                <div className="text-sm text-muted-foreground">{renderTooltip("GAU Reserve Allocation", "Percentage of the reserve that is currently backing GAUs. The price of GAU is this reserve portion divided by the GAU supply.")}</div>
               </div>
               <div className="space-y-2">
                 <div className="text-2xl font-bold text-foreground">
                   {isLoading ? <Skeleton className="mx-auto h-8 w-16" /> : hasError ? "—" : stats.fusionRatio ? 100 - +stats.fusionRatio : "—"}%
                 </div>
-                <div className="text-sm text-muted-foreground">GAUC Reserve Allocation</div>
+                <div className="text-sm text-muted-foreground">{renderTooltip("GAUC Reserve Allocation", "Percentage of the reserve that is currently backing GAUCs. The price of GAUC is this reserve portion divided by the GAUC supply.")}</div>
               </div>
               <div className="space-y-2">
                 <div className="text-2xl font-bold text-foreground">
                   {isLoading ? <Skeleton className="mx-auto h-8 w-16" /> : hasError ? "—" : stats.normalizedReserveRatio ? Math.round(stats.normalizedReserveRatio) : "—"}%
                 </div>
-                <div className="text-sm text-muted-foreground">Normalized Reserve Ratio</div>
+                <div className="text-sm text-muted-foreground">{renderTooltip("Normalized Reserve Ratio", "The Inverse of the GAU Reserve Allocation.")}</div>
               </div>
               <div className="space-y-2">
                 <div className="text-2xl font-bold text-foreground">
                   {isLoading ? <Skeleton className="mx-auto h-8 w-16" /> : hasError ? "—" : stats.reserveRatio ? Math.round(+stats.reserveRatio) : "—" }%
                 </div>
-                <div className="text-sm text-muted-foreground">Reserve Ratio</div>
+                <div className="text-sm text-muted-foreground">{renderTooltip("Reserve Ratio", "Total Reserve divided by the GAU Supply times the Gold Oracle Price.")}</div>
               </div>
             </div>
           </Card>
@@ -350,7 +350,7 @@ export function GluonStats() {
 
         {/* Supplies and Volumes */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4, duration: 0.4 }} className="flex-1">
-          <Card className="border-border bg-card p-6">
+          <Card className="border-border bg-card p-6 mt-6">
             <div className="mb-4 flex items-center gap-2">
               <Activity className="h-5 w-5 text-primary" />
               <span className="text-lg font-semibold">Activity</span>
@@ -408,7 +408,7 @@ export function GluonStats() {
                     transition={{ duration: 0.3 }}
                     className="text-center"
                   >
-                    <div className="mb-1 text-4xl font-bold text-foreground">{hasError ? "—" : stats.tvl ? renderTooltip(formatApprox(stats.tvl), "Total Value Locked: " + format(stats.tvl)) + "ERG" : "—"}</div>
+                    <div className="mb-1 text-4xl font-bold text-foreground">{hasError ? "—" : stats.tvl ? renderTooltip(formatApprox(stats.tvl) + " ERG", "Total Value Locked: " + format(stats.tvl) + " ERG") : "—"}</div>
                     <div className="text-sm font-medium text-muted-foreground">Reserve (TVL)</div>
                   </motion.div>
                 )}
@@ -435,7 +435,7 @@ export function GluonStats() {
                     className="text-center"
                   >
                     <div className="mb-1 text-4xl font-bold text-foreground">{hasError ? "—" : stats.priceCrashCushion ? renderTooltip("" + Math.round(+stats.priceCrashCushion),"test") : "—" }%</div>
-                    <div className="text-sm font-medium text-muted-foreground">Price Crash Cushion</div>
+                    <div className="text-sm font-medium text-muted-foreground">{renderTooltip("Price Crash Cushion", "Maximum drop in the price of ERG w.r.t. Gold that can be tolerated for GAU to remain pegged to Gold. When 0%, GAU depegs to prevent bank runs and maintain non-zero GAUC price.")}</div>
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -469,7 +469,7 @@ export function GluonStats() {
                       {hasError ? '—' : stats.gaucLeverage ? +stats.gaucLeverage : '—'}x <br />
                     </div>
                     <div className="font-medium text-sm text-muted-foreground">
-                      GAUC Leverage
+                      {renderTooltip("GAUC Leverage", "Factor by which GAUC's price will increase/decrease in comparison to increases/decreases in the ERG price w.r.t. Gold. This does not apply when GAU is depegged.")}
                     </div>
                   </motion.div>
                 )}
