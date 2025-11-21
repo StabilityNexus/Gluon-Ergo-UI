@@ -113,6 +113,14 @@ export const formatMicroNumber = (value: number | string | BigNumber): Formatted
   };
 };
 
+export const formatApprox = (value: number | string | BigNumber): string => {
+  return formatMacroNumber(value).display;
+}
+
+export const format = (value: number | string | BigNumber): string => {
+  return formatMicroNumber(value).display;
+}
+
 /**
  * Main formatting function that decides between macro and micro formatting
  * @param value - Number to format

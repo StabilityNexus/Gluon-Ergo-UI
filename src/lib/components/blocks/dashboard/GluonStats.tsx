@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Card } from "@/lib/components/ui/card";
 import { Skeleton } from "@/lib/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/lib/components/ui/tooltip";
-import { nanoErgsToErgs, convertFromDecimals, formatNumber } from "@/lib/utils/erg-converter";
+import { nanoErgsToErgs, convertFromDecimals, format, formatApprox } from "@/lib/utils/erg-converter";
 import { Scale, Percent, Loader2, TrendingUp, TrendingDown, Activity, PiggyBank } from "lucide-react";
 import { cn } from "@/lib/utils/utils";
 import { useRouter } from "next/navigation";
@@ -197,16 +197,14 @@ export function GluonStats() {
     };
   }, []);
 
-  const renderTooltip = (value: BigNumber | null, label: string) => {
-    if (!value) return null;
-    const formatted = formatNumber(value, false);
+  const renderTooltip = (text: string, tooltipText: string) => {
     return (
       <TooltipProvider>
         <Tooltip>
-          <TooltipTrigger className="cursor-help">{formatNumber(value, true).display}</TooltipTrigger>
+          <TooltipTrigger className="cursor-help">{text}</TooltipTrigger>
           <TooltipContent>
             <p>
-              Exact {label}: {formatted.display} ERG
+              {tooltipText}
             </p>
           </TooltipContent>
         </Tooltip>
@@ -247,7 +245,7 @@ export function GluonStats() {
                 transition={{ duration: 0.2 }}
                 className="text-center"
               >
-                <div className="text-4xl font-bold">{value ? renderTooltip(value, title + " Price") : "—"}</div>
+                <div className="text-4xl font-bold">{value ? renderTooltip(formatApprox(value), title + " Exact Price: " + format(value)) : "—"}</div>
                 <div className="mt-1 text-sm text-muted-foreground">{suffix}</div>
               </motion.div>
             </AnimatePresence>
@@ -410,7 +408,7 @@ export function GluonStats() {
                     transition={{ duration: 0.3 }}
                     className="text-center"
                   >
-                    <div className="mb-1 text-4xl font-bold text-foreground">{hasError ? "—" : stats.tvl ? renderTooltip(stats.tvl, "Total Value Locked") : "—"}</div>
+                    <div className="mb-1 text-4xl font-bold text-foreground">{hasError ? "—" : stats.tvl ? renderTooltip(formatApprox(stats.tvl), "Total Value Locked: " + format(stats.tvl)) + "ERG" : "—"}</div>
                     <div className="text-sm font-medium text-muted-foreground">Reserve (TVL)</div>
                   </motion.div>
                 )}
@@ -436,7 +434,7 @@ export function GluonStats() {
                     transition={{ duration: 0.3 }}
                     className="text-center"
                   >
-                    <div className="mb-1 text-4xl font-bold text-foreground">{hasError ? "—" : stats.priceCrashCushion ? Math.round(+stats.priceCrashCushion) : "—" }%</div>
+                    <div className="mb-1 text-4xl font-bold text-foreground">{hasError ? "—" : stats.priceCrashCushion ? renderTooltip("" + Math.round(+stats.priceCrashCushion),"test") : "—" }%</div>
                     <div className="text-sm font-medium text-muted-foreground">Price Crash Cushion</div>
                   </motion.div>
                 )}
