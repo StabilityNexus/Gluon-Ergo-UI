@@ -5,7 +5,7 @@ import { Card } from "@/lib/components/ui/card";
 import { Skeleton } from "@/lib/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/lib/components/ui/tooltip";
 import { nanoErgsToErgs, convertFromDecimals, format, formatApprox } from "@/lib/utils/erg-converter";
-import { Scale, Percent, Loader2, TrendingUp, TrendingDown, Activity, PiggyBank } from "lucide-react";
+import { Scale, Percent, Loader2, TrendingUp, TrendingDown, Activity, Landmark } from "lucide-react";
 import { cn } from "@/lib/utils/utils";
 import { useRouter } from "next/navigation";
 import BigNumber from "bignumber.js";
@@ -391,7 +391,7 @@ export function GluonStats() {
           <div className="flex flex-1 flex-col items-center justify-center space-y-16">
             <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.6, duration: 0.3 }} className="text-center">
               <div className="mb-4 flex items-center justify-center">
-                <PiggyBank className="mr-2 h-6 w-6 text-green-600" />
+                <Landmark className="mr-2 h-6 w-6 text-green-600" />
               </div>
               <AnimatePresence mode="wait">
                 {isLoading ? (
