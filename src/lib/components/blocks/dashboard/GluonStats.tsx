@@ -384,7 +384,33 @@ export function GluonStats() {
       {/* Right Card - Responsive and Properly Aligned */}
       <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.4, duration: 0.4 }} className="w-full xl:w-[320px]">
         <Card className="flex h-full flex-col border-border bg-gradient-to-b from-background to-muted/20 p-6">
-          <div className="flex flex-1 flex-col items-center justify-center space-y-8">
+          <div className="flex flex-1 flex-col items-center justify-center space-y-16">
+            <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.6, duration: 0.3 }} className="text-center">
+              <div className="mb-4 flex items-center justify-center">
+                <TrendingUp className="mr-2 h-6 w-6 text-green-600" />
+              </div>
+              <AnimatePresence mode="wait">
+                {isLoading ? (
+                  <motion.div key="loading-tvl" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center gap-2">
+                    <Skeleton className="h-12 w-24" />
+                    <Skeleton className="h-5 w-32" />
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key={stats.tvl?.toString() || "error"}
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.8 }}
+                    transition={{ duration: 0.3 }}
+                    className="text-center"
+                  >
+                    <div className="mb-1 text-4xl font-bold text-foreground">{hasError ? "—" : stats.tvl ? renderTooltip(stats.tvl, "Total Value Locked") : "—"}</div>
+                    <div className="text-sm font-medium text-muted-foreground">Reserve (TVL)</div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+            
             <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.5, duration: 0.3 }} className="text-center">
               <div className="mb-4 flex items-center justify-center">
                 <Percent className="mr-2 h-6 w-6 text-amber-600" />
@@ -441,32 +467,6 @@ export function GluonStats() {
                     <div className="font-medium text-sm text-muted-foreground">
                       GAUC Leverage
                     </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </motion.div>
-
-            <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.6, duration: 0.3 }} className="text-center">
-              <div className="mb-4 flex items-center justify-center">
-                <TrendingUp className="mr-2 h-6 w-6 text-green-600" />
-              </div>
-              <AnimatePresence mode="wait">
-                {isLoading ? (
-                  <motion.div key="loading-tvl" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center gap-2">
-                    <Skeleton className="h-12 w-24" />
-                    <Skeleton className="h-5 w-32" />
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    key={stats.tvl?.toString() || "error"}
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.8 }}
-                    transition={{ duration: 0.3 }}
-                    className="text-center"
-                  >
-                    <div className="mb-1 text-4xl font-bold text-foreground">{hasError ? "—" : stats.tvl ? renderTooltip(stats.tvl, "Total Value Locked") : "—"}</div>
-                    <div className="text-sm font-medium text-muted-foreground">Reserve (TVL)</div>
                   </motion.div>
                 )}
               </AnimatePresence>
