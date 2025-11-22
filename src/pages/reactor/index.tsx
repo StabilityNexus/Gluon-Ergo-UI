@@ -1,5 +1,5 @@
 import { GluonStats } from "@/lib/components/blocks/dashboard/GluonStats";
-import ReactorLayout from "../layout";
+import PageLayout from "../layout";
 import { MyStats } from "@/lib/components/blocks/dashboard/MyStats";
 import { SEO } from "@/lib/components/layout/SEO";
 import { motion } from "framer-motion";
@@ -13,9 +13,9 @@ export default function ReactorDashboard() {
         description="Monitor your Gluon portfolio, track token prices, and analyze market statistics in real-time with our comprehensive DeFi dashboard."
         keywords="Gluon Dashboard, DeFi Stats, GAU Price, GAUC Price, Gold Price, Portfolio Tracker, Ergo DeFi"
       />
-      <ReactorLayout>
+      <PageLayout>
         <motion.div
-          className="container mx-auto space-y-8 px-4 pb-8 sm:px-6 lg:px-8"
+          className="mx-auto w-full max-w-7xl space-y-8 rounded-2xl border border-border/50 bg-card/30 px-4 py-8 shadow-lg backdrop-blur-sm sm:px-6 lg:px-8"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, ease: "easeOut" }}
@@ -32,7 +32,7 @@ export default function ReactorDashboard() {
             <MyStats />
           </motion.div>
         </motion.div>
-      </ReactorLayout>
+      </PageLayout>
     </>
   );
 }
