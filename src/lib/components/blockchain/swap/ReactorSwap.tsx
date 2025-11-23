@@ -1,5 +1,5 @@
 "use client";
-
+import { ExternalLink } from "lucide-react";
 import { Button } from "@/lib/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/lib/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/lib/components/ui/select";
@@ -100,6 +100,7 @@ const formatErgAmount = (value: number | string | BigNumber): string => {
 };
 
 export function ReactorSwap() {
+  const [lastSubmittedTx, setLastSubmittedTx] = useState<string | null>(null);
   const { isConnected, getBalance, getUtxos, ergoWallet } = useErgo();
   const [tokens, setTokens] = useState<Token[]>(defaultTokens);
   const [fromToken, setFromToken] = useState<Token>(tokens[0]);
@@ -137,7 +138,12 @@ export function ReactorSwap() {
   // Transaction listener state
   const [transactionListener] = useState(() => createTransactionListener(nodeService));
   const [hasPendingTransactions, setHasPendingTransactions] = useState(false);
-
+  // CLEAR TX HASH WHEN PENDING TRANSACTION IS FINISHED
+  useEffect(() => {
+    if (!hasPendingTransactions) {
+      setLastSubmittedTx(null);
+    }
+  }, [hasPendingTransactions]);
   // Helper function to capture current wallet state
   const captureWalletState = async (): Promise<WalletState> => {
     const balances = await getBalance();
@@ -773,6 +779,8 @@ export function ReactorSwap() {
 
       if (result && result.txHash) {
         // SUCCESS: Save transaction to listener system
+        setLastSubmittedTx(result.txHash);
+
         transactionListener.saveUpTransaction(result.txHash, actionType, preTransactionState, expectedChanges);
 
         setHasPendingTransactions(true);
@@ -1260,6 +1268,20 @@ export function ReactorSwap() {
                 <p className="text-sm text-muted-foreground">{getDescription(currentAction)}</p>
                 {initError && <p className="text-sm text-red-500">{initError}</p>}
                 {hasPendingTransactions && <p className="animate-pulse text-sm text-blue-500">🔄 Transaction pending - waiting for wallet update...</p>}
+               {lastSubmittedTx && (
+  <div className="text-xs text-blue-400 flex items-center gap-2">
+    <span>Transaction Hash:</span>
+    <a
+      href={`https://sigmaspace.io/transactions/${lastSubmittedTx}`}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="underline hover:text-blue-300 flex items-center gap-1"
+    >
+      {lastSubmittedTx.slice(0, 40)}...
+      <ExternalLink className="w-3 h-3" />
+    </a>
+  </div>
+)}
               </div>
               {/* <Button
                 variant="ghost"
