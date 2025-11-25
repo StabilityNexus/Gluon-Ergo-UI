@@ -7,6 +7,7 @@ export class GluonBox {
   boxJs: any;
   serializer: Serializer;
   qstar = BigInt(660000000);
+  qstarV2 = BigInt(990000000);
 
   constructor(box: any) {
     this.boxJs = box;
@@ -155,6 +156,19 @@ export class GluonBox {
   }
 
   /**
+   * returns the fusion ratio, according to the Gluon V2
+   * @param goldOracle gold oracle
+   */
+  async fusionRatioV2(goldOracle: GoldOracleBox): Promise<bigint> {
+    const pricePerGram = await goldOracle.getPricePerGram(); // this is pt
+    const fissionedErg = this.getErgFissioned();
+    const neutronsInCirculation = await this.getNeutronsCirculatingSupply();
+    const q = (neutronsInCirculation * BigInt(pricePerGram)) / BigInt(fissionedErg);
+    const qAdjusted = q / (q + BigInt(1) - this.qstarV2); // TODO: consider precision
+    return q < qAdjusted ? q : qAdjusted;
+  }
+
+  /**
    * returns variable phi beta
    * @param rErg fissioned erg
    * @param volumeToBeNegate volume to be negated
@@ -163,6 +177,21 @@ export class GluonBox {
   varPhiBeta(rErg: bigint, volumeToBeNegate: number[], volumeToMinus: number[]): bigint {
     const phi0 = BigInt(5000000);
     const phi1 = BigInt(500000000);
+    const sumVolumeToBeNegate = volumeToBeNegate.reduce((acc, x) => acc + BigInt(x), BigInt(0));
+    const sumVolumeToMinus = volumeToMinus.reduce((acc, x) => acc + BigInt(x), BigInt(0));
+    const volume = sumVolumeToBeNegate < sumVolumeToMinus ? BigInt(0) : sumVolumeToBeNegate - sumVolumeToMinus;
+    return phi0 + (phi1 * volume) / rErg;
+  }
+
+  /**
+   * returns variable phi beta, according to Gluon V2
+   * @param rErg fissioned erg
+   * @param volumeToBeNegate volume to be negated
+   * @param volumeToMinus volume
+   */
+  varPhiBetaV2(rErg: bigint, volumeToBeNegate: number[], volumeToMinus: number[]): bigint {
+    const phi0 = BigInt(5000000);
+    const phi1 = BigInt(1000000000);
     const sumVolumeToBeNegate = volumeToBeNegate.reduce((acc, x) => acc + BigInt(x), BigInt(0));
     const sumVolumeToMinus = volumeToMinus.reduce((acc, x) => acc + BigInt(x), BigInt(0));
     const volume = sumVolumeToBeNegate < sumVolumeToMinus ? BigInt(0) : sumVolumeToBeNegate - sumVolumeToMinus;
@@ -188,6 +217,29 @@ export class GluonBox {
     const protonsInCirculation = await this.getProtonsCirculatingSupply();
     const fissonedErg = this.getErgFissioned();
     const fusionRatio = await this.fusionRatio(goldOracle);
+    const oneMinusFusionRatio = BigInt(1e9) - fusionRatio;
+    return (oneMinusFusionRatio * BigInt(fissonedErg)) / protonsInCirculation;
+  }
+
+  /**
+   * returns the neutron price in nano ERG, according to Gluon V2
+   * @param goldOracle gold oracle
+   */
+  async neutronPriceV2(goldOracle: GoldOracleBox): Promise<bigint> {
+    const neutronsInCirculation = await this.getNeutronsCirculatingSupply();
+    const fissonedErg = this.getErgFissioned();
+    const fusionRatio = await this.fusionRatioV2(goldOracle);
+    return (fusionRatio * BigInt(fissonedErg)) / neutronsInCirculation;
+  }
+
+  /**
+   * returns the proton price in nano ERG, according to Gluon v2
+   * @param goldOracle gold oracle
+   */
+  async protonPriceV2(goldOracle: GoldOracleBox): Promise<bigint> {
+    const protonsInCirculation = await this.getProtonsCirculatingSupply();
+    const fissonedErg = this.getErgFissioned();
+    const fusionRatio = await this.fusionRatioV2(goldOracle);
     const oneMinusFusionRatio = BigInt(1e9) - fusionRatio;
     return (oneMinusFusionRatio * BigInt(fissonedErg)) / protonsInCirculation;
   }
