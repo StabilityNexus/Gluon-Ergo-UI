@@ -309,7 +309,7 @@ export function GluonStats() {
           {renderStatCard(
             protocolConfig.ui.labels.goldPriceTitle,
             protocolConfig.ui.labels.goldPriceSubtitle,
-            stats.goldKgPrice,
+            stats.goldPrice,
             <Scale className="h-8 w-8 text-yellow-700" />,
             "ERG",
             0.1
@@ -461,9 +461,16 @@ export function GluonStats() {
                     className="text-center"
                   >
                     <div className="text-4xl font-bold text-foreground mb-1">
-                      {hasError ? '—' : stats.reserveRatio ? Math.round(- (100 / (100 - stats.reserveRatio)) * 100)/100 : '—'}x <br />
+                      {hasError
+                        ? "—"
+                        : stats.reserveRatio
+                        ? Math.round(-(100 / (100 - Number(stats.reserveRatio))) * 100) / 100
+                        : "—"}
+                      x <br />
                     </div>
-                    <div className="font-medium text-sm text-muted-foreground">Current {protocolConfig.tokens.proton.ticker} Leverage</div>
+                    <div className="font-medium text-sm text-muted-foreground">
+                      Reserve-Implied {protocolConfig.tokens.proton.ticker} Leverage
+                    </div>
 
                   </motion.div>
                 )}
