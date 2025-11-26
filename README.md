@@ -153,24 +153,34 @@ The project follows a modular approach. Components or functions that will be use
 ### Directory Overview
 
 ```
-src/
-├── lib/
-│   ├── components/          # All React components
-│   │   ├── ui/             # Shadcn UI components
-│   │   ├── blocks/         # Page-specific sections (dashboard, home)
-│   │   ├── layout/         # Layout components (navbar, sidebar, SEO)
-│   │   ├── blockchain/     # Wallet and protocol integrations
-│   │   └── icons/          # Custom icon components
-│   ├── constants/          # Application constants and addresses
-│   ├── functions/          # Business logic and protocol functions
-│   ├── hooks/              # Custom React hooks
-│   ├── providers/          # Context providers (Ergo, theme)
-│   ├── services/           # External service integrations
-│   ├── stores/             # State management (Zustand)
-│   ├── types/              # TypeScript type definitions
-│   └── utils/              # Utility functions and helpers
-├── pages/                  # Next.js pages and API routes
-└── styles/                 # Global styles and CSS
+
+├── public/                 # Static assets (images, logos, fonts)
+├── src/
+│   ├── lib/
+│   │   ├── components/    # All React components
+│   │   │   ├── ui/       # Shadcn UI components
+│   │   │   ├── blocks/   # Page-specific sections (dashboard, home)
+│   │   │   ├── layout/   # Layout components (navbar, sidebar, SEO)
+│   │   │   ├── blockchain/ # Wallet and protocol integrations
+│   │   │   ├── icons/    # Custom icon components
+│   │   │   └── toggle/   # Theme toggle components
+│   │   ├── constants/    # Application constants and token addresses
+│   │   ├── functions/    # Business logic and protocol functions
+│   │   │   └── reactor/  # Reactor swap logic (fission, fusion, transmutation)
+│   │   ├── providers/    # Context providers (Ergo, theme)
+│   │   └── utils/        # Utility functions and helpers
+│   ├── pages/            # Next.js pages and API routes
+│   │   ├── _app.tsx     # App wrapper with providers
+│   │   ├── _document.tsx # HTML document structure
+│   │   ├── index.tsx    # Home page
+│   │   └── dashboard.tsx # Dashboard page
+│   └── styles/           # Global styles and CSS
+└── tests/                # Test files (mirrors src structure)
+    ├── setup.ts         # Global test configuration & mocks
+    └── lib/
+        ├── utils/       # Utility function tests (168 tests)
+        └── functions/   # Business logic tests
+            └── reactor/ # Reactor function tests
 ```
 
 ### Component Organization Guidelines
