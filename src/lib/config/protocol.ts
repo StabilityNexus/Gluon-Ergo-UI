@@ -1,7 +1,7 @@
 export const protocolConfig = {
   peg: {
     asset: "Gold",
-    adjective: "gold-pegged",
+    adjective: "Gold-Pegged",
     description: "digital gold-pegged tokens",
   },
   tokens: {
