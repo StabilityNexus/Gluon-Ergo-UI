@@ -1,5 +1,5 @@
 "use client";
-
+import { ExternalLink } from "lucide-react";
 import { Button } from "@/lib/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/lib/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/lib/components/ui/select";
@@ -100,6 +100,9 @@ const formatErgAmount = (value: number | string | BigNumber): string => {
 };
 
 export function ReactorSwap() {
+  const [lastSubmittedTx, setLastSubmittedTx] = useState<string | null>(null);
+  // Minimum ERG to keep in wallet for operations
+  const MIN_ERG_BUFFER = 0.1;
   const { isConnected, getBalance, getUtxos, ergoWallet } = useErgo();
   const [tokens, setTokens] = useState<Token[]>(defaultTokens);
   const [fromToken, setFromToken] = useState<Token>(tokens[0]);
@@ -132,12 +135,17 @@ export function ReactorSwap() {
   const [maxErgOutput, setMaxErgOutput] = useState<string>("0");
   const [maxErgOutputPrecise, setMaxErgOutputPrecise] = useState<string>("0"); // Precise value for calculations
   //const [isUpdatingProgrammatically, setIsUpdatingProgrammatically] = useState(false)
-  const updateBalancesRef = useRef(() => {});
+  const updateBalancesRef = useRef(() => { });
 
   // Transaction listener state
   const [transactionListener] = useState(() => createTransactionListener(nodeService));
   const [hasPendingTransactions, setHasPendingTransactions] = useState(false);
-
+  // CLEAR TX HASH WHEN PENDING TRANSACTION IS FINISHED
+  useEffect(() => {
+    if (!hasPendingTransactions) {
+      setLastSubmittedTx(null);
+    }
+  }, [hasPendingTransactions]);
   // Helper function to capture current wallet state
   const captureWalletState = async (): Promise<WalletState> => {
     const balances = await getBalance();
@@ -429,9 +437,9 @@ export function ReactorSwap() {
               updatedTokens = updatedTokens.map((t) =>
                 t.symbol === "GAU"
                   ? {
-                      ...t,
-                      balance: formatMicroNumber(gauDecimalBalance).display,
-                    }
+                    ...t,
+                    balance: formatMicroNumber(gauDecimalBalance).display,
+                  }
                   : t
               );
             } else if (tokenBalance.tokenId === TOKEN_ADDRESS.gauc) {
@@ -440,9 +448,9 @@ export function ReactorSwap() {
               updatedTokens = updatedTokens.map((t) =>
                 t.symbol === "GAUC"
                   ? {
-                      ...t,
-                      balance: formatMicroNumber(gaucDecimalBalance).display,
-                    }
+                    ...t,
+                    balance: formatMicroNumber(gaucDecimalBalance).display,
+                  }
                   : t
               );
             }
@@ -633,20 +641,20 @@ export function ReactorSwap() {
         try {
           // Calculate actual fees for the current balance
           const balanceNanoErgs = ergsToNanoErgs(balanceNum);
-          
+
           // Get actual fees from the SDK
           const fees = await gluonInstance.getTotalFeeAmountFission(gluonBox, Number(balanceNanoErgs));
-          
+
           // Convert fees to ERG
           const actualTotalFee = parseFloat(nanoErgsToErgs(fees.totalFee).toString());
-          
-          // Small buffer for wallet operations (0.01 ERG)
-          const walletBuffer = 0.01;
-          
+
+          // Small buffer for wallet operations
+          const walletBuffer = MIN_ERG_BUFFER;
+
           // Calculate available ERG
           const availableErg = Math.max(0, balanceNum - actualTotalFee - walletBuffer);
           maxAmount = availableErg.toString();
-          
+
           console.log("🔍 MAX CALCULATION:", {
             balance: balanceNum,
             actualTotalFee,
@@ -658,7 +666,7 @@ export function ReactorSwap() {
           console.error("Error calculating max amount:", error);
           // Fallback to conservative estimate
           const estimatedTotalFeeERG = 0.011;
-          const walletBuffer = 0.01;
+          const walletBuffer = MIN_ERG_BUFFER;
           const availableErg = Math.max(0, balanceNum - estimatedTotalFeeERG - walletBuffer);
           maxAmount = availableErg.toString();
         }
@@ -773,6 +781,8 @@ export function ReactorSwap() {
 
       if (result && result.txHash) {
         // SUCCESS: Save transaction to listener system
+        setLastSubmittedTx(result.txHash);
+
         transactionListener.saveUpTransaction(result.txHash, actionType, preTransactionState, expectedChanges);
 
         setHasPendingTransactions(true);
@@ -1226,7 +1236,7 @@ export function ReactorSwap() {
       const ergBalance = parseFloat(ergBalanceStr);
       if (isNaN(ergInput) || ergInput <= 0) return true;
       if (ergInput > ergBalance) return true;
-      if (ergBalance - ergInput < 0.1) return true;
+      if (ergBalance - ergInput < MIN_ERG_BUFFER) return true;
 
       return false;
     }
@@ -1260,6 +1270,20 @@ export function ReactorSwap() {
                 <p className="text-sm text-muted-foreground">{getDescription(currentAction)}</p>
                 {initError && <p className="text-sm text-red-500">{initError}</p>}
                 {hasPendingTransactions && <p className="animate-pulse text-sm text-blue-500">🔄 Transaction pending - waiting for wallet update...</p>}
+               {lastSubmittedTx && (
+  <div className="text-xs text-blue-400 flex items-center gap-2">
+    <span>Transaction Hash:</span>
+    <a
+      href={`https://sigmaspace.io/transactions/${lastSubmittedTx}`}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="underline hover:text-blue-300 flex items-center gap-1"
+    >
+      {lastSubmittedTx.slice(0, 40)}...
+      <ExternalLink className="w-3 h-3" />
+    </a>
+  </div>
+)}
               </div>
               {/* <Button
                 variant="ghost"

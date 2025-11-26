@@ -16,6 +16,7 @@ export function SEO({
   keywords = protocolConfig.seo.defaultKeywords,
   image = protocolConfig.seo.defaultImage,
   url = protocolConfig.seo.defaultUrl,
+
   type = "website",
 }: SEOProps) {
   const siteTitle = title.includes("Gluon") ? title : `${title} | Gluon`;

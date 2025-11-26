@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import { Card } from "@/lib/components/ui/card";
 import { Skeleton } from "@/lib/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/lib/components/ui/tooltip";
-import { nanoErgsToErgs, convertFromDecimals, formatNumber } from "@/lib/utils/erg-converter";
-import { Scale, Percent, Loader2, Expand, TrendingUp, Activity } from "lucide-react";
+import { nanoErgsToErgs, convertFromDecimals, format, formatApprox } from "@/lib/utils/erg-converter";
+import { Scale, Percent, Loader2, TrendingUp, TrendingDown, Activity, Landmark } from "lucide-react";
 import { cn } from "@/lib/utils/utils";
 import { useRouter } from "next/navigation";
 import BigNumber from "bignumber.js";
@@ -16,10 +16,14 @@ import { protocolConfig } from "@/lib/config/protocol";
 
 interface GluonStats {
   ergPrice: number | null;
-  goldKgPrice: BigNumber | null;
+  goldPrice: BigNumber | null;
   gauPrice: BigNumber | null;
   gaucPrice: BigNumber | null;
-  reserveRatio: number | null;
+  fusionRatio: BigNumber | null;
+  normalizedReserveRatio: number | null;
+  reserveRatio: BigNumber | null;
+  priceCrashCushion: BigNumber | null;
+  gaucLeverage: BigNumber | null;
   tvl: BigNumber | null;
 }
 
@@ -39,10 +43,14 @@ interface ProtocolMetrics {
 
 const initialStats: GluonStats = {
   ergPrice: null,
-  goldKgPrice: null,
+  goldPrice: null,
   gauPrice: null,
   gaucPrice: null,
+  fusionRatio: null,
+  normalizedReserveRatio: null,
   reserveRatio: null,
+  priceCrashCushion: null,
+  gaucLeverage: null,
   tvl: null,
 };
 
@@ -75,7 +83,7 @@ export function GluonStats() {
         const oracleBox = await gluon.getGoldOracleBox();
 
         // Fetch basic stats
-        const [gaucPrice, goldKgPrice, reserveRatio, tvl] = await Promise.all([
+        const [gaucPrice, goldPrice, normalizedReserveRatio, tvl] = await Promise.all([
           gluonBox.protonPrice(oracleBox),
           oracleBox.getPrice(),
           gluon.getReserveRatio(gluonBox, oracleBox),
@@ -98,17 +106,25 @@ export function GluonStats() {
         const volumeArrays = { protonsToNeutrons: [], neutronsToProtons: [] };
 
         // Convert values to proper format
-        const goldKgPriceBN = nanoErgsToErgs(goldKgPrice);
+        const goldPriceBN = nanoErgsToErgs(goldPrice).dividedBy(1000);
         const gaucPriceBN = nanoErgsToErgs(gaucPrice);
         const tvlBN = nanoErgsToErgs(tvl);
+        const gauPriceBN = tvlBN.minus(convertFromDecimals(circProtons).multipliedBy(gaucPriceBN)).dividedBy(convertFromDecimals(circNeutrons));
+        const fusionRatioBN = BigNumber(Math.round(10000 / normalizedReserveRatio));
+        const reserveRatioBN = BigNumber(+BigNumber(tvl) * 1e14 / (+BigNumber(circNeutrons) * goldPrice));
+        const priceCrashCushionBN = BigNumber(Math.max(0, 100 * (+reserveRatioBN - 100/0.66)/ +reserveRatioBN));
+        const gaucLeverageBN = BigNumber(Math.round(- (100 / (100 - normalizedReserveRatio)) * 100)/100); 
 
         setStats({
           ergPrice,
-          goldKgPrice: goldKgPriceBN,
-          // Convert from kg to gram by dividing by 1000
-          gauPrice: goldKgPriceBN.dividedBy(1000),
+          goldPrice: goldPriceBN,
+          gauPrice: gauPriceBN,
           gaucPrice: gaucPriceBN,
-          reserveRatio,
+          fusionRatio: fusionRatioBN,
+          normalizedReserveRatio,
+          reserveRatio: reserveRatioBN,
+          priceCrashCushion: priceCrashCushionBN,
+          gaucLeverage: gaucLeverageBN,
           tvl: tvlBN,
         });
 
@@ -142,14 +158,14 @@ export function GluonStats() {
           },
           volumeArrays: volumeArrays,
           prices: {
-            goldKg: goldKgPriceBN.toNumber(),
-            gau: goldKgPriceBN.dividedBy(1000).toNumber(),
+            gold: goldPriceBN.toNumber(),
+            gau: gauPriceBN.toNumber(),
             gauc: gaucPriceBN.toNumber(),
             erg: ergPrice,
           },
           protocolHealth: {
             tvl: tvlBN.toNumber(),
-            reserveRatio: reserveRatio,
+            normalizedReserveRatio: normalizedReserveRatio,
           },
         });
       } catch (error) {
@@ -182,16 +198,14 @@ export function GluonStats() {
     };
   }, []);
 
-  const renderTooltip = (value: BigNumber | null, label: string) => {
-    if (!value) return null;
-    const formatted = formatNumber(value, false);
+  const renderTooltip = (text: string, tooltipText: string) => {
     return (
       <TooltipProvider>
         <Tooltip>
-          <TooltipTrigger className="cursor-help">{formatNumber(value, true).display}</TooltipTrigger>
+          <TooltipTrigger className="cursor-help">{text}</TooltipTrigger>
           <TooltipContent>
             <p>
-              Exact {label}: {formatted.display} ERG
+              {tooltipText}
             </p>
           </TooltipContent>
         </Tooltip>
@@ -232,7 +246,7 @@ export function GluonStats() {
                 transition={{ duration: 0.2 }}
                 className="text-center"
               >
-                <div className="text-4xl font-bold">{value ? renderTooltip(value, title + " Price") : "—"}</div>
+                <div className="text-4xl font-bold">{value ? renderTooltip(formatApprox(value), "Price of 1 " + title + ": " + format(value) + " ERG") : "—"}</div>
                 <div className="mt-1 text-sm text-muted-foreground">{suffix}</div>
               </motion.div>
             </AnimatePresence>
@@ -320,12 +334,48 @@ export function GluonStats() {
           )}
         </div>
 
-        {/* Protocol Volume Metrics - Improved */}
+        {/* Stats */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4, duration: 0.4 }} className="flex-1">
           <Card className="border-border bg-card p-6">
             <div className="mb-4 flex items-center gap-2">
+              <Percent className="h-5 w-5 text-primary" />
+              <span className="text-lg font-semibold">Ratios</span>
+            </div>
+            <div className="grid grid-cols-1 gap-6 text-center sm:grid-cols-4">
+              <div className="space-y-2">
+                <div className="text-2xl font-bold text-foreground">
+                  {isLoading ? <Skeleton className="mx-auto h-8 w-16" /> : hasError ? "—" : stats.fusionRatio ? +stats.fusionRatio : "—"}%
+                </div>
+                <div className="text-sm text-muted-foreground">{renderTooltip("GAU Reserve Allocation", "Percentage of the reserve that is currently backing GAUs. The price of GAU is this reserve portion divided by the GAU supply.")}</div>
+              </div>
+              <div className="space-y-2">
+                <div className="text-2xl font-bold text-foreground">
+                  {isLoading ? <Skeleton className="mx-auto h-8 w-16" /> : hasError ? "—" : stats.fusionRatio ? 100 - +stats.fusionRatio : "—"}%
+                </div>
+                <div className="text-sm text-muted-foreground">{renderTooltip("GAUC Reserve Allocation", "Percentage of the reserve that is currently backing GAUCs. The price of GAUC is this reserve portion divided by the GAUC supply.")}</div>
+              </div>
+              <div className="space-y-2">
+                <div className="text-2xl font-bold text-foreground">
+                  {isLoading ? <Skeleton className="mx-auto h-8 w-16" /> : hasError ? "—" : stats.normalizedReserveRatio ? Math.round(stats.normalizedReserveRatio) : "—"}%
+                </div>
+                <div className="text-sm text-muted-foreground">{renderTooltip("Normalized Reserve Ratio", "The Inverse of the GAU Reserve Allocation.")}</div>
+              </div>
+              <div className="space-y-2">
+                <div className="text-2xl font-bold text-foreground">
+                  {isLoading ? <Skeleton className="mx-auto h-8 w-16" /> : hasError ? "—" : stats.reserveRatio ? Math.round(+stats.reserveRatio) : "—" }%
+                </div>
+                <div className="text-sm text-muted-foreground">{renderTooltip("Reserve Ratio", "Total Reserve divided by the GAU Supply times the Gold Oracle Price.")}</div>
+              </div>
+            </div>
+          </Card>
+        </motion.div>
+
+        {/* Supplies and Volumes */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4, duration: 0.4 }} className="flex-1">
+          <Card className="border-border bg-card p-6 mt-6">
+            <div className="mb-4 flex items-center gap-2">
               <Activity className="h-5 w-5 text-primary" />
-              <span className="text-lg font-semibold">Protocol Activity</span>
+              <span className="text-lg font-semibold">Activity</span>
             </div>
             <div className="grid grid-cols-1 gap-6 text-center sm:grid-cols-4">
               <div className="space-y-2">
@@ -364,69 +414,10 @@ export function GluonStats() {
       {/* Right Card - Responsive and Properly Aligned */}
       <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.4, duration: 0.4 }} className="w-full xl:w-[320px]">
         <Card className="flex h-full flex-col border-border bg-gradient-to-b from-background to-muted/20 p-6">
-          <div className="flex flex-1 flex-col items-center justify-center space-y-8">
-            <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.5, duration: 0.3 }} className="text-center">
-              <div className="mb-4 flex items-center justify-center">
-                <Percent className="mr-2 h-6 w-6 text-amber-600" />
-              </div>
-              <AnimatePresence mode="wait">
-                {isLoading ? (
-                  <motion.div key="loading-ratio" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center gap-2">
-                    <Skeleton className="h-12 w-20" />
-                    <Skeleton className="h-5 w-32" />
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    key={stats.reserveRatio?.toString() || "error"}
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.8 }}
-                    transition={{ duration: 0.3 }}
-                    className="text-center"
-                  >
-                    <div className="mb-1 text-4xl font-bold text-foreground">{hasError ? "—" : stats.reserveRatio ? Math.round(stats.reserveRatio) : "—"}%</div>
-                    <div className="text-sm font-medium text-muted-foreground">Current Reserve Ratio</div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.5, duration: 0.3 }}
-              className="text-center"
-            >
-              <div className="flex items-center justify-center mb-4">
-                <Expand className="h-6 w-6 text-amber-600 mr-2" />
-              </div>
-              <AnimatePresence mode="wait">
-                {isLoading ? (
-                  <motion.div key="loading-ratio" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center gap-2">
-                    <Skeleton className="h-12 w-20" />
-                    <Skeleton className="h-5 w-32" />
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    key={stats.reserveRatio?.toString() || "error"}
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.8 }}
-                    transition={{ duration: 0.3 }}
-                    className="text-center"
-                  >
-                    <div className="text-4xl font-bold text-foreground mb-1">
-                      {hasError ? '—' : stats.reserveRatio ? Math.round(- (100 / (100 - stats.reserveRatio)) * 100)/100 : '—'}x <br />
-                    </div>
-                    <div className="font-medium text-sm text-muted-foreground">Current {protocolConfig.tokens.proton.ticker} Leverage</div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </motion.div>
-
+          <div className="flex flex-1 flex-col items-center justify-center space-y-16">
             <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.6, duration: 0.3 }} className="text-center">
               <div className="mb-4 flex items-center justify-center">
-                <TrendingUp className="mr-2 h-6 w-6 text-green-600" />
+                <Landmark className="mr-2 h-6 w-6 text-green-600" />
               </div>
               <AnimatePresence mode="wait">
                 {isLoading ? (
@@ -443,8 +434,72 @@ export function GluonStats() {
                     transition={{ duration: 0.3 }}
                     className="text-center"
                   >
-                    <div className="mb-1 text-4xl font-bold text-foreground">{hasError ? "—" : stats.tvl ? renderTooltip(stats.tvl, "Total Value Locked") : "—"}</div>
-                    <div className="text-sm font-medium text-muted-foreground">Total Value Locked</div>
+                    <div className="mb-1 text-4xl font-bold text-foreground">{hasError ? "—" : stats.tvl ? renderTooltip(formatApprox(stats.tvl) + " ERG", "Total Value Locked: " + format(stats.tvl) + " ERG") : "—"}</div>
+                    <div className="text-sm font-medium text-muted-foreground">Reserve (TVL)</div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+            
+            <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.5, duration: 0.3 }} className="text-center">
+              <div className="mb-4 flex items-center justify-center">
+                <TrendingDown className="mr-2 h-6 w-6 text-amber-600" />
+              </div>
+              <AnimatePresence mode="wait">
+                {isLoading ? (
+                  <motion.div key="loading-ratio" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center gap-2">
+                    <Skeleton className="h-12 w-20" />
+                    <Skeleton className="h-5 w-32" />
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key={stats.normalizedReserveRatio?.toString() || "error"}
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.8 }}
+                    transition={{ duration: 0.3 }}
+                    className="text-center"
+                  >
+                    <div className="text-4xl font-bold text-foreground mb-1">
+                      {hasError ? '—' : stats.reserveRatio ? Math.round(- (100 / (100 - stats.reserveRatio)) * 100)/100 : '—'}x <br />
+                    </div>
+                    <div className="font-medium text-sm text-muted-foreground">Current {protocolConfig.tokens.proton.ticker} Leverage</div>
+
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.5, duration: 0.3 }}
+              className="text-center"
+            >
+              <div className="flex items-center justify-center mb-4">
+                <TrendingUp className="h-6 w-6 text-amber-600 mr-2" />
+              </div>
+              <AnimatePresence mode="wait">
+                {isLoading ? (
+                  <motion.div key="loading-ratio" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center gap-2">
+                    <Skeleton className="h-12 w-20" />
+                    <Skeleton className="h-5 w-32" />
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key={stats.normalizedReserveRatio?.toString() || "error"}
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.8 }}
+                    transition={{ duration: 0.3 }}
+                    className="text-center"
+                  >
+                    <div className="text-4xl font-bold text-foreground mb-1">
+                      {hasError ? '—' : stats.gaucLeverage ? +stats.gaucLeverage : '—'}x <br />
+                    </div>
+                    <div className="font-medium text-sm text-muted-foreground">
+                      {renderTooltip("GAUC Leverage", "Factor by which GAUC's price will increase/decrease in comparison to increases/decreases in the ERG price w.r.t. Gold. This does not apply when GAU is depegged.")}
+                    </div>
                   </motion.div>
                 )}
               </AnimatePresence>
