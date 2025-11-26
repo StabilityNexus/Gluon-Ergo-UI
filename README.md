@@ -95,6 +95,57 @@ You will have access to the core component file, which means you can edit the wh
 
 > ⚠️ **Note:** Avoid reinstalling existing components when prompted, as this will reset any custom styling in the component files.
 
+## 🧪 Testing
+
+The project includes a comprehensive test suite using Bun's native test runner for utility functions and business logic.
+
+### Running Tests
+
+```bash
+# Run all tests
+bun test
+
+# Run tests in watch mode
+bun test --watch
+
+# Run specific test file
+bun test tests/lib/utils/erg-converter.test.ts
+
+# Run with coverage
+bun test --coverage
+```
+
+### Test Coverage
+
+**Current Status**: ✅ 168/168 tests passing (100% success rate)
+
+- **Utility Functions** (`src/lib/utils`):
+  - `utils.ts` - className merging (8 tests)
+  - `erg-converter.ts` - ERG conversion & formatting (60 tests)
+  - `error-handler.ts` - Error classification (36 tests)
+  - `node-service.ts` - Blockchain API service (15 tests)
+  - `transaction-listener.ts` - Transaction monitoring (12 tests)
+
+- **Business Logic** (`src/lib/functions/reactor`):
+  - `utils.ts` - Token validation & swap actions (37 tests)
+
+### Writing Tests
+
+Test files are located in the `/tests` directory, mirroring the source structure. See [tests/README.md](tests/README.md) for detailed documentation on:
+- Test structure and patterns
+- Writing new tests
+- Mocking strategies
+- Best practices
+
+### What's Not Tested Yet
+
+- React components (UI, layout, blockchain components)
+- User interaction flows
+- Integration tests
+- Visual regression tests
+
+Contributions for component tests are welcome!
+
 ## 📁 Folder Structure
 
 The project follows a modular approach. Components or functions that will be used multiple times should be designed to accept various props or be moved to separate files.
