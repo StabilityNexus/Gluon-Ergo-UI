@@ -8,6 +8,7 @@ import GaucIcon from "@/lib/components/icons/GaucIcon";
 import { useRef, forwardRef, useState, useEffect } from "react";
 import { cn } from "@/lib/utils/utils";
 import { motion } from "framer-motion";
+import { protocolConfig } from "@/lib/config/protocol";
 
 const Circle = forwardRef<HTMLDivElement, { className?: string; children?: React.ReactNode }>(({ className, children }, ref) => {
   return (
@@ -177,7 +178,7 @@ export const Features = () => (
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.4, duration: 0.5 }}
                 >
-                  Gluon Mechanics
+                  {protocolConfig.ui.mechanics.overviewTitle}
                 </motion.h2>
                 <motion.p
                   className="z-20 max-w-lg text-left text-lg leading-relaxed tracking-tight text-muted-foreground"
@@ -185,17 +186,13 @@ export const Features = () => (
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.5, duration: 0.5 }}
                 >
-                  Get exposure to Gold with GAU.
-                  <br />
-                  GAU is the stablecoin pegged to 1g of Gold.
-                  <br />
-                  <br />
-                  Get leveraged volatility and yield with GAUC.
-                  <br />
-                  GAUC tokenizes the reserve surplus.
-                  <br />
-                  <br />
-                  Both GAU and GAUC are fully backed by ERG.
+                  {protocolConfig.ui.mechanics.overviewBody.map((line, idx) => (
+                    <span key={idx}>
+                      {line}
+                      <br />
+                      {idx === 1 || idx === 3 ? <br /> : null}
+                    </span>
+                  ))}
                 </motion.p>
               </div>
             </div>
@@ -203,23 +200,23 @@ export const Features = () => (
               {[
                 {
                   icon: Maximize2,
-                  title: "Fission",
-                  description: "Splits $ERG tokens into $GAU stable tokeons and $GAUC volatile tokeons",
+                  title: protocolConfig.ui.mechanics.actions.fission.title,
+                  description: protocolConfig.ui.mechanics.actions.fission.description,
                 },
                 {
                   icon: Minimize2,
-                  title: "Fusion",
-                  description: "Merges $GAU stable tokeons and $GAUC volatile tokeons into $ERG tokens",
+                  title: protocolConfig.ui.mechanics.actions.fusion.title,
+                  description: protocolConfig.ui.mechanics.actions.fusion.description,
                 },
                 {
                   icon: Repeat,
-                  title: "Transmute to Gold",
-                  description: "Transmutes $GAUC volatile tokeons into $GAU stable tokeons",
+                  title: protocolConfig.ui.mechanics.actions.transmuteToPeg.title,
+                  description: protocolConfig.ui.mechanics.actions.transmuteToPeg.description,
                 },
                 {
                   icon: Repeat,
-                  title: "Transmute from Gold",
-                  description: "Transmutes $GAU stable tokeons into $GAUC volatile tokeons",
+                  title: protocolConfig.ui.mechanics.actions.transmuteFromPeg.title,
+                  description: protocolConfig.ui.mechanics.actions.transmuteFromPeg.description,
                 },
               ].map((item, index) => (
                 <motion.div
@@ -245,17 +242,13 @@ export const Features = () => (
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.4, duration: 0.5 }}
           >
-            {/* Fission: ERG -> GAU + GAUC */}
-            <TokenFlow title="Fission" fromTokens={["ERG"]} toTokens={["GAU", "GAUC"]} />
+            <TokenFlow title={protocolConfig.ui.mechanics.actions.fission.title} fromTokens={["ERG"]} toTokens={["GAU", "GAUC"]} />
 
-            {/* Fusion: GAU + GAUC -> ERG */}
-            <TokenFlow title="Fusion" fromTokens={["GAU", "GAUC"]} toTokens={["ERG"]} reverse={false} />
+            <TokenFlow title={protocolConfig.ui.mechanics.actions.fusion.title} fromTokens={["GAU", "GAUC"]} toTokens={["ERG"]} reverse={false} />
 
-            {/* Transmute To Gold: GAUC -> GAU */}
-            <TokenFlow title="Transmute To Gold" fromTokens={["GAUC"]} toTokens={["GAU"]} />
+            <TokenFlow title={protocolConfig.ui.mechanics.actions.transmuteToPeg.title} fromTokens={["GAUC"]} toTokens={["GAU"]} />
 
-            {/* Transmute From Gold: GAU -> GAUC */}
-            <TokenFlow title="Transmute From Gold" fromTokens={["GAU"]} toTokens={["GAUC"]} reverse={false} />
+            <TokenFlow title={protocolConfig.ui.mechanics.actions.transmuteFromPeg.title} fromTokens={["GAU"]} toTokens={["GAUC"]} reverse={false} />
           </motion.div>
         </CardSpotlight>
       </motion.div>

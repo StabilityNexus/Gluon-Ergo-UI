@@ -12,6 +12,7 @@ import BigNumber from "bignumber.js";
 import { motion, AnimatePresence } from "framer-motion";
 import GauIcon from "@/lib/components/icons/GauIcon";
 import GaucIcon from "@/lib/components/icons/GaucIcon";
+import { protocolConfig } from "@/lib/config/protocol";
 
 interface GluonStats {
   ergPrice: number | null;
@@ -291,11 +292,32 @@ export function GluonStats() {
 
         {/* Token Grid - Responsive */}
         <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
-          {renderStatCard("1 kg of Gold", "Oracle Gold Price", stats.goldKgPrice, <Scale className="h-8 w-8 text-yellow-700" />, "ERG", 0.1)}
+          {renderStatCard(
+            protocolConfig.ui.labels.goldPriceTitle,
+            protocolConfig.ui.labels.goldPriceSubtitle,
+            stats.goldKgPrice,
+            <Scale className="h-8 w-8 text-yellow-700" />,
+            "ERG",
+            0.1
+          )}
 
-          {renderStatCard("GAU", "Gold Pegged Token", stats.gauPrice, <GauIcon className="h-8 w-8" />, "ERG", 0.2)}
+          {renderStatCard(
+            protocolConfig.tokens.neutron.ticker,
+            protocolConfig.ui.labels.neutronSubtitle,
+            stats.gauPrice,
+            <GauIcon className="h-8 w-8" />,
+            "ERG",
+            0.2
+          )}
 
-          {renderStatCard("GAUC", "Leveraged Yield Token", stats.gaucPrice, <GaucIcon className="h-8 w-8" />, "ERG", 0.3)}
+          {renderStatCard(
+            protocolConfig.tokens.proton.ticker,
+            protocolConfig.ui.labels.protonSubtitle,
+            stats.gaucPrice,
+            <GaucIcon className="h-8 w-8" />,
+            "ERG",
+            0.3
+          )}
         </div>
 
         {/* Protocol Volume Metrics - Improved */}
@@ -310,25 +332,29 @@ export function GluonStats() {
                 <div className="text-2xl font-bold text-foreground">
                   {isLoading ? <Skeleton className="mx-auto h-8 w-16" /> : hasError ? "—" : nanoErgsToErgs(protocolMetrics.volume14Day.neutronsToProtons).toFixed(2)}
                 </div>
-                <div className="text-sm text-muted-foreground">14d GAU to GAUC Volume (ERG)</div>
+                <div className="text-sm text-muted-foreground">
+                  14d {protocolConfig.tokens.neutron.ticker} to {protocolConfig.tokens.proton.ticker} Volume (ERG)
+                </div>
               </div>
               <div className="space-y-2">
                 <div className="text-2xl font-bold text-foreground">
                   {isLoading ? <Skeleton className="mx-auto h-8 w-16" /> : hasError ? "—" : nanoErgsToErgs(protocolMetrics.volume14Day.protonsToNeutrons).toFixed(2)}
                 </div>
-                <div className="text-sm text-muted-foreground">14d GAUC to GAU Volume (ERG)</div>
+                <div className="text-sm text-muted-foreground">
+                  14d {protocolConfig.tokens.proton.ticker} to {protocolConfig.tokens.neutron.ticker} Volume (ERG)
+                </div>
               </div>
               <div className="space-y-2">
                 <div className="text-2xl font-bold text-foreground">
                   {isLoading ? <Skeleton className="mx-auto h-8 w-16" /> : hasError ? "—" : convertFromDecimals(protocolMetrics.circulatingSupply.neutrons).toFixed(2)}
                 </div>
-                <div className="text-sm text-muted-foreground">GAU Supply</div>
+                <div className="text-sm text-muted-foreground">{protocolConfig.ui.labels.neutronSupplyLabel}</div>
               </div>
               <div className="space-y-2">
                 <div className="text-2xl font-bold text-foreground">
                   {isLoading ? <Skeleton className="mx-auto h-8 w-16" /> : hasError ? "—" : convertFromDecimals(protocolMetrics.circulatingSupply.protons).toFixed(2)}
                 </div>
-                <div className="text-sm text-muted-foreground">GAUC Supply</div>
+                <div className="text-sm text-muted-foreground">{protocolConfig.ui.labels.protonSupplyLabel}</div>
               </div>
             </div>
           </Card>
@@ -392,9 +418,7 @@ export function GluonStats() {
                     <div className="text-4xl font-bold text-foreground mb-1">
                       {hasError ? '—' : stats.reserveRatio ? Math.round(- (100 / (100 - stats.reserveRatio)) * 100)/100 : '—'}x <br />
                     </div>
-                    <div className="font-medium text-sm text-muted-foreground">
-                      Current GAUC Leverage
-                    </div>
+                    <div className="font-medium text-sm text-muted-foreground">Current {protocolConfig.tokens.proton.ticker} Leverage</div>
                   </motion.div>
                 )}
               </AnimatePresence>
