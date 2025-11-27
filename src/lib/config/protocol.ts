@@ -40,40 +40,12 @@ export const protocolConfig = {
     labels: {
       navbarTitle: "GLUON GOLD",
       telegramHandle: "GluonGold",
-      goldPriceTitle: "1 kg of Gold",
-      goldPriceSubtitle: "Oracle Gold Price",
+      assetPriceTitle: "1 kg of Gold",
+      assetPriceSubtitle: "Oracle Gold Price",
       neutronSubtitle: "Gold Pegged Token",
       protonSubtitle: "Leveraged Yield Token",
       neutronSupplyLabel: "GAU Supply",
       protonSupplyLabel: "GAUC Supply",
-    },
-    mechanics: {
-      overviewTitle: "Gluon Mechanics",
-      overviewBody: [
-        "Get exposure to Gold with GAU.",
-        "GAU is the stablecoin pegged to 1g of Gold.",
-        "Get leveraged volatility and yield with GAUC.",
-        "GAUC tokenizes the reserve surplus.",
-        "Both GAU and GAUC are fully backed by ERG.",
-      ],
-      actions: {
-        fission: {
-          title: "Fission",
-          description: "Splits $ERG tokens into $GAU stable tokens and $GAUC volatile tokens.",
-        },
-        fusion: {
-          title: "Fusion",
-          description: "Merges $GAU stable tokens and $GAUC volatile tokens into $ERG tokens.",
-        },
-        transmuteToPeg: {
-          title: "Transmute To Gold",
-          description: "Transmutes $GAUC volatile tokens into $GAU stable tokens.",
-        },
-        transmuteFromPeg: {
-          title: "Transmute From Gold",
-          description: "Transmutes $GAU stable tokens into $GAUC volatile tokens.",
-        },
-      },
     },
   },
 } as const;

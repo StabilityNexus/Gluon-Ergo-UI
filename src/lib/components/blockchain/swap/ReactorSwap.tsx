@@ -109,8 +109,8 @@ export function ReactorSwap() {
   const [toToken, setToToken] = useState<Token>(tokens[3]);
   const [fromAmount, setFromAmount] = useState<string>("");
   const [toAmount, setToAmount] = useState<string>("");
-  const [gauAmount, setGauAmount] = useState<string>("0");
-  const [gaucAmount, setGaucAmount] = useState<string>("0");
+  const [neutronAmount, setNeutronAmount] = useState<string>("0");
+  const [protonAmount, setProtonAmount] = useState<string>("0");
   const [isLoading, setIsLoading] = useState(false);
   const [isCalculating, setIsCalculating] = useState(false);
   const [gluonInstance, setGluonInstance] = useState<any>(null);
@@ -123,7 +123,7 @@ export function ReactorSwap() {
   const [boxesReady, setBoxesReady] = useState(false);
   const [receiptDetails, setReceiptDetails] = useState<ReceiptDetails>({
     inputAmount: 0,
-    outputAmount: { gau: 0, gauc: 0, erg: 0 },
+    outputAmount: { neutron: 0, proton: 0, erg: 0 },
     fees: {
       devFee: 0,
       uiFee: 0,
@@ -147,60 +147,57 @@ export function ReactorSwap() {
     }
   }, [hasPendingTransactions]);
   // Helper function to capture current wallet state
+  // Note: WalletState still uses gau/gauc keys for backward compatibility with transaction-listener storage
   const captureWalletState = async (): Promise<WalletState> => {
     const balances = await getBalance();
     const ergBalance = balances.find((b: any) => b.tokenId === "ERG" || !b.tokenId)?.balance || "0";
-    const gauBalance = balances.find((b: any) => b.tokenId === TOKEN_ADDRESS.gau)?.balance || "0";
-    const gaucBalance = balances.find((b: any) => b.tokenId === TOKEN_ADDRESS.gauc)?.balance || "0";
+    const neutronBalance = balances.find((b: any) => b.tokenId === TOKEN_ADDRESS.gau)?.balance || "0";
+    const protonBalance = balances.find((b: any) => b.tokenId === TOKEN_ADDRESS.gauc)?.balance || "0";
 
     return {
       erg: ergBalance,
-      gau: gauBalance,
-      gauc: gaucBalance,
+      gau: neutronBalance, // Map neutron → gau for storage compatibility
+      gauc: protonBalance, // Map proton → gauc for storage compatibility
       timestamp: Date.now(),
     };
   };
 
   // Helper function to calculate expected changes based on transaction type
+  // Note: ExpectedChanges still uses gau/gauc keys for backward compatibility with transaction-listener storage
   const calculateExpectedChanges = (
     actionType: string,
     inputAmount: string,
-    outputAmounts: { gau?: string; gauc?: string; erg?: string },
+    outputAmounts: { neutron?: string; proton?: string; erg?: string },
     fees: number | BigNumber
   ): ExpectedChanges => {
     const feeAmount = typeof fees === "number" ? fees : fees.toNumber();
-    const changes: ExpectedChanges = {
-      erg: "0",
-      gau: "0",
-      gauc: "0",
-      fees: (-Math.abs(feeAmount * 1000000000)).toString(), // Convert to nanoERGs and make negative
-    };
+    const changes: ExpectedChanges = { erg: "0", gau: "0", gauc: "0", fees: (-Math.abs(feeAmount * 1000000000)).toString() };
 
     switch (actionType) {
       case "fission":
         // ERG → GAU + GAUC
-        changes.erg = (-parseFloat(inputAmount) * 1000000000).toString(); // Input ERG converted to nanoERGs and negative
-        changes.gau = convertToDecimals(outputAmounts.gau || "0").toString();
-        changes.gauc = convertToDecimals(outputAmounts.gauc || "0").toString();
+        changes.erg = (-parseFloat(inputAmount) * 1000000000).toString();
+        changes.gau = convertToDecimals(outputAmounts.neutron || "0").toString();
+        changes.gauc = convertToDecimals(outputAmounts.proton || "0").toString();
         break;
 
       case "fusion":
         // GAU + GAUC → ERG
-        changes.erg = (parseFloat(outputAmounts.erg || "0") * 1000000000).toString(); // Output ERG to nanoERGs
-        changes.gau = (-convertToDecimals(gauAmount)).toString(); // Used GAU tokens
-        changes.gauc = (-convertToDecimals(gaucAmount)).toString(); // Used GAUC tokens
+        changes.erg = (parseFloat(outputAmounts.erg || "0") * 1000000000).toString();
+        changes.gau = (-convertToDecimals(neutronAmount)).toString();
+        changes.gauc = (-convertToDecimals(protonAmount)).toString();
         break;
 
       case "transmute-to-gold":
         // GAUC → GAU
         changes.gauc = (-convertToDecimals(inputAmount)).toString();
-        changes.gau = convertToDecimals(outputAmounts.gau || "0").toString();
+        changes.gau = convertToDecimals(outputAmounts.neutron || "0").toString();
         break;
 
       case "transmute-from-gold":
         // GAU → GAUC
         changes.gau = (-convertToDecimals(inputAmount)).toString();
-        changes.gauc = convertToDecimals(outputAmounts.gauc || "0").toString();
+        changes.gauc = convertToDecimals(outputAmounts.proton || "0").toString();
         break;
     }
 
@@ -228,11 +225,11 @@ export function ReactorSwap() {
       console.log("⚠️ Invalid input value, resetting");
       setIsCalculating(false);
       setToAmount("");
-      setGauAmount("0");
-      setGaucAmount("0");
+      setNeutronAmount("0");
+      setProtonAmount("0");
       setReceiptDetails({
         inputAmount: 0,
-        outputAmount: { gau: 0, gauc: 0, erg: 0 },
+        outputAmount: { neutron: 0, proton: 0, erg: 0 },
         fees: { devFee: 0, uiFee: 0, oracleFee: 0, minerFee: 0, totalFee: 0 },
         maxErgOutput: maxErgOutput,
       });
@@ -259,27 +256,27 @@ export function ReactorSwap() {
           gluonInstance,
           gluonBox,
           value: calculationValue,
-          gauBalance: tokens.find((t) => t.symbol === "GAU")?.balance || "0",
-          gaucBalance: tokens.find((t) => t.symbol === "GAUC")?.balance || "0",
+          neutronBalance: tokens.find((t) => t.symbol === "GAU")?.balance || "0",
+          protonBalance: tokens.find((t) => t.symbol === "GAUC")?.balance || "0",
         });
 
         if ("error" in result) {
           console.error("❌ Fusion calculation error:", result.error);
           setToAmount("");
-          setGauAmount("0");
-          setGaucAmount("0");
+          setNeutronAmount("0");
+          setProtonAmount("0");
           return;
         }
 
         console.log("✅ Fusion calculation result:", {
-          gauAmount: result.gauAmount,
-          gaucAmount: result.gaucAmount,
+          neutronAmount: result.neutronAmount,
+          protonAmount: result.protonAmount,
           receiptDetails: result.receiptDetails,
         });
 
         // Update the amounts based on the ERG output target
-        setGauAmount(result.gauAmount);
-        setGaucAmount(result.gaucAmount);
+        setNeutronAmount(result.neutronAmount);
+        setProtonAmount(result.protonAmount);
         setReceiptDetails(result.receiptDetails);
       } else if (fromToken.symbol === "ERG" && toToken.symbol === "GAU-GAUC") {
         console.log("🔄 Calculating Fission amounts");
@@ -293,18 +290,18 @@ export function ReactorSwap() {
           console.error(result.error);
           setToAmount("");
           if (result.resetValues) {
-            if (result.resetValues.gauAmount) setGauAmount(result.resetValues.gauAmount);
-            if (result.resetValues.gaucAmount) setGaucAmount(result.resetValues.gaucAmount);
+            if (result.resetValues.neutronAmount) setNeutronAmount(result.resetValues.neutronAmount);
+            if (result.resetValues.protonAmount) setProtonAmount(result.resetValues.protonAmount);
           } else {
-            setGauAmount("0");
-            setGaucAmount("0");
+            setNeutronAmount("0");
+            setProtonAmount("0");
           }
           return;
         }
-        const minOutput = Math.min(parseFloat(result.gauAmount), parseFloat(result.gaucAmount));
+        const minOutput = Math.min(parseFloat(result.neutronAmount), parseFloat(result.protonAmount));
         setToAmount(isNaN(minOutput) ? "" : minOutput.toString());
-        setGauAmount(result.gauAmount);
-        setGaucAmount(result.gaucAmount);
+        setNeutronAmount(result.neutronAmount);
+        setProtonAmount(result.protonAmount);
         setReceiptDetails(result.receiptDetails);
       } else if ((fromToken.symbol === "GAUC" && toToken.symbol === "GAU") || (fromToken.symbol === "GAU" && toToken.symbol === "GAUC")) {
         // Only calculate if we're changing the input amount
@@ -354,11 +351,11 @@ export function ReactorSwap() {
     }
     if (floatValue === undefined || floatValue === 0) {
       setToAmount("");
-      setGauAmount("0");
-      setGaucAmount("0");
+      setNeutronAmount("0");
+      setProtonAmount("0");
       setReceiptDetails({
         inputAmount: 0,
-        outputAmount: { gau: 0, gauc: 0, erg: 0 },
+        outputAmount: { neutron: 0, proton: 0, erg: 0 },
         fees: { devFee: 0, uiFee: 0, oracleFee: 0, minerFee: 0, totalFee: 0 },
         maxErgOutput: maxErgOutput,
       });
@@ -456,12 +453,12 @@ export function ReactorSwap() {
             }
           });
 
-          const gauToken = updatedTokens.find((t) => t.symbol === "GAU");
-          const gaucToken = updatedTokens.find((t) => t.symbol === "GAUC");
-          if (gauToken && gaucToken) {
-            const gauBalanceNum = parseFloat(gauToken.balance);
-            const gaucBalanceNum = parseFloat(gaucToken.balance);
-            const pairBalanceVal = Math.min(Number.isNaN(gauBalanceNum) ? 0 : gauBalanceNum, Number.isNaN(gaucBalanceNum) ? 0 : gaucBalanceNum);
+          const neutronToken = updatedTokens.find((t) => t.symbol === "GAU");
+          const protonToken = updatedTokens.find((t) => t.symbol === "GAUC");
+          if (neutronToken && protonToken) {
+            const neutronBalanceNum = parseFloat(neutronToken.balance);
+            const protonBalanceNum = parseFloat(protonToken.balance);
+            const pairBalanceVal = Math.min(Number.isNaN(neutronBalanceNum) ? 0 : neutronBalanceNum, Number.isNaN(protonBalanceNum) ? 0 : protonBalanceNum);
             const pairBalance = formatTokenAmount(pairBalanceVal.toString());
             updatedTokens = updatedTokens.map((t) => (t.symbol === "GAU-GAUC" ? { ...t, balance: pairBalance } : t));
           }
@@ -533,8 +530,8 @@ export function ReactorSwap() {
       setToToken(zeroBalanceTokens[3]);
       setFromAmount("");
       setToAmount("");
-      setGauAmount("0");
-      setGaucAmount("0");
+      setNeutronAmount("0");
+      setProtonAmount("0");
     }
   }, [isConnected]);
 
@@ -551,7 +548,7 @@ export function ReactorSwap() {
     debouncedCalculateAmounts.cancel();
     setReceiptDetails({
       inputAmount: 0,
-      outputAmount: { gau: 0, gauc: 0, erg: 0 },
+      outputAmount: { neutron: 0, proton: 0, erg: 0 },
       fees: { devFee: 0, uiFee: 0, oracleFee: 0, minerFee: 0, totalFee: 0 },
       maxErgOutput,
     });
@@ -569,7 +566,7 @@ export function ReactorSwap() {
     debouncedCalculateAmounts.cancel();
     setReceiptDetails({
       inputAmount: 0,
-      outputAmount: { gau: 0, gauc: 0, erg: 0 },
+      outputAmount: { neutron: 0, proton: 0, erg: 0 },
       fees: { devFee: 0, uiFee: 0, oracleFee: 0, minerFee: 0, totalFee: 0 },
       maxErgOutput,
     });
@@ -587,11 +584,11 @@ export function ReactorSwap() {
       // Reset all values when switching directions
       setFromAmount("");
       setToAmount("");
-      setGauAmount("0");
-      setGaucAmount("0");
+      setNeutronAmount("0");
+      setProtonAmount("0");
       setReceiptDetails({
         inputAmount: 0,
-        outputAmount: { gau: 0, gauc: 0, erg: 0 },
+        outputAmount: { neutron: 0, proton: 0, erg: 0 },
         fees: { devFee: 0, uiFee: 0, oracleFee: 0, minerFee: 0, totalFee: 0 },
         maxErgOutput,
       });
@@ -679,11 +676,11 @@ export function ReactorSwap() {
       await calculateAmounts(maxAmount, isFromCard);
     } else {
       setToAmount("");
-      setGauAmount("0");
-      setGaucAmount("0");
+      setNeutronAmount("0");
+      setProtonAmount("0");
       setReceiptDetails({
         inputAmount: 0,
-        outputAmount: { gau: 0, gauc: 0, erg: 0 },
+        outputAmount: { neutron: 0, proton: 0, erg: 0 },
         fees: { devFee: 0, uiFee: 0, oracleFee: 0, minerFee: 0, totalFee: 0 },
         maxErgOutput: maxErgOutput,
       });
@@ -713,24 +710,24 @@ export function ReactorSwap() {
       // Determine action type for transaction listener
       let actionType = "";
       let inputAmount = "";
-      let outputAmounts = { gau: "", gauc: "", erg: "" };
+      let outputAmounts = { neutron: "", proton: "", erg: "" };
 
       if (fromToken.symbol === "ERG" && toToken.symbol === "GAU-GAUC") {
         actionType = "fission";
         inputAmount = fromAmount;
-        outputAmounts = { gau: gauAmount, gauc: gaucAmount, erg: "0" };
+        outputAmounts = { neutron: neutronAmount, proton: protonAmount, erg: "0" };
       } else if (fromToken.symbol === "GAU-GAUC" && toToken.symbol === "ERG") {
         actionType = "fusion";
         inputAmount = toAmount; // For fusion, we target ERG output
-        outputAmounts = { gau: "0", gauc: "0", erg: toAmount };
+        outputAmounts = { neutron: "0", proton: "0", erg: toAmount };
       } else if (fromToken.symbol === "GAUC" && toToken.symbol === "GAU") {
         actionType = "transmute-to-gold";
         inputAmount = fromAmount;
-        outputAmounts = { gau: toAmount, gauc: "0", erg: "0" };
+        outputAmounts = { neutron: toAmount, proton: "0", erg: "0" };
       } else if (fromToken.symbol === "GAU" && toToken.symbol === "GAUC") {
         actionType = "transmute-from-gold";
         inputAmount = fromAmount;
-        outputAmounts = { gau: "0", gauc: toAmount, erg: "0" };
+        outputAmounts = { neutron: "0", proton: toAmount, erg: "0" };
       }
 
       // Calculate expected changes for transaction listener
@@ -795,11 +792,11 @@ export function ReactorSwap() {
         // Reset form immediately (UI responsiveness)
         setFromAmount("");
         setToAmount("");
-        setGauAmount("0");
-        setGaucAmount("0");
+        setNeutronAmount("0");
+        setProtonAmount("0");
         setReceiptDetails({
           inputAmount: 0,
-          outputAmount: { gau: 0, gauc: 0, erg: 0 },
+          outputAmount: { neutron: 0, proton: 0, erg: 0 },
           fees: { devFee: 0, uiFee: 0, oracleFee: 0, minerFee: 0, totalFee: 0 },
           maxErgOutput: maxErgOutput,
         });
@@ -819,14 +816,14 @@ export function ReactorSwap() {
     const calculateMaxErgForFusion = async () => {
       if (!boxesReady || !gluonInstance || !gluonBox) return;
       try {
-        const gauBalanceStr = tokens.find((t) => t.symbol === "GAU")?.balance || "0";
-        const gaucBalanceStr = tokens.find((t) => t.symbol === "GAUC")?.balance || "0";
+        const neutronBalanceStr = tokens.find((t) => t.symbol === "GAU")?.balance || "0";
+        const protonBalanceStr = tokens.find((t) => t.symbol === "GAUC")?.balance || "0";
         const result = await calculateFusionAmounts({
           gluonInstance,
           gluonBox,
           value: "0",
-          gauBalance: gauBalanceStr,
-          gaucBalance: gaucBalanceStr,
+          neutronBalance: neutronBalanceStr,
+          protonBalance: protonBalanceStr,
         });
         if (!("error" in result) && result.maxErgOutput) {
           const valuePair = createValuePair(result.maxErgOutput);
@@ -1133,14 +1130,14 @@ export function ReactorSwap() {
               </div>
               <AnimatePresence mode="wait">
                 <motion.span
-                  key={`gau-${gauAmount}`}
+                  key={`neutron-${neutronAmount}`}
                   className="flex-1 text-xl font-bold text-white sm:text-2xl"
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.8 }}
                   transition={{ duration: 0.2 }}
                 >
-                  {formatTokenAmount(gauAmount)}
+                  {formatTokenAmount(neutronAmount)}
                 </motion.span>
               </AnimatePresence>
               <motion.div
@@ -1168,14 +1165,14 @@ export function ReactorSwap() {
               </div>
               <AnimatePresence mode="wait">
                 <motion.span
-                  key={`gauc-${gaucAmount}`}
+                  key={`proton-${protonAmount}`}
                   className="flex-1 text-xl font-bold text-white sm:text-2xl"
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.8 }}
                   transition={{ duration: 0.2 }}
                 >
-                  {formatTokenAmount(gaucAmount)}
+                  {formatTokenAmount(protonAmount)}
                 </motion.span>
               </AnimatePresence>
               <motion.div
@@ -1205,14 +1202,14 @@ export function ReactorSwap() {
 
     if (fromToken.symbol === "GAU-GAUC" && toToken.symbol === "ERG") {
       const ergOutput = toVal;
-      const gauRequired = parseFloat(gauAmount);
-      const gaucRequired = parseFloat(gaucAmount);
-      const gauBalance = parseFloat(tokens.find((t) => t.symbol === "GAU")?.balance || "0");
-      const gaucBalance = parseFloat(tokens.find((t) => t.symbol === "GAUC")?.balance || "0");
+      const neutronRequired = parseFloat(neutronAmount);
+      const protonRequired = parseFloat(protonAmount);
+      const neutronBalance = parseFloat(tokens.find((t) => t.symbol === "GAU")?.balance || "0");
+      const protonBalance = parseFloat(tokens.find((t) => t.symbol === "GAUC")?.balance || "0");
       if (isNaN(ergOutput) || ergOutput <= 0) return true;
-      if (isNaN(gauRequired) || gauRequired <= 0) return true;
-      if (isNaN(gaucRequired) || gaucRequired <= 0) return true;
-      if (gauRequired > gauBalance || gaucRequired > gaucBalance) return true;
+      if (isNaN(neutronRequired) || neutronRequired <= 0) return true;
+      if (isNaN(protonRequired) || protonRequired <= 0) return true;
+      if (neutronRequired > neutronBalance || protonRequired > protonBalance) return true;
 
       // Use precise comparison but allow for display value tolerance
       try {
@@ -1241,17 +1238,17 @@ export function ReactorSwap() {
       return false;
     }
     if (fromToken.symbol === "GAUC" && toToken.symbol === "GAU") {
-      const gaucInput = fromVal;
-      const gaucBalance = parseFloat(tokens.find((t) => t.symbol === "GAUC")?.balance || "0");
-      if (Number.isNaN(gaucInput) || gaucInput <= 0) return true;
-      if (gaucInput > gaucBalance) return true;
+      const protonInput = fromVal;
+      const protonBalance = parseFloat(tokens.find((t) => t.symbol === "GAUC")?.balance || "0");
+      if (Number.isNaN(protonInput) || protonInput <= 0) return true;
+      if (protonInput > protonBalance) return true;
       return false;
     }
     if (fromToken.symbol === "GAU" && toToken.symbol === "GAUC") {
-      const gauInput = fromVal;
-      const gauBalance = parseFloat(tokens.find((t) => t.symbol === "GAU")?.balance || "0");
-      if (Number.isNaN(gauInput) || gauInput <= 0) return true;
-      if (gauInput > gauBalance) return true;
+      const neutronInput = fromVal;
+      const neutronBalance = parseFloat(tokens.find((t) => t.symbol === "GAU")?.balance || "0");
+      if (Number.isNaN(neutronInput) || neutronInput <= 0) return true;
+      if (neutronInput > neutronBalance) return true;
       return false;
     }
     return true;
@@ -1471,7 +1468,7 @@ export function ReactorSwap() {
                   >
                     {fromToken.symbol !== "GAU-GAUC"
                       ? `${formatTokenAmount(formatValue(receiptDetails.inputAmount))} ${fromToken.symbol}`
-                      : `${formatTokenAmount(gauAmount)} GAU - ${formatTokenAmount(gaucAmount)} GAUC`}
+                      : `${formatTokenAmount(neutronAmount)} ${protocolConfig.tokens.neutron.ticker} - ${formatTokenAmount(protonAmount)} ${protocolConfig.tokens.proton.ticker}`}
                   </motion.span>
                 </AnimatePresence>
               </motion.div>
@@ -1578,40 +1575,40 @@ export function ReactorSwap() {
                   <AnimatePresence mode="wait">
                     {toToken.symbol === "GAU-GAUC" && (
                       <motion.div
-                        key={`output-pair-${receiptDetails.outputAmount.gau}-${receiptDetails.outputAmount.gauc}`}
+                        key={`output-pair-${receiptDetails.outputAmount.neutron}-${receiptDetails.outputAmount.proton}`}
                         initial={{ opacity: 0, scale: 0.8, y: 10 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.8, y: -10 }}
                         transition={{ duration: 0.2 }}
                       >
-                        <div>{formatTokenAmount(formatValue(receiptDetails.outputAmount.gau))} GAU</div>
-                        <div>{formatTokenAmount(formatValue(receiptDetails.outputAmount.gauc))} GAUC</div>
+                        <div>{formatTokenAmount(formatValue(receiptDetails.outputAmount.neutron))} GAU</div>
+                        <div>{formatTokenAmount(formatValue(receiptDetails.outputAmount.proton))} GAUC</div>
                       </motion.div>
                     )}
                   </AnimatePresence>
                   <AnimatePresence mode="wait">
                     {toToken.symbol === "GAU" && currentAction === "gauc-to-gau" && (
                       <motion.span
-                        key={`output-gau-${receiptDetails.outputAmount.gau}`}
+                        key={`output-gau-${receiptDetails.outputAmount.neutron}`}
                         initial={{ opacity: 0, scale: 0.8, y: 10 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.8, y: -10 }}
                         transition={{ duration: 0.2 }}
                       >
-                        {formatTokenAmount(formatValue(receiptDetails.outputAmount.gau))} GAU
+                        {formatTokenAmount(formatValue(receiptDetails.outputAmount.neutron))} GAU
                       </motion.span>
                     )}
                   </AnimatePresence>
                   <AnimatePresence mode="wait">
                     {toToken.symbol === "GAUC" && currentAction === "gau-to-gauc" && (
                       <motion.span
-                        key={`output-gauc-${receiptDetails.outputAmount.gauc}`}
+                        key={`output-gauc-${receiptDetails.outputAmount.proton}`}
                         initial={{ opacity: 0, scale: 0.8, y: 10 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.8, y: -10 }}
                         transition={{ duration: 0.2 }}
                       >
-                        {formatTokenAmount(formatValue(receiptDetails.outputAmount.gauc))} GAUC
+                        {formatTokenAmount(formatValue(receiptDetails.outputAmount.proton))} GAUC
                       </motion.span>
                     )}
                   </AnimatePresence>

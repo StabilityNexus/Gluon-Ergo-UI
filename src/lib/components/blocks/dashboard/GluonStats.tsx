@@ -152,10 +152,7 @@ export function GluonStats() {
             "7Day": { fissions: volume7DayPN, fusions: volume7DayNP },
             "14Day": { fissions: volume14DayPN, fusions: volume14DayNP },
           },
-          circulatingSupply: {
-            gau: Number(circNeutrons),
-            gauc: Number(circProtons),
-          },
+          circulatingSupply: { gau: Number(circNeutrons), gauc: Number(circProtons) },
           volumeArrays: volumeArrays,
           prices: {
             gold: goldPriceBN.toNumber(),
@@ -307,8 +304,8 @@ export function GluonStats() {
         {/* Token Grid - Responsive */}
         <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
           {renderStatCard(
-            protocolConfig.ui.labels.goldPriceTitle,
-            protocolConfig.ui.labels.goldPriceSubtitle,
+            protocolConfig.ui.labels.assetPriceTitle,
+            protocolConfig.ui.labels.assetPriceSubtitle,
             stats.goldPrice,
             <Scale className="h-8 w-8 text-yellow-700" />,
             "ERG",

@@ -178,7 +178,7 @@ export const Features = () => (
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.4, duration: 0.5 }}
                 >
-                  {protocolConfig.ui.mechanics.overviewTitle}
+                  Gluon Mechanics
                 </motion.h2>
                 <motion.p
                   className="z-20 max-w-lg text-left text-lg leading-relaxed tracking-tight text-muted-foreground"
@@ -186,13 +186,17 @@ export const Features = () => (
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.5, duration: 0.5 }}
                 >
-                  {protocolConfig.ui.mechanics.overviewBody.map((line, idx) => (
-                    <span key={idx}>
-                      {line}
-                      <br />
-                      {idx === 1 || idx === 3 ? <br /> : null}
-                    </span>
-                  ))}
+                  Get exposure to {protocolConfig.peg.asset} with {protocolConfig.tokens.neutron.ticker}.
+                  <br />
+                  {protocolConfig.tokens.neutron.ticker} is the stable token pegged to {protocolConfig.peg.asset}.
+                  <br />
+                  <br />
+                  Get leveraged volatility and yield with {protocolConfig.tokens.proton.ticker}.
+                  <br />
+                  {protocolConfig.tokens.proton.ticker} tokenizes the reserve surplus.
+                  <br />
+                  <br />
+                  Both {protocolConfig.tokens.neutron.ticker} and {protocolConfig.tokens.proton.ticker} are fully backed by ERG.
                 </motion.p>
               </div>
             </div>
@@ -200,23 +204,23 @@ export const Features = () => (
               {[
                 {
                   icon: Maximize2,
-                  title: protocolConfig.ui.mechanics.actions.fission.title,
-                  description: protocolConfig.ui.mechanics.actions.fission.description,
+                  title: "Fission",
+                  description: "Split ERG into the stable and leveraged tokens of the Gluon protocol.",
                 },
                 {
                   icon: Minimize2,
-                  title: protocolConfig.ui.mechanics.actions.fusion.title,
-                  description: protocolConfig.ui.mechanics.actions.fusion.description,
+                  title: "Fusion",
+                  description: "Merge the stable and leveraged tokens back into ERG.",
                 },
                 {
                   icon: Repeat,
-                  title: protocolConfig.ui.mechanics.actions.transmuteToPeg.title,
-                  description: protocolConfig.ui.mechanics.actions.transmuteToPeg.description,
+                  title: "Transmute to Stable",
+                  description: "Convert the leveraged token into the stable token.",
                 },
                 {
                   icon: Repeat,
-                  title: protocolConfig.ui.mechanics.actions.transmuteFromPeg.title,
-                  description: protocolConfig.ui.mechanics.actions.transmuteFromPeg.description,
+                  title: "Transmute to Leveraged",
+                  description: "Convert the stable token into the leveraged token.",
                 },
               ].map((item, index) => (
                 <motion.div
@@ -242,13 +246,13 @@ export const Features = () => (
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.4, duration: 0.5 }}
           >
-            <TokenFlow title={protocolConfig.ui.mechanics.actions.fission.title} fromTokens={["ERG"]} toTokens={["GAU", "GAUC"]} />
+            <TokenFlow title="Fission" fromTokens={["ERG"]} toTokens={["GAU", "GAUC"]} />
 
-            <TokenFlow title={protocolConfig.ui.mechanics.actions.fusion.title} fromTokens={["GAU", "GAUC"]} toTokens={["ERG"]} reverse={false} />
+            <TokenFlow title="Fusion" fromTokens={["GAU", "GAUC"]} toTokens={["ERG"]} reverse={false} />
 
-            <TokenFlow title={protocolConfig.ui.mechanics.actions.transmuteToPeg.title} fromTokens={["GAUC"]} toTokens={["GAU"]} />
+            <TokenFlow title="Transmute to Stable" fromTokens={["GAUC"]} toTokens={["GAU"]} />
 
-            <TokenFlow title={protocolConfig.ui.mechanics.actions.transmuteFromPeg.title} fromTokens={["GAU"]} toTokens={["GAUC"]} reverse={false} />
+            <TokenFlow title="Transmute to Leveraged" fromTokens={["GAU"]} toTokens={["GAUC"]} reverse={false} />
           </motion.div>
         </CardSpotlight>
       </motion.div>
