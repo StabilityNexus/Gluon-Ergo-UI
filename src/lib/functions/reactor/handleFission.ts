@@ -25,7 +25,7 @@ export const calculateFissionAmounts = async ({ gluonInstance, gluonBox, value }
       type: typeof ergToFission,
     });
 
-    // Get prediction of GAU/GAUC amounts
+    // Get prediction of stable/leveraged token amounts
     const willGet = await gluonInstance.fissionWillGet(gluonBox, Number(ergToFission));
     console.log("🔍 FISSION PREDICTION RAW:", willGet);
 
@@ -33,12 +33,12 @@ export const calculateFissionAmounts = async ({ gluonInstance, gluonBox, value }
       throw new Error("Failed to get fission prediction from SDK");
     }
 
-    // Format the values using our utility - NOTE: protons are GAUC, neutrons are GAU
-    const formattedGau = formatMicroNumber(convertFromDecimals(willGet.neutrons));
-    const formattedGauc = formatMicroNumber(convertFromDecimals(willGet.protons));
+    // Format the values using our utility - NOTE: neutrons are the stable token (GAU), protons are the leveraged token (GAUC)
+    const formattedNeutron = formatMicroNumber(convertFromDecimals(willGet.neutrons));
+    const formattedProton = formatMicroNumber(convertFromDecimals(willGet.protons));
     console.log("🔍 FISSION FORMATTED:", {
-      gau: formattedGau,
-      gauc: formattedGauc,
+      neutron: formattedNeutron,
+      proton: formattedProton,
       rawNeutrons: willGet.neutrons.toString(),
       rawProtons: willGet.protons.toString(),
     });
@@ -50,8 +50,8 @@ export const calculateFissionAmounts = async ({ gluonInstance, gluonBox, value }
     const receiptDetails: ReceiptDetails = {
       inputAmount: numValue,
       outputAmount: {
-        gau: convertFromDecimals(willGet.neutrons), // neutrons are GAU
-        gauc: convertFromDecimals(willGet.protons), // protons are GAUC
+        neutron: convertFromDecimals(willGet.neutrons),
+        proton: convertFromDecimals(willGet.protons),
         erg: 0,
       },
       fees: {
@@ -64,8 +64,8 @@ export const calculateFissionAmounts = async ({ gluonInstance, gluonBox, value }
     };
 
     return {
-      gauAmount: formattedGau.display,
-      gaucAmount: formattedGauc.display,
+      neutronAmount: formattedNeutron.display,
+      protonAmount: formattedProton.display,
       toAmount: "0", // Not used in fission
       receiptDetails,
       maxErgOutput: "0", // Not applicable for fission
@@ -79,8 +79,8 @@ export const calculateFissionAmounts = async ({ gluonInstance, gluonBox, value }
     return {
       error: errorDetails.userMessage,
       resetValues: {
-        gauAmount: "0",
-        gaucAmount: "0",
+        neutronAmount: "0",
+        protonAmount: "0",
       },
     };
   }

@@ -12,6 +12,7 @@ import BigNumber from "bignumber.js";
 import ErgIcon from "@/lib/components/icons/ErgIcon";
 import GauIcon from "@/lib/components/icons/GauIcon";
 import GaucIcon from "@/lib/components/icons/GaucIcon";
+import { protocolConfig } from "@/lib/config/protocol";
 
 interface WalletStats {
   ergBalance: string;
@@ -197,16 +198,16 @@ export function MyStats() {
         case "GAU":
           return {
             icon: <GauIcon className="h-7 w-7" />,
-            name: "GAU",
-            symbol: "GAU",
-            fullName: "Gold Pegged",
+            name: protocolConfig.tokens.neutron.ticker,
+            symbol: protocolConfig.tokens.neutron.ticker,
+            fullName: protocolConfig.ui.labels.neutronSubtitle,
           };
         case "GAUC":
           return {
             icon: <GaucIcon className="h-7 w-7" />,
-            name: "GAUC",
-            symbol: "GAUC",
-            fullName: "Collateral",
+            name: protocolConfig.tokens.proton.ticker,
+            symbol: protocolConfig.tokens.proton.ticker,
+            fullName: protocolConfig.ui.labels.protonSubtitle,
           };
       }
     };

@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils/utils";
 import { useMediaQuery } from "usehooks-ts";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
+import { protocolConfig } from "@/lib/config/protocol";
 
 const socialLinks = [
   {
@@ -20,7 +21,7 @@ const socialLinks = [
     iconDark: "/logo/Discord-White.svg",
   },
   {
-    href: "https://t.me/GluonGold",
+    href: `https://t.me/${protocolConfig.ui.labels.telegramHandle}`,
     label: "Telegram",
     iconLight: "/logo/Telegram-Black.svg",
     iconDark: "/logo/Telegram-White.svg",
