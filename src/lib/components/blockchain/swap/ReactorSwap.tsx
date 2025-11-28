@@ -1080,7 +1080,7 @@ export function ReactorSwap() {
                   }}
                   className={cn(
                     "w-full min-w-[80px] border-0 bg-transparent text-left text-2xl font-bold focus:outline-none focus-visible:ring-0 sm:text-right sm:text-3xl",
-                    isFromCard ? "text-black dark:text-white placeholder:text-black dark:placeholder:text-white" : "text-muted-foreground",
+                    isFromCard || (fromToken.symbol === "GAU-GAUC" && toToken.symbol === "ERG") ? "text-black dark:text-white placeholder:text-black dark:placeholder:text-white" : "text-muted-foreground",
                     isFieldDisabled && "cursor-not-allowed opacity-50"
                   )}
                   disabled={isFieldDisabled}
