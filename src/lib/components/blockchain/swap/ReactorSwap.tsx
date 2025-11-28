@@ -135,12 +135,30 @@ export function ReactorSwap() {
   const [maxErgOutput, setMaxErgOutput] = useState<string>("0");
   const [maxErgOutputPrecise, setMaxErgOutputPrecise] = useState<string>("0"); // Precise value for calculations
   //const [isUpdatingProgrammatically, setIsUpdatingProgrammatically] = useState(false)
-  const updateBalancesRef = useRef(() => { });
+  const updateBalancesRef = useRef(() => {});
 
   // Transaction listener state
   const [transactionListener] = useState(() => createTransactionListener(nodeService));
   const [hasPendingTransactions, setHasPendingTransactions] = useState(false);
   // CLEAR TX HASH WHEN PENDING TRANSACTION IS FINISHED
+  //  UI refresh hook for TransactionListener
+  useEffect(() => {
+    (window as any).refreshWalletUI = () => {
+      console.log("🔄 Refreshing balances + UI after wallet updated...");
+
+      // Refresh balances immediately
+      updateBalancesRef.current();
+
+      // Remove pending transaction UI state instantly
+      setHasPendingTransactions(false);
+    };
+
+    return () => {
+      // Cleanup global handler on unmount
+      delete (window as any).refreshWalletUI;
+    };
+  }, []);
+
   useEffect(() => {
     if (!hasPendingTransactions) {
       setLastSubmittedTx(null);
