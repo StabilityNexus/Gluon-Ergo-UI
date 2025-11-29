@@ -151,7 +151,10 @@ export class GluonBox {
     const fissionedErg = this.getErgFissioned();
     const neutronsInCirculation = await this.getNeutronsCirculatingSupply();
     const q = (neutronsInCirculation * BigInt(pricePerGram)) / BigInt(fissionedErg);
-    const qAdjusted = q / (q + BigInt(1) - this.qstar); // TODO: consider precision
+    const qAdjusted = q * BigInt(1e9) / (q + BigInt(1e9) - this.qstar);
+    console.log("Fusion Ratio:");
+    console.log("  q =     " + q);
+    console.log("  qAdj =  " + qAdjusted);
     return q < qAdjusted ? q : qAdjusted;
   }
 
