@@ -111,7 +111,7 @@ export function GluonStats() {
         const gauPriceBN = tvlBN.minus(convertFromDecimals(circProtons).multipliedBy(gaucPriceBN)).dividedBy(convertFromDecimals(circNeutrons));
         const fusionRatioBN = BigNumber(Math.round(10000 / normalizedReserveRatio));
         const reserveRatioBN = BigNumber(+BigNumber(tvl) * 1e14 / (+BigNumber(circNeutrons) * goldPrice));
-        const priceCrashCushionBN = BigNumber(Math.max(0, 100 * (+reserveRatioBN - 100/0.66)/ +reserveRatioBN));
+        const priceCrashCushionBN = BigNumber(Math.max(0, 100 * (+reserveRatioBN - 100/0.99)/ +reserveRatioBN));
         const gaucLeverageBN = BigNumber(Math.round(- (100 / (100 - normalizedReserveRatio)) * 100)/100); 
 
         setStats({
