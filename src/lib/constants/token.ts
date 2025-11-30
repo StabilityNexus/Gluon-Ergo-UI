@@ -1,5 +1,5 @@
 export const TOKEN_ADDRESS = {
-  decimals: 9,
-  gau: "886b7721bef42f60c6317d37d8752da8aca01898cae7dae61808c4a14225edc8",
-  gauc: "9944ff273ff169f32b851b96bbecdbb67f223101c15ae143de82b3e7f75b19d2",
+  decimals: 3,
+  gau: "53d579987c33b9f6d8ca3d694c55948037a82882ceb7627b1b2b291932a4e5ab",
+  gauc: "1bc496f013ff3acf4d4d621554bf9ffc8b0c547c553e204f68040a54ed6d4d28",
 };
