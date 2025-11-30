@@ -24,7 +24,7 @@ export const defaultTokens: Token[] = [
     color: "bg-yellow-500",
     balance: "0",
     tokenId: TOKEN_ADDRESS.gau,
-    decimals: 9, // Full blockchain precision
+    decimals: 3,
   },
   {
     symbol: "GAUC",
@@ -32,7 +32,7 @@ export const defaultTokens: Token[] = [
     color: "bg-red-500",
     balance: "0",
     tokenId: TOKEN_ADDRESS.gauc,
-    decimals: 9, // Full blockchain precision
+    decimals: 3,
   },
   {
     symbol: "GAU-GAUC",
@@ -40,7 +40,7 @@ export const defaultTokens: Token[] = [
     color: "bg-purple-500",
     balance: "0",
     tokenId: "GAU-GAUC_PAIR_TOKEN_ID_PLACEHOLDER",
-    decimals: 9, // Full blockchain precision
+    decimals: 3,
   },
 ];
 
