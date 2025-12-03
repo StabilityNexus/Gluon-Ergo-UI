@@ -199,12 +199,19 @@ export class TransactionListener {
           },
         });
 
-        // Update transaction state
         transactionState.isWalletUpdated = true;
         pendingTransactions[txHash] = transactionState;
         localStorage.setItem(LISTENER_CONFIG.LOCALSTORAGE_KEY, JSON.stringify(pendingTransactions));
 
-        // Show success notification
+        // Stop polling and cleanup
+        this.stopListening();
+        this.cleanUpTransaction(txHash);
+
+        // Update UI immediately if available
+        if (typeof (window as any).refreshWalletUI === "function") {
+          (window as any).refreshWalletUI();
+        }
+
         toast.success(`${transactionState.actionType.charAt(0).toUpperCase() + transactionState.actionType.slice(1)} completed!`, {
           description: "Your wallet balances have been updated.",
           duration: 8000,
