@@ -152,7 +152,7 @@ The project follows a modular approach. Components or functions that will be use
 
 ### Directory Overview
 
-```
+```text
 
 ├── public/                 # Static assets (images, logos, fonts)
 ├── src/
