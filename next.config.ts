@@ -2,9 +2,7 @@ import { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
+  turbopack: {},
   webpack: function (config: any, options: any) {
     config.experiments = {
       asyncWebAssembly: true,
