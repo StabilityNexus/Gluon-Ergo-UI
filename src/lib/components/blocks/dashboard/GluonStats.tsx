@@ -10,8 +10,9 @@ import { cn } from "@/lib/utils/utils";
 import { useRouter } from "next/navigation";
 import BigNumber from "bignumber.js";
 import { motion, AnimatePresence } from "framer-motion";
-import GauIcon from "@/lib/components/icons/GauIcon";
-import GaucIcon from "@/lib/components/icons/GaucIcon";
+import NeutronIcon from "@/lib/components/icons/NeutronIcon";
+import ProtonIcon from "@/lib/components/icons/ProtonIcon";
+import { tokenConfig } from "@/config/tokenConfig";
 
 interface GluonStats {
   ergPrice: number | null;
@@ -305,11 +306,11 @@ export function GluonStats() {
 
         {/* Token Grid - Responsive */}
         <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
-          {renderStatCard("Gram of Gold", "Gold (from Oracle)", stats.goldPrice, <Scale className="h-8 w-8 text-yellow-700" />, "ERG", 0.1)}
+          {renderStatCard(tokenConfig.peg.unit, `${tokenConfig.peg.type} (from Oracle)`, stats.goldPrice, <Scale className="h-8 w-8 text-yellow-700" />, "ERG", 0.1)}
 
-          {renderStatCard("GAU", "Gold Pegged Token", stats.gauPrice, <GauIcon className="h-8 w-8" />, "ERG", 0.2)}
+          {renderStatCard(tokenConfig.stableAsset.displayName, `${tokenConfig.peg.type} Pegged Token`, stats.gauPrice, <NeutronIcon className="h-8 w-8" />, "ERG", 0.2)}
 
-          {renderStatCard("GAUC", "Leveraged Yield Token", stats.gaucPrice, <GaucIcon className="h-8 w-8" />, "ERG", 0.3)}
+          {renderStatCard(tokenConfig.volatileAsset.displayName, "Leveraged Yield Token", stats.gaucPrice, <ProtonIcon className="h-8 w-8" />, "ERG", 0.3)}
         </div>
 
         {/* Stats */}
@@ -324,25 +325,25 @@ export function GluonStats() {
                 <div className="text-2xl font-bold text-foreground">
                   {isLoading ? <Skeleton className="mx-auto h-8 w-16" /> : hasError ? "—" : stats.fusionRatio ? +stats.fusionRatio : "—"}%
                 </div>
-                <div className="text-sm text-muted-foreground">{renderTooltip("GAU Reserve Allocation", "Percentage of the reserve that is currently backing GAUs. The price of GAU is this reserve portion divided by the GAU supply.")}</div>
+                <div className="text-sm text-muted-foreground">{renderTooltip(`${tokenConfig.stableAsset.displayName} Reserve Allocation`, `Percentage of the reserve that is currently backing ${tokenConfig.stableAsset.displayName}s. The price of ${tokenConfig.stableAsset.displayName} is this reserve portion divided by the ${tokenConfig.stableAsset.displayName} supply.`)}</div>
               </div>
               <div className="space-y-2">
                 <div className="text-2xl font-bold text-foreground">
                   {isLoading ? <Skeleton className="mx-auto h-8 w-16" /> : hasError ? "—" : stats.fusionRatio ? 100 - +stats.fusionRatio : "—"}%
                 </div>
-                <div className="text-sm text-muted-foreground">{renderTooltip("GAUC Reserve Allocation", "Percentage of the reserve that is currently backing GAUCs. The price of GAUC is this reserve portion divided by the GAUC supply.")}</div>
+                <div className="text-sm text-muted-foreground">{renderTooltip(`${tokenConfig.volatileAsset.displayName} Reserve Allocation`, `Percentage of the reserve that is currently backing ${tokenConfig.volatileAsset.displayName}s. The price of ${tokenConfig.volatileAsset.displayName} is this reserve portion divided by the ${tokenConfig.volatileAsset.displayName} supply.`)}</div>
               </div>
               <div className="space-y-2">
                 <div className="text-2xl font-bold text-foreground">
                   {isLoading ? <Skeleton className="mx-auto h-8 w-16" /> : hasError ? "—" : stats.normalizedReserveRatio ? Math.round(stats.normalizedReserveRatio) : "—"}%
                 </div>
-                <div className="text-sm text-muted-foreground">{renderTooltip("Normalized Reserve Ratio", "The Inverse of the GAU Reserve Allocation.")}</div>
+                <div className="text-sm text-muted-foreground">{renderTooltip("Normalized Reserve Ratio", `The Inverse of the ${tokenConfig.stableAsset.displayName} Reserve Allocation.`)}</div>
               </div>
               <div className="space-y-2">
                 <div className="text-2xl font-bold text-foreground">
                   {isLoading ? <Skeleton className="mx-auto h-8 w-16" /> : hasError ? "—" : stats.reserveRatio ? Math.round(+stats.reserveRatio) : "—" }%
                 </div>
-                <div className="text-sm text-muted-foreground">{renderTooltip("Reserve Ratio", "Total Reserve divided by the GAU Supply times the Gold Oracle Price.")}</div>
+                <div className="text-sm text-muted-foreground">{renderTooltip("Reserve Ratio", `Total Reserve divided by the ${tokenConfig.stableAsset.displayName} Supply times the ${tokenConfig.peg.type} Oracle Price.`)}</div>
               </div>
             </div>
           </Card>
@@ -360,25 +361,25 @@ export function GluonStats() {
                 <div className="text-2xl font-bold text-foreground">
                   {isLoading ? <Skeleton className="mx-auto h-8 w-16" /> : hasError ? "—" : nanoErgsToErgs(protocolMetrics.volume14Day.neutronsToProtons).toFixed(2)}
                 </div>
-                <div className="text-sm text-muted-foreground">14d GAU to GAUC Volume (ERG)</div>
+                <div className="text-sm text-muted-foreground">14d {tokenConfig.stableAsset.displayName} to {tokenConfig.volatileAsset.displayName} Volume (ERG)</div>
               </div>
               <div className="space-y-2">
                 <div className="text-2xl font-bold text-foreground">
                   {isLoading ? <Skeleton className="mx-auto h-8 w-16" /> : hasError ? "—" : nanoErgsToErgs(protocolMetrics.volume14Day.protonsToNeutrons).toFixed(2)}
                 </div>
-                <div className="text-sm text-muted-foreground">14d GAUC to GAU Volume (ERG)</div>
+                <div className="text-sm text-muted-foreground">14d {tokenConfig.volatileAsset.displayName} to {tokenConfig.stableAsset.displayName} Volume (ERG)</div>
               </div>
               <div className="space-y-2">
                 <div className="text-2xl font-bold text-foreground">
                   {isLoading ? <Skeleton className="mx-auto h-8 w-16" /> : hasError ? "—" : convertFromDecimals(protocolMetrics.circulatingSupply.neutrons).toFixed(2)}
                 </div>
-                <div className="text-sm text-muted-foreground">GAU Supply</div>
+                <div className="text-sm text-muted-foreground">{tokenConfig.stableAsset.displayName} Supply</div>
               </div>
               <div className="space-y-2">
                 <div className="text-2xl font-bold text-foreground">
                   {isLoading ? <Skeleton className="mx-auto h-8 w-16" /> : hasError ? "—" : convertFromDecimals(protocolMetrics.circulatingSupply.protons).toFixed(2)}
                 </div>
-                <div className="text-sm text-muted-foreground">GAUC Supply</div>
+                <div className="text-sm text-muted-foreground">{tokenConfig.volatileAsset.displayName} Supply</div>
               </div>
             </div>
           </Card>
@@ -435,7 +436,7 @@ export function GluonStats() {
                     className="text-center"
                   >
                     <div className="mb-1 text-4xl font-bold text-foreground">{hasError ? "—" : stats.priceCrashCushion ? Math.round(+stats.priceCrashCushion) : "—" }%</div>
-                    <div className="text-sm font-medium text-muted-foreground">{renderTooltip("Price Crash Cushion", "Maximum drop in the price of ERG w.r.t. Gold that can be tolerated for GAU to remain pegged to Gold. When 0%, GAU depegs to prevent bank runs and maintain non-zero GAUC price.")}</div>
+                    <div className="text-sm font-medium text-muted-foreground">{renderTooltip("Price Crash Cushion", `Maximum drop in the price of ERG w.r.t. ${tokenConfig.peg.type} that can be tolerated for ${tokenConfig.stableAsset.displayName} to remain pegged to ${tokenConfig.peg.type}. When 0%, ${tokenConfig.stableAsset.displayName} depegs to prevent bank runs and maintain non-zero ${tokenConfig.volatileAsset.displayName} price.`)}</div>
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -469,7 +470,7 @@ export function GluonStats() {
                       {hasError ? '—' : stats.gaucLeverage ? +stats.gaucLeverage : '—'}x <br />
                     </div>
                     <div className="font-medium text-sm text-muted-foreground">
-                      {renderTooltip("GAUC Leverage", "Factor by which GAUC's price will increase/decrease in comparison to increases/decreases in the ERG price w.r.t. Gold. This does not apply when GAU is depegged.")}
+                      {renderTooltip(`${tokenConfig.volatileAsset.displayName} Leverage`, `Factor by which ${tokenConfig.volatileAsset.displayName}'s price will increase/decrease in comparison to increases/decreases in the ERG price w.r.t. ${tokenConfig.peg.type}. This does not apply when ${tokenConfig.stableAsset.displayName} is depegged.`)}
                     </div>
                   </motion.div>
                 )}

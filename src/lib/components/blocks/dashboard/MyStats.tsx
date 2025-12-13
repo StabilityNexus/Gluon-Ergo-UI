@@ -10,8 +10,12 @@ import { nanoErgsToErgs, convertFromDecimals, formatMicroNumber } from "@/lib/ut
 import { TOKEN_ADDRESS } from "@/lib/constants/token";
 import BigNumber from "bignumber.js";
 import ErgIcon from "@/lib/components/icons/ErgIcon";
-import GauIcon from "@/lib/components/icons/GauIcon";
-import GaucIcon from "@/lib/components/icons/GaucIcon";
+import NeutronIcon from "@/lib/components/icons/NeutronIcon";
+import ProtonIcon from "@/lib/components/icons/ProtonIcon";
+import { tokenConfig } from "@/config/tokenConfig";
+// Legacy imports for backward compatibility
+import GauIcon from "@/lib/components/icons/NeutronIcon";
+import GaucIcon from "@/lib/components/icons/ProtonIcon";
 
 interface WalletStats {
   ergBalance: string;
@@ -67,7 +71,7 @@ export function MyStats() {
 
         const { price: ergPrice } = await ergPriceRes.json();
 
-        // Get protocol prices for GAU/GAUC
+        // Get protocol prices for stable/volatile assets
         const gluon = new sdk.Gluon();
         gluon.config.NETWORK = process.env.NEXT_PUBLIC_DEPLOYMENT || "testnet";
         const gluonBox = await gluon.getGluonBox();
@@ -82,8 +86,8 @@ export function MyStats() {
 
         // Process wallet balances
         const ergBalanceData = balances.find((b: any) => b.tokenId === "ERG" || !b.tokenId);
-        const gauBalanceData = balances.find((b: any) => b.tokenId === TOKEN_ADDRESS.gau);
-        const gaucBalanceData = balances.find((b: any) => b.tokenId === TOKEN_ADDRESS.gauc);
+        const gauBalanceData = balances.find((b: any) => b.tokenId === TOKEN_ADDRESS.stableAsset || b.tokenId === TOKEN_ADDRESS.gau);
+        const gaucBalanceData = balances.find((b: any) => b.tokenId === TOKEN_ADDRESS.volatileAsset || b.tokenId === TOKEN_ADDRESS.gauc);
 
         // Convert balances to readable format
         const ergRawBalance = ergBalanceData?.balance ? BigInt(ergBalanceData.balance) : BigInt(0);
@@ -196,17 +200,17 @@ export function MyStats() {
           };
         case "GAU":
           return {
-            icon: <GauIcon className="h-7 w-7" />,
-            name: "GAU",
-            symbol: "GAU",
-            fullName: "Gold Pegged",
+            icon: <NeutronIcon className="h-7 w-7" />,
+            name: tokenConfig.stableAsset.symbol,
+            symbol: tokenConfig.stableAsset.symbol,
+            fullName: tokenConfig.stableAsset.displayName,
           };
         case "GAUC":
           return {
-            icon: <GaucIcon className="h-7 w-7" />,
-            name: "GAUC",
-            symbol: "GAUC",
-            fullName: "Collateral",
+            icon: <ProtonIcon className="h-7 w-7" />,
+            name: tokenConfig.volatileAsset.symbol,
+            symbol: tokenConfig.volatileAsset.symbol,
+            fullName: tokenConfig.volatileAsset.displayName,
           };
       }
     };
