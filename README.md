@@ -58,11 +58,9 @@ This repository contains the source-code of the UI for the Gluon Gold implementa
 
 This UI was built with Next.js, Tailwind CSS, Shadcn UI, Zustand, Framer Motion, and bun as package manager.
 
-## 🚀 Getting Started
+## Getting Started
 
 Install bun, if you don't have it already, you can find it [here](https://bun.sh/docs/installation).
-
-If you don't want to use bun, you can always use NPM or PNPM.
 
 1. Install dependencies:
 
@@ -93,9 +91,9 @@ npx shadcn@latest add <component-name>
 While working with shadcn, all components are installed to src/lib/components/ui
 You will have access to the core component file, which means you can edit the whole component as you please.
 
-> ⚠️ **Note:** Avoid reinstalling existing components when prompted, as this will reset any custom styling in the component files.
+> **Note:** Avoid reinstalling existing components when prompted, as this will reset any custom styling in the component files.
 
-## 📁 Folder Structure
+## Folder Structure
 
 The project follows a modular approach. Components or functions that will be used multiple times should be designed to accept various props or be moved to separate files.
 
@@ -149,7 +147,7 @@ const gluonBox = await gluon.getGluonBox();
 const oracleBox = await gluon.getGoldOracleBox();
 ```
 
-## 🎨 Design System
+## Design System
 
 ### Dashboard Architecture
 
@@ -175,7 +173,7 @@ const oracleBox = await gluon.getGoldOracleBox();
 | Multiple Functions / Utils | kebab-case | `error-handler.ts`, `node-service.ts`              |
 | Constants                  | UPPERCASE  | `LIKE_THIS.ts`                                     |
 
-## 💡 Deploying on Vercel
+## Deploying on Vercel
 
 1. Configure Vercel to deploy from the `mainnet` branch.
 2. Get a coingecko API key from https://www.coingecko.com/en/developers/dashboard .
@@ -186,7 +184,7 @@ const oracleBox = await gluon.getGoldOracleBox();
 
 <img width="923" height="857" alt="Screenshot 2025-09-19 at 09 37 24" src="https://github.com/user-attachments/assets/3c38e2c7-9bfd-474d-b162-6f1f6b3b3173" />
 
-## 🔄 Pull Request Workflow
+## Pull Request Workflow
 
 ### Branch Structure
 
@@ -216,7 +214,7 @@ if (process.env.NEXT_PUBLIC_DEPLOYMENT === "testnet") {
 }
 ```
 
-## 💡 Best Practices
+## Best Practices
 
 ### TypeScript Guidelines
 
