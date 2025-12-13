@@ -3,13 +3,13 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "check:sdk": "node -e \"const fs=require('fs'); if(!fs.existsSync('lib/gluon-gold-sdk/dist')){ process.exit(1) }\" || bun run build:sdk",
-    "dev": "bun run check:sdk && next dev",
+    "check:sdk": "node -e \"const fs=require('fs'); if(!fs.existsSync('lib/gluon-gold-sdk/dist')){ process.exit(1) }\" || npm run build:sdk",
+    "dev": "npm run check:sdk && next dev",
     "buildtest": "next build",
-    "build": "bun run build:sdk && next build",
+    "build": "npm run build:sdk && next build",
     "start": "next start",
     "lint": "next lint",
-    "build:sdk": "cd lib/gluon-gold-sdk && bun install && bun run build",
+    "build:sdk": "cd lib/gluon-gold-sdk && npm install && npm run build",
     "test": "vitest",
     "format": "prettier --write .",
     "prepare": "husky"
