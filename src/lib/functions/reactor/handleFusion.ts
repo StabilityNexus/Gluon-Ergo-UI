@@ -7,27 +7,30 @@ interface FusionParams {
   gluonInstance: any;
   gluonBox: any;
   value: string;
+  stableAssetBalance: string;
+  volatileAssetBalance: string;
+  // Legacy fields for backward compatibility
   gauBalance: string;
   gaucBalance: string;
 }
 
 /**
- * Calculate the maximum possible ERG output based on available GAU/GAUC balances
+ * Calculate the maximum possible ERG output based on available stable/volatile asset balances
  */
-const calculateMaxErgOutput = async (gluonInstance: any, gluonBox: any, gauBalance: string, gaucBalance: string): Promise<BigNumber> => {
+const calculateMaxErgOutput = async (gluonInstance: any, gluonBox: any, stableAssetBalance: string, volatileAssetBalance: string): Promise<BigNumber> => {
   try {
     // Convert our balances to blockchain decimals (these are BigInts)
-    const gauAmount = BigInt(convertToDecimals(gauBalance));
-    const gaucAmount = BigInt(convertToDecimals(gaucBalance));
+    const stableAmount = BigInt(convertToDecimals(stableAssetBalance));
+    const volatileAmount = BigInt(convertToDecimals(volatileAssetBalance));
 
     console.log("Input Validation:", {
       displayValues: {
-        gau: gauBalance,
-        gauc: gaucBalance,
+        stableAsset: stableAssetBalance,
+        volatileAsset: volatileAssetBalance,
       },
       nanoValues: {
-        gauNano: gauAmount.toString(),
-        gaucNano: gaucAmount.toString(),
+        stableNano: stableAmount.toString(),
+        volatileNano: volatileAmount.toString(),
       },
     });
 
@@ -42,9 +45,9 @@ const calculateMaxErgOutput = async (gluonInstance: any, gluonBox: any, gauBalan
 
     // Calculate maximum ERG we can get based on our token ratios
     // All calculations done in BigInt
-    const maxFromGau = (gauAmount * oneErg) / neutronsNeeded;
-    const maxFromGauc = (gaucAmount * oneErg) / protonsNeeded;
-    const maxPossibleNanoErgs = maxFromGau < maxFromGauc ? maxFromGau : maxFromGauc;
+    const maxFromStable = (stableAmount * oneErg) / neutronsNeeded;
+    const maxFromVolatile = (volatileAmount * oneErg) / protonsNeeded;
+    const maxPossibleNanoErgs = maxFromStable < maxFromVolatile ? maxFromStable : maxFromVolatile;
 
     console.log("Max ERG Calculation:", {
       maxErg: new BigNumber(maxPossibleNanoErgs.toString()).dividedBy(1e9).toFixed(),
@@ -59,12 +62,16 @@ const calculateMaxErgOutput = async (gluonInstance: any, gluonBox: any, gauBalan
 };
 
 /**
- * Calculate the amounts of GAU and GAUC needed for fusion to get the desired ERG amount
+ * Calculate the amounts of stable and volatile assets needed for fusion to get the desired ERG amount
  */
-export const calculateFusionAmounts = async ({ gluonInstance, gluonBox, value, gauBalance, gaucBalance }: FusionParams): Promise<SwapResult | SwapError> => {
+export const calculateFusionAmounts = async ({ gluonInstance, gluonBox, value, stableAssetBalance, volatileAssetBalance, gauBalance, gaucBalance }: FusionParams): Promise<SwapResult | SwapError> => {
   try {
+    // Use new names if provided, otherwise fall back to legacy names
+    const stableBalance = stableAssetBalance || gauBalance;
+    const volatileBalance = volatileAssetBalance || gaucBalance;
+    
     // Get maximum possible ERG output
-    const maxNanoErgs = await calculateMaxErgOutput(gluonInstance, gluonBox, gauBalance, gaucBalance);
+    const maxNanoErgs = await calculateMaxErgOutput(gluonInstance, gluonBox, stableBalance, volatileBalance);
     // Use BigNumber to preserve precision instead of converting to Number
     const maxErgStr = maxNanoErgs.dividedBy(1e9).toFixed();
 
@@ -75,18 +82,21 @@ export const calculateFusionAmounts = async ({ gluonInstance, gluonBox, value, g
     const { neutrons, protons } = await gluonInstance.fusionWillNeed(gluonBox, Number(desiredNanoErgs));
 
     // Convert to display values
-    const requiredGau = convertFromDecimals(BigInt(neutrons)).toString();
-    const requiredGauc = convertFromDecimals(BigInt(protons)).toString();
+    const requiredStable = convertFromDecimals(BigInt(neutrons)).toString();
+    const requiredVolatile = convertFromDecimals(BigInt(protons)).toString();
 
     // Get fee prediction (using Number since the SDK expects it)
     const fees = await gluonInstance.getTotalFeeAmountFusion(gluonBox, Number(desiredNanoErgs));
 
     const receiptDetails: ReceiptDetails = {
-      inputAmount: parseFloat(requiredGau),
+      inputAmount: parseFloat(requiredStable),
       outputAmount: {
-        gau: parseFloat(requiredGau),
-        gauc: parseFloat(requiredGauc),
+        stableAsset: parseFloat(requiredStable),
+        volatileAsset: parseFloat(requiredVolatile),
         erg: parseFloat(value),
+        // Legacy fields for backward compatibility
+        gau: parseFloat(requiredStable),
+        gauc: parseFloat(requiredVolatile),
       },
       fees: {
         devFee: nanoErgsToErgs(fees.devFee),
@@ -99,11 +109,14 @@ export const calculateFusionAmounts = async ({ gluonInstance, gluonBox, value, g
     };
 
     return {
-      gauAmount: requiredGau,
-      gaucAmount: requiredGauc,
+      stableAssetAmount: requiredStable,
+      volatileAssetAmount: requiredVolatile,
       toAmount: value,
       maxErgOutput: maxErgStr,
       receiptDetails,
+      // Legacy fields for backward compatibility
+      gauAmount: requiredStable,
+      gaucAmount: requiredVolatile,
     };
   } catch (error) {
     console.error("Error calculating fusion amounts:", error);
@@ -114,9 +127,12 @@ export const calculateFusionAmounts = async ({ gluonInstance, gluonBox, value, g
     return {
       error: errorDetails.userMessage,
       resetValues: {
+        stableAssetAmount: "0",
+        volatileAssetAmount: "0",
+        toAmount: "0",
+        // Legacy fields for backward compatibility
         gauAmount: "0",
         gaucAmount: "0",
-        toAmount: "0",
       },
     };
   }
@@ -179,8 +195,8 @@ export const handleFusionSwap = async (
     }
 
     // Convert to proper display values
-    const requiredGau = convertFromDecimals(BigInt(neutrons)).toString();
-    const requiredGauc = convertFromDecimals(BigInt(protons)).toString();
+    const requiredStable = convertFromDecimals(BigInt(neutrons)).toString();
+    const requiredVolatile = convertFromDecimals(BigInt(protons)).toString();
 
     console.log("Transaction Value Verification:", {
       input: {
@@ -190,8 +206,8 @@ export const handleFusionSwap = async (
       tokensToBeConsumed: {
         rawNeutrons: neutrons.toString(),
         rawProtons: protons.toString(),
-        displayGau: requiredGau,
-        displayGauc: requiredGauc,
+        displayStable: requiredStable,
+        displayVolatile: requiredVolatile,
       },
     });
 

@@ -3,8 +3,9 @@ import { Badge } from "@/lib/components/ui/badge";
 import { AnimatedBeam } from "@/lib/components/ui/animated-beam";
 import { CardSpotlight } from "@/lib/components/ui/card-spotlight";
 import ErgIcon from "@/lib/components/icons/ErgIcon";
-import GauIcon from "@/lib/components/icons/GauIcon";
-import GaucIcon from "@/lib/components/icons/GaucIcon";
+import NeutronIcon from "@/lib/components/icons/NeutronIcon";
+import ProtonIcon from "@/lib/components/icons/ProtonIcon";
+import { tokenConfig } from "@/config/tokenConfig";
 import { useRef, forwardRef, useState, useEffect } from "react";
 import { cn } from "@/lib/utils/utils";
 import { motion } from "framer-motion";
@@ -27,8 +28,8 @@ const TokenFlow = ({
   className = "",
 }: {
   title: string;
-  fromTokens: Array<"ERG" | "GAU" | "GAUC">;
-  toTokens: Array<"ERG" | "GAU" | "GAUC">;
+  fromTokens: Array<"ERG" | typeof tokenConfig.stableAsset.symbol | typeof tokenConfig.volatileAsset.symbol>;
+  toTokens: Array<"ERG" | typeof tokenConfig.stableAsset.symbol | typeof tokenConfig.volatileAsset.symbol>;
   reverse?: boolean;
   className?: string;
 }) => {
@@ -53,15 +54,19 @@ const TokenFlow = ({
     return () => clearTimeout(timer);
   }, [fromTokens.length, toTokens.length]);
 
-  const getTokenIcon = (token: "ERG" | "GAU" | "GAUC") => {
+  const getTokenIcon = (token: "ERG" | typeof tokenConfig.stableAsset.symbol | typeof tokenConfig.volatileAsset.symbol) => {
     const iconProps = { className: "w-8 h-8" };
+    const stableSymbol = tokenConfig.stableAsset.symbol;
+    const volatileSymbol = tokenConfig.volatileAsset.symbol;
     switch (token) {
       case "ERG":
         return <ErgIcon {...iconProps} />;
-      case "GAU":
-        return <GauIcon {...iconProps} />;
-      case "GAUC":
-        return <GaucIcon {...iconProps} />;
+      case stableSymbol:
+      case "GAU": // Legacy support
+        return <NeutronIcon {...iconProps} />;
+      case volatileSymbol:
+      case "GAUC": // Legacy support
+        return <ProtonIcon {...iconProps} />;
     }
   };
 
@@ -185,17 +190,17 @@ export const Features = () => (
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.5, duration: 0.5 }}
                 >
-                  Get exposure to Gold with GAU.
+                  {tokenConfig.stableAsset.description}
                   <br />
-                  GAU is the stablecoin pegged to 1g of Gold.
-                  <br />
-                  <br />
-                  Get leveraged volatility and yield with GAUC.
-                  <br />
-                  GAUC tokenizes the reserve surplus.
+                  {tokenConfig.stableAsset.displayName} is the stablecoin {tokenConfig.peg.description.toLowerCase()}.
                   <br />
                   <br />
-                  Both GAU and GAUC are fully backed by ERG.
+                  {tokenConfig.volatileAsset.description}
+                  <br />
+                  {tokenConfig.volatileAsset.displayName} tokenizes the reserve surplus.
+                  <br />
+                  <br />
+                  Both {tokenConfig.stableAsset.displayName} and {tokenConfig.volatileAsset.displayName} are fully backed by ERG.
                 </motion.p>
               </div>
             </div>
@@ -204,22 +209,22 @@ export const Features = () => (
                 {
                   icon: Maximize2,
                   title: "Fission",
-                  description: "Splits $ERG tokens into $GAU stable tokeons and $GAUC volatile tokeons",
+                  description: `Splits $ERG tokens into $${tokenConfig.stableAsset.symbol} stable tokens and $${tokenConfig.volatileAsset.symbol} volatile tokens`,
                 },
                 {
                   icon: Minimize2,
                   title: "Fusion",
-                  description: "Merges $GAU stable tokeons and $GAUC volatile tokeons into $ERG tokens",
+                  description: `Merges $${tokenConfig.stableAsset.symbol} stable tokens and $${tokenConfig.volatileAsset.symbol} volatile tokens into $ERG tokens`,
                 },
                 {
                   icon: Repeat,
-                  title: "Transmute to Gold",
-                  description: "Transmutes $GAUC volatile tokeons into $GAU stable tokeons",
+                  title: `Transmute to ${tokenConfig.stableAsset.displayName}`,
+                  description: `Transmutes $${tokenConfig.volatileAsset.symbol} volatile tokens into $${tokenConfig.stableAsset.symbol} stable tokens`,
                 },
                 {
                   icon: Repeat,
-                  title: "Transmute from Gold",
-                  description: "Transmutes $GAU stable tokeons into $GAUC volatile tokeons",
+                  title: `Transmute from ${tokenConfig.stableAsset.displayName}`,
+                  description: `Transmutes $${tokenConfig.stableAsset.symbol} stable tokens into $${tokenConfig.volatileAsset.symbol} volatile tokens`,
                 },
               ].map((item, index) => (
                 <motion.div
@@ -245,17 +250,17 @@ export const Features = () => (
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.4, duration: 0.5 }}
           >
-            {/* Fission: ERG -> GAU + GAUC */}
-            <TokenFlow title="Fission" fromTokens={["ERG"]} toTokens={["GAU", "GAUC"]} />
+            {/* Fission: ERG -> Stable + Volatile */}
+            <TokenFlow title="Fission" fromTokens={["ERG"]} toTokens={[tokenConfig.stableAsset.symbol, tokenConfig.volatileAsset.symbol]} />
 
-            {/* Fusion: GAU + GAUC -> ERG */}
-            <TokenFlow title="Fusion" fromTokens={["GAU", "GAUC"]} toTokens={["ERG"]} reverse={false} />
+            {/* Fusion: Stable + Volatile -> ERG */}
+            <TokenFlow title="Fusion" fromTokens={[tokenConfig.stableAsset.symbol, tokenConfig.volatileAsset.symbol]} toTokens={["ERG"]} reverse={false} />
 
-            {/* Transmute To Gold: GAUC -> GAU */}
-            <TokenFlow title="Transmute To Gold" fromTokens={["GAUC"]} toTokens={["GAU"]} />
+            {/* Transmute To Stable: Volatile -> Stable */}
+            <TokenFlow title={`Transmute to ${tokenConfig.stableAsset.displayName}`} fromTokens={[tokenConfig.volatileAsset.symbol]} toTokens={[tokenConfig.stableAsset.symbol]} />
 
-            {/* Transmute From Gold: GAU -> GAUC */}
-            <TokenFlow title="Transmute From Gold" fromTokens={["GAU"]} toTokens={["GAUC"]} reverse={false} />
+            {/* Transmute From Stable: Stable -> Volatile */}
+            <TokenFlow title={`Transmute from ${tokenConfig.stableAsset.displayName}`} fromTokens={[tokenConfig.stableAsset.symbol]} toTokens={[tokenConfig.volatileAsset.symbol]} reverse={false} />
           </motion.div>
         </CardSpotlight>
       </motion.div>

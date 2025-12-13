@@ -25,7 +25,7 @@ export const calculateFissionAmounts = async ({ gluonInstance, gluonBox, value }
       type: typeof ergToFission,
     });
 
-    // Get prediction of GAU/GAUC amounts
+    // Get prediction of stable/volatile asset amounts
     const willGet = await gluonInstance.fissionWillGet(gluonBox, Number(ergToFission));
     console.log("🔍 FISSION PREDICTION RAW:", willGet);
 
@@ -33,12 +33,12 @@ export const calculateFissionAmounts = async ({ gluonInstance, gluonBox, value }
       throw new Error("Failed to get fission prediction from SDK");
     }
 
-    // Format the values using our utility - NOTE: protons are GAUC, neutrons are GAU
-    const formattedGau = formatMicroNumber(convertFromDecimals(willGet.neutrons));
-    const formattedGauc = formatMicroNumber(convertFromDecimals(willGet.protons));
+    // Format the values using our utility - NOTE: protons are volatile asset, neutrons are stable asset
+    const formattedStable = formatMicroNumber(convertFromDecimals(willGet.neutrons));
+    const formattedVolatile = formatMicroNumber(convertFromDecimals(willGet.protons));
     console.log("🔍 FISSION FORMATTED:", {
-      gau: formattedGau,
-      gauc: formattedGauc,
+      stableAsset: formattedStable,
+      volatileAsset: formattedVolatile,
       rawNeutrons: willGet.neutrons.toString(),
       rawProtons: willGet.protons.toString(),
     });
@@ -50,9 +50,12 @@ export const calculateFissionAmounts = async ({ gluonInstance, gluonBox, value }
     const receiptDetails: ReceiptDetails = {
       inputAmount: numValue,
       outputAmount: {
-        gau: convertFromDecimals(willGet.neutrons), // neutrons are GAU
-        gauc: convertFromDecimals(willGet.protons), // protons are GAUC
+        stableAsset: convertFromDecimals(willGet.neutrons), // neutrons are stable asset
+        volatileAsset: convertFromDecimals(willGet.protons), // protons are volatile asset
         erg: 0,
+        // Legacy fields for backward compatibility
+        gau: convertFromDecimals(willGet.neutrons),
+        gauc: convertFromDecimals(willGet.protons),
       },
       fees: {
         devFee: nanoErgsToErgs(fees.devFee),
@@ -64,11 +67,14 @@ export const calculateFissionAmounts = async ({ gluonInstance, gluonBox, value }
     };
 
     return {
-      gauAmount: formattedGau.display,
-      gaucAmount: formattedGauc.display,
+      stableAssetAmount: formattedStable.display,
+      volatileAssetAmount: formattedVolatile.display,
       toAmount: "0", // Not used in fission
       receiptDetails,
       maxErgOutput: "0", // Not applicable for fission
+      // Legacy fields for backward compatibility
+      gauAmount: formattedStable.display,
+      gaucAmount: formattedVolatile.display,
     };
   } catch (error) {
     console.error("Error calculating fission amounts:", error);
@@ -79,6 +85,9 @@ export const calculateFissionAmounts = async ({ gluonInstance, gluonBox, value }
     return {
       error: errorDetails.userMessage,
       resetValues: {
+        stableAssetAmount: "0",
+        volatileAssetAmount: "0",
+        // Legacy fields for backward compatibility
         gauAmount: "0",
         gaucAmount: "0",
       },
