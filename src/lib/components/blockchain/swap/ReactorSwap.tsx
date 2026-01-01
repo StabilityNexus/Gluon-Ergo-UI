@@ -135,12 +135,30 @@ export function ReactorSwap() {
   const [maxErgOutput, setMaxErgOutput] = useState<string>("0");
   const [maxErgOutputPrecise, setMaxErgOutputPrecise] = useState<string>("0"); // Precise value for calculations
   //const [isUpdatingProgrammatically, setIsUpdatingProgrammatically] = useState(false)
-  const updateBalancesRef = useRef(() => { });
+  const updateBalancesRef = useRef(() => {});
 
   // Transaction listener state
   const [transactionListener] = useState(() => createTransactionListener(nodeService));
   const [hasPendingTransactions, setHasPendingTransactions] = useState(false);
   // CLEAR TX HASH WHEN PENDING TRANSACTION IS FINISHED
+  //  UI refresh hook for TransactionListener
+  useEffect(() => {
+    (window as any).refreshWalletUI = () => {
+      console.log("🔄 Refreshing balances + UI after wallet updated...");
+
+      // Refresh balances immediately
+      updateBalancesRef.current();
+
+      // Remove pending transaction UI state instantly
+      setHasPendingTransactions(false);
+    };
+
+    return () => {
+      // Cleanup global handler on unmount
+      delete (window as any).refreshWalletUI;
+    };
+  }, []);
+
   useEffect(() => {
     if (!hasPendingTransactions) {
       setLastSubmittedTx(null);
@@ -931,6 +949,8 @@ export function ReactorSwap() {
 
     const isInputDisabled = !boxesReady || isCalculating || (isInitializing && !boxesReady);
     const shouldRenderInputOrDisplay = currentToken.symbol !== "GAU-GAUC";
+    const isTransmutation = (fromToken.symbol === "GAUC" && toToken.symbol === "GAU") || (fromToken.symbol === "GAU" && toToken.symbol === "GAUC");
+    const isFieldDisabled = isInputDisabled || (!isFromCard && isTransmutation);
 
     // Helper function to get token icon
     const getTokenIcon = (symbol: string, className: string = "w-6 h-6") => {
@@ -1078,10 +1098,10 @@ export function ReactorSwap() {
                   }}
                   className={cn(
                     "w-full min-w-[80px] border-0 bg-transparent text-left text-2xl font-bold focus:outline-none focus-visible:ring-0 sm:text-right sm:text-3xl",
-                    isFromCard ? "text-white placeholder:text-white" : "text-muted-foreground",
-                    isInputDisabled && "cursor-not-allowed opacity-50"
+                    isFromCard || (fromToken.symbol === "GAU-GAUC" && toToken.symbol === "ERG") ? "text-black dark:text-white placeholder:text-black dark:placeholder:text-white" : "text-muted-foreground",
+                    isFieldDisabled && "cursor-not-allowed opacity-50"
                   )}
-                  disabled={isInputDisabled}
+                  disabled={isFieldDisabled}
                   onFocus={(e: React.FocusEvent<HTMLInputElement>) => e.target.select()}
                 />
               </motion.div>
