@@ -70,7 +70,7 @@ export function TopNavbar() {
               {/* Right - Actions */}
               <div className="flex items-center gap-2">
                 <ThemeToggle />
-                {pathname?.startsWith("/reactor") || pathname?.startsWith("/test") || pathname?.startsWith("/swap") ? <WalletConnector /> : null}
+                {pathname?.startsWith("/reactor") || pathname?.startsWith("/test") || pathname?.startsWith("/swap") || pathname?.startsWith("/history") || pathname?.startsWith("/analytics") ? <WalletConnector /> : null}
               </div>
             </>
           ) : (
@@ -78,7 +78,7 @@ export function TopNavbar() {
               {/* Mobile view */}
               <div className="flex items-center gap-2">
                 <ThemeToggle />
-                {pathname?.startsWith("/reactor") || pathname?.startsWith("/test") || pathname?.startsWith("/swap") ? <WalletConnector /> : null}
+                {pathname?.startsWith("/reactor") || pathname?.startsWith("/test") || pathname?.startsWith("/swap") || pathname?.startsWith("/history") || pathname?.startsWith("/analytics") ? <WalletConnector /> : null}
               </div>
             </>
           )}
