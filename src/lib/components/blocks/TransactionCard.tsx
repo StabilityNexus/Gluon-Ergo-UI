@@ -4,12 +4,31 @@
  */
 
 import { TransactionRecord } from "@/lib/utils/indexed-db";
-import { getActionTypeLabel, formatDuration } from "@/lib/utils/analytics-utils";
 import { nanoErgsToErgs } from "@/lib/utils/erg-converter";
 import { Badge } from "@/lib/components/ui/badge";
 import { Card, CardContent } from "@/lib/components/ui/card";
 import { Copy, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
+
+// Inline utility functions (previously from analytics-utils)
+const getActionTypeLabel = (actionType: string): string => {
+  const labels: Record<string, string> = {
+    fission: "Fission",
+    fusion: "Fusion",
+    "transmute-to-gold": "Transmute to Gold",
+    "transmute-from-gold": "Transmute from Gold",
+  };
+  return labels[actionType] || actionType;
+};
+
+const formatDuration = (ms: number): string => {
+  const seconds = Math.floor(ms / 1000);
+  if (seconds < 60) return `${seconds}s`;
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ${seconds % 60}s`;
+  const hours = Math.floor(minutes / 60);
+  return `${hours}h ${minutes % 60}m`;
+};
 
 interface TransactionCardProps {
   transaction: TransactionRecord;
@@ -33,8 +52,6 @@ export const TransactionCard = ({ transaction }: TransactionCardProps) => {
         return "default";
       case "pending":
         return "outline";
-      case "failed":
-        return "destructive";
       case "timeout":
         return "secondary";
       default:

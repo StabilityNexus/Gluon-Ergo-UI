@@ -81,7 +81,6 @@ export function BottomNavbar() {
             { href: "/reactor", label: "Reactor" },
             { href: "/swap", label: "Swap" },
             { href: "/history", label: "History" },
-            { href: "/analytics", label: "Analytics" },
             {
               href: "https://docs.stability.nexus/gluon-protocols/gluon-overview",
               label: "Docs",
