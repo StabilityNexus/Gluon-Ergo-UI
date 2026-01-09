@@ -2,6 +2,8 @@ import { SwapResult, SwapError, ReceiptDetails } from "./types";
 import { convertFromDecimals, nanoErgsToErgs, ergsToNanoErgs } from "@/lib/utils/erg-converter";
 import { formatMicroNumber } from "@/lib/utils/erg-converter";
 import { handleTransactionError, handleTransactionSuccess, handleCalculationError } from "@/lib/utils/error-handler";
+import { getTxReducedB64Safe } from "@/lib/utils/ergopay-tx-reducer";
+import { explorerClient } from "@/lib/utils/explorer-client";
 
 interface FissionParams {
   gluonInstance: any;
@@ -18,14 +20,12 @@ export const calculateFissionAmounts = async ({ gluonInstance, gluonBox, value }
       type: typeof value,
     });
 
-    // Convert input ERG to nanoERG for SDK
     const ergToFission = ergsToNanoErgs(numValue);
     console.log("🔍 FISSION ERG CONVERSION:", {
       ergToFission: ergToFission.toString(),
       type: typeof ergToFission,
     });
 
-    // Get prediction of GAU/GAUC amounts
     const willGet = await gluonInstance.fissionWillGet(gluonBox, Number(ergToFission));
     console.log("🔍 FISSION PREDICTION RAW:", willGet);
 
@@ -33,7 +33,6 @@ export const calculateFissionAmounts = async ({ gluonInstance, gluonBox, value }
       throw new Error("Failed to get fission prediction from SDK");
     }
 
-    // Format the values using our utility - NOTE: protons are GAUC, neutrons are GAU
     const formattedGau = formatMicroNumber(convertFromDecimals(willGet.neutrons));
     const formattedGauc = formatMicroNumber(convertFromDecimals(willGet.protons));
     console.log("🔍 FISSION FORMATTED:", {
@@ -43,15 +42,14 @@ export const calculateFissionAmounts = async ({ gluonInstance, gluonBox, value }
       rawProtons: willGet.protons.toString(),
     });
 
-    // Get fee prediction
     const fees = await gluonInstance.getTotalFeeAmountFission(gluonBox, Number(ergToFission));
     console.log("🔍 FISSION FEES:", fees);
 
     const receiptDetails: ReceiptDetails = {
       inputAmount: numValue,
       outputAmount: {
-        gau: convertFromDecimals(willGet.neutrons), // neutrons are GAU
-        gauc: convertFromDecimals(willGet.protons), // protons are GAUC
+        gau: convertFromDecimals(willGet.neutrons),
+        gauc: convertFromDecimals(willGet.protons),
         erg: 0,
       },
       fees: {
@@ -66,14 +64,13 @@ export const calculateFissionAmounts = async ({ gluonInstance, gluonBox, value }
     return {
       gauAmount: formattedGau.display,
       gaucAmount: formattedGauc.display,
-      toAmount: "0", // Not used in fission
+      toAmount: "0", 
       receiptDetails,
-      maxErgOutput: "0", // Not applicable for fission
+      maxErgOutput: "0",
     };
   } catch (error) {
     console.error("Error calculating fission amounts:", error);
 
-    // Use the error handler for proper classification
     const errorDetails = handleCalculationError(error, "fission");
 
     return {
@@ -101,7 +98,6 @@ export const handleFissionSwap = async (
       type: typeof amount,
     });
 
-    // Validate inputs
     if (!gluonInstance || !gluonBox || !oracleBox) {
       throw new Error("Required boxes not initialized");
     }
@@ -110,7 +106,6 @@ export const handleFissionSwap = async (
       throw new Error("Wallet not connected. Please disconnect and reconnect your wallet.");
     }
 
-    // Additional validation for wallet API methods
     if (!ergoWallet.sign_tx || !ergoWallet.submit_tx) {
       throw new Error("Wallet API not fully initialized. Please refresh the page and reconnect.");
     }
@@ -121,7 +116,6 @@ export const handleFissionSwap = async (
       type: typeof nanoErgsToFission,
     });
 
-    // Verify we can get the expected output
     const willGet = await gluonInstance.fissionWillGet(gluonBox, Number(nanoErgsToFission));
     console.log("🔍 FISSION WILL GET:", {
       neutrons: willGet.neutrons.toString(),
@@ -132,7 +126,6 @@ export const handleFissionSwap = async (
       throw new Error("Invalid fission amount - no tokens will be generated");
     }
 
-    // Fetch fresh boxes to avoid stale data issues
     const oracleBoxJs = await gluonInstance.getGoldOracleBox();
     const gluonBoxJs = await gluonInstance.getGluonBox();
 
@@ -140,7 +133,6 @@ export const handleFissionSwap = async (
       throw new Error("Failed to get fresh protocol boxes");
     }
 
-    // Create unsigned transaction
     const unsignedTransaction = await gluonInstance.fissionForEip12(gluonBoxJs, oracleBoxJs, userBoxes, Number(nanoErgsToFission));
 
     if (!unsignedTransaction) {
@@ -149,13 +141,11 @@ export const handleFissionSwap = async (
 
     console.log("Signing and submitting transaction...");
 
-    // Sign transaction
     const signature = await ergoWallet?.sign_tx(unsignedTransaction);
     if (!signature) {
       throw new Error("Failed to sign transaction");
     }
 
-    // Submit transaction
     const txHash = await ergoWallet?.submit_tx(signature);
     if (!txHash) {
       throw new Error("Failed to submit transaction");
@@ -163,14 +153,112 @@ export const handleFissionSwap = async (
 
     console.log("Transaction submitted successfully. TxId:", txHash);
 
-    // Handle success with toast notification
     handleTransactionSuccess(txHash, "fission");
 
     return { txHash };
   } catch (error) {
     console.error("Fission failed:", error);
 
-    // Use the error handler for proper classification and toast notification
+    const errorDetails = handleTransactionError(error, "fission");
+
+    return { error: errorDetails.userMessage };
+  }
+};
+
+const validateBoxFormat = (box: any): boolean => {
+  return !!(
+    box &&
+    typeof box.boxId === 'string' &&
+    (typeof box.value === 'number' || typeof box.value === 'bigint') &&
+    typeof box.ergoTree === 'string' &&
+    Array.isArray(box.assets) &&
+    typeof box.additionalRegisters === 'object'
+  );
+};
+
+export const handleFissionSwapErgoPay = async (
+  gluonInstance: any,
+  gluonBox: any,
+  oracleBox: any,
+  userAddress: string,
+  amount: string
+): Promise<{ txId?: string; reducedTx?: string; error?: string }> => {
+  try {
+    console.log("🔍 ERGOPAY FISSION INPUT:", {
+      userAddress,
+      amount,
+      type: typeof amount,
+    });
+
+    if (!gluonInstance || !gluonBox || !oracleBox) {
+      throw new Error("Required boxes not initialized");
+    }
+
+    if (!userAddress) {
+      throw new Error("User address required for ErgoPay");
+    }
+
+    const nanoErgsToFission = ergsToNanoErgs(amount);
+    console.log("🔍 ERGOPAY FISSION NANO ERGS:", {
+      nanoErgsToFission: nanoErgsToFission.toString(),
+    });
+
+    const willGet = await gluonInstance.fissionWillGet(gluonBox, Number(nanoErgsToFission));
+    console.log("🔍 ERGOPAY FISSION WILL GET:", {
+      neutrons: willGet.neutrons.toString(),
+      protons: willGet.protons.toString(),
+    });
+
+    if (!willGet || (willGet.neutrons === 0 && willGet.protons === 0)) {
+      throw new Error("Invalid fission amount - no tokens will be generated");
+    }
+
+    const oracleBoxJs = await gluonInstance.getGoldOracleBox();
+    const gluonBoxJs = await gluonInstance.getGluonBox();
+
+    if (!oracleBoxJs || !gluonBoxJs) {
+      throw new Error("Failed to get fresh protocol boxes");
+    }
+
+    console.log("Fetching user boxes from explorer...");
+    const userBoxesResponse = await explorerClient.getApiV1AddressesP1Boxes(userAddress);
+    const userBoxes = userBoxesResponse.data.items || [];
+
+    if (!userBoxes || userBoxes.length === 0) {
+      throw new Error("No unspent boxes found for address. Please ensure your wallet has funds.");
+    }
+
+    console.log(`Found ${userBoxes.length} boxes for user`);
+
+    const invalidBoxes = userBoxes.filter((box: any) => !validateBoxFormat(box));
+    if (invalidBoxes.length > 0) {
+      console.error("Invalid box format detected:", invalidBoxes);
+      throw new Error(`Invalid box format from explorer API. This should not happen - please report this issue.`);
+    }
+    console.log("✅ All boxes validated successfully");
+
+    console.log("Creating unsigned transaction (EIP-12 JSON)...");
+    const unsignedTransaction = await gluonInstance.fissionForEip12(
+      gluonBoxJs,
+      oracleBoxJs,
+      userBoxes,
+      Number(nanoErgsToFission)
+    );
+
+    if (!unsignedTransaction) {
+      throw new Error("Failed to create unsigned transaction");
+    }
+
+    console.log("Reducing transaction for ErgoPay...");
+
+    const [txId, reducedTx] = await getTxReducedB64Safe(unsignedTransaction, explorerClient);
+
+    console.log("Transaction reduced successfully. TxId:", txId);
+
+    return { txId, reducedTx };
+  } catch (error) {
+    console.error("ErgoPay fission failed:", error);
+
     const errorDetails = handleTransactionError(error, "fission");
 
     return { error: errorDetails.userMessage };

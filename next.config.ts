@@ -10,7 +10,6 @@ const nextConfig: NextConfig = {
       asyncWebAssembly: true,
       layers: true,
       topLevelAwait: true,
-      syncWebAssembly: true,
     };
 
     // Exclude .map files
@@ -31,6 +30,13 @@ const nextConfig: NextConfig = {
       path: false,
       os: false,
     };
+
+    // Externalize WASM libraries for server-side to avoid bundling issues
+    if (options.isServer) {
+      config.externals = config.externals || [];
+      // Externalize both WASM libraries so they load from node_modules directly
+      config.externals.push("ergo-lib-wasm-browser", "ergo-lib-wasm-nodejs");
+    }
 
     return config;
   },

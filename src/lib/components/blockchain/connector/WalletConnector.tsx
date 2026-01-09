@@ -6,7 +6,13 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/lib/components/ui/tabs";
 import { useErgo } from "@/lib/providers/ErgoProvider";
 import { WalletIcon, LogOut, ArrowUpRight, Loader2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { ErgoPayQRModal } from "@/lib/components/ergopay/ErgoPayQRModal";
+import { useErgoPay } from "@/lib/providers/ErgoPayProvider";
+import { nanoErgsToErgs, convertFromDecimals, format as formatTokenValue } from "@/lib/utils/erg-converter";
+import { TOKEN_ADDRESS } from "@/lib/constants/token";
+import GauIcon from "@/lib/components/icons/GauIcon";
+import GaucIcon from "@/lib/components/icons/GaucIcon";
 
 export function WalletConnector() {
   const { walletList, isConnected, isInitialized, isRestoringConnection, connect, disconnect, getChangeAddress, getBalance, ergoWallet } = useErgo();
@@ -14,13 +20,14 @@ export function WalletConnector() {
   const [ergoAddress, setErgoAddress] = useState<string | null>(null);
   const [ergBalance, setErgoBalance] = useState<string | null>("0");
   const [connectingWallet, setConnectingWallet] = useState<string | null>(null);
+  const [showErgoPayModal, setShowErgoPayModal] = useState(false);
+  const [showErgoPayDrawer, setShowErgoPayDrawer] = useState(false);
+  const { address: ergoPayAddress, setAddress: setErgoPayAddress, clearAddress: clearErgoPayAddress, balances: ergoPayBalances, setBalances: setErgoPayBalances } = useErgoPay();
 
-  console.log(ergBalance); // To avoid linting error
+  console.log(ergBalance);
 
-  // Fetch address and balance when wallet becomes connected (including after auto-reconnect)
   useEffect(() => {
     if (isConnected && ergoWallet && !ergoAddress) {
-      // Wallet is connected but address not fetched yet - fetch it now
       getChangeAddress()
         .then(async (address) => {
           setErgoAddress(address);
@@ -39,17 +46,14 @@ export function WalletConnector() {
           console.error("Error fetching address:", error);
         });
     } else if (!isConnected && ergoAddress) {
-      // Wallet disconnected - clear address and balance
       setErgoAddress(null);
       setErgoBalance("0");
     }
   }, [isConnected, ergoWallet, ergoAddress, getChangeAddress, getBalance]);
 
-  // Legacy effect for manual connection (kept for backward compatibility)
   useEffect(() => {
     const savedWallet = localStorage.getItem("connectedWallet");
     const isLoaded = walletList.find((wallet) => wallet.connectName === savedWallet);
-    // Only try to connect if not already connected and wallet is loaded
     if (savedWallet && isLoaded && !isConnected) {
       connect(savedWallet)
         .then(async (success) => {
@@ -99,7 +103,6 @@ export function WalletConnector() {
           setIsOpen(false);
         } catch (error) {
           console.error("Error fetching address/balance after connection:", error);
-          // Still close the drawer even if fetching fails
           setIsOpen(false);
         }
       }
@@ -117,6 +120,53 @@ export function WalletConnector() {
     setErgoBalance(null);
   };
 
+  const fetchErgoPayBalances = useCallback(async (address: string) => {
+    try {
+      const response = await fetch(`https://api.ergoplatform.com/api/v1/addresses/${address}/balance/total`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch ErgoPay balances");
+      }
+
+      const data = await response.json();
+      const confirmed = data?.confirmed ?? {};
+      const tokens = confirmed.tokens ?? [];
+
+      const gauToken = tokens.find((token: any) => token.tokenId === TOKEN_ADDRESS.gau);
+      const gaucToken = tokens.find((token: any) => token.tokenId === TOKEN_ADDRESS.gauc);
+
+      const nextBalances = {
+        erg: nanoErgsToErgs(confirmed.nanoErgs ?? 0).toString(),
+        gau: gauToken ? convertFromDecimals(gauToken.amount, gauToken.decimals ?? TOKEN_ADDRESS.decimals).toString() : "0",
+        gauc: gaucToken ? convertFromDecimals(gaucToken.amount, gaucToken.decimals ?? TOKEN_ADDRESS.decimals).toString() : "0",
+      };
+
+      setErgoPayBalances(nextBalances);
+    } catch (error) {
+      console.error("Error fetching ErgoPay balance:", error);
+      setErgoPayBalances({ erg: "0", gau: "0", gauc: "0" });
+    }
+  }, [setErgoPayBalances]);
+
+  const handleErgoPayAddress = (address: string) => {
+    console.log("ErgoPay address received:", address);
+    setErgoPayAddress(address);
+  };
+
+  const handleErgoPayDisconnect = () => {
+    clearErgoPayAddress();
+    setShowErgoPayDrawer(false);
+  };
+
+  useEffect(() => {
+    if (ergoPayAddress) {
+      fetchErgoPayBalances(ergoPayAddress);
+    } else {
+      setErgoPayBalances({ erg: "0", gau: "0", gauc: "0" });
+    }
+  }, [ergoPayAddress, fetchErgoPayBalances, setErgoPayBalances]);
+
+  const formatBalance = (value: string) => formatTokenValue(value || "0");
+
   if (isConnected && ergoAddress) {
     return (
       <DropdownMenu>
@@ -133,6 +183,77 @@ export function WalletConnector() {
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+    );
+  }
+
+  if (ergoPayAddress) {
+    return (
+      <>
+        <Button variant="outline" className="gap-2" onClick={() => setShowErgoPayDrawer(true)}>
+          <WalletIcon className="h-4 w-4" />
+          {`${ergoPayAddress.slice(0, 4)}...${ergoPayAddress.slice(-4)}`}
+        </Button>
+        <Drawer open={showErgoPayDrawer} onOpenChange={setShowErgoPayDrawer}>
+          <DrawerContent className="z-[9999]">
+            <DrawerHeader>
+              <DrawerTitle className="text-center text-xl text-primary">ErgoPay</DrawerTitle>
+            </DrawerHeader>
+            <div className="flex w-full max-w-md flex-col gap-6 self-center p-6 pb-12">
+              <div className="space-y-2">
+                <h3 className="text-sm font-medium text-primary">Total balance</h3>
+                <div className="flex items-center justify-between rounded-lg border bg-card p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
+                      <span className="text-lg font-bold">Σ</span>
+                    </div>
+                    <span className="text-xl font-semibold">{formatBalance(ergoPayBalances.erg)} ERG</span>
+                  </div>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-sm font-medium text-primary">Token balances</h3>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="flex items-center justify-between rounded-lg border bg-card p-3">
+                    <div className="flex items-center gap-3">
+                      <GauIcon className="h-6 w-6" />
+                      <div>
+                        <p className="text-xs text-muted-foreground">GAU</p>
+                        <p className="text-lg font-semibold">{formatBalance(ergoPayBalances.gau)}</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between rounded-lg border bg-card p-3">
+                    <div className="flex items-center gap-3">
+                      <GaucIcon className="h-6 w-6" />
+                      <div>
+                        <p className="text-xs text-muted-foreground">GAUC</p>
+                        <p className="text-lg font-semibold">{formatBalance(ergoPayBalances.gauc)}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-sm font-medium text-primary">Active address</h3>
+                <div className="group relative rounded-lg border bg-card p-4">
+                  <div className="flex items-center justify-between">
+                    <span className="font-mono text-sm break-all">
+                      {ergoPayAddress}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <Button
+                onClick={handleErgoPayDisconnect}
+                variant="default"
+                className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
+              >
+                Disconnect wallet
+              </Button>
+            </div>
+          </DrawerContent>
+        </Drawer>
+      </>
     );
   }
 
@@ -155,7 +276,7 @@ export function WalletConnector() {
           <Tabs defaultValue="browser" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="browser">Browser Wallet</TabsTrigger>
-              <TabsTrigger value="ergopay" disabled>
+              <TabsTrigger value="ergopay">
                 Ergo Pay
               </TabsTrigger>
             </TabsList>
@@ -203,11 +324,22 @@ export function WalletConnector() {
               )}
             </TabsContent>
             <TabsContent value="ergopay">
-              <div className="p-4 text-center text-muted-foreground">Ergo Pay here</div>
+              <div className="p-4">
+                <Button
+                  onClick={() => {
+                    setShowErgoPayModal(true);
+                    setIsOpen(false);
+                  }}
+                  className="w-full"
+                >
+                  Open ErgoPay QR Code
+                </Button>
+              </div>
             </TabsContent>
           </Tabs>
         </div>
       </DrawerContent>
+      <ErgoPayQRModal isOpen={showErgoPayModal} onClose={() => setShowErgoPayModal(false)} onAddressReceived={handleErgoPayAddress} />
     </Drawer>
   );
 }
