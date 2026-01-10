@@ -1,7 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import type { ErgoPaySigningRequest } from "@/lib/ergopay/types";
-
-const sessionMap = new Map<string, string>();
+import { storeOrUpdateAddress } from "@/lib/utils/session-manager";
 
 export default function handler(req: NextApiRequest, res: NextApiResponse<ErgoPaySigningRequest>) {
   if (req.method !== "GET") {
@@ -20,7 +19,9 @@ export default function handler(req: NextApiRequest, res: NextApiResponse<ErgoPa
     });
   }
 
-  sessionMap.set(sessionId, address);
+  // Store or update address in centralized session manager
+  // Creates minimal session if it doesn't exist (for address-only capture)
+  storeOrUpdateAddress(sessionId, address);
 
   res.status(200).json({
     message: "Wallet address captured successfully! You can now return to the dApp.",
@@ -28,5 +29,3 @@ export default function handler(req: NextApiRequest, res: NextApiResponse<ErgoPa
     address: address,
   });
 }
-
-export { sessionMap };

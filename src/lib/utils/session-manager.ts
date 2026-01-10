@@ -8,6 +8,7 @@ export interface ErgoPaySession {
   gaucAmount: string;
   fromToken: string;
   toToken: string;
+  address?: string; // Wallet address for ErgoPay connection
   fees?: {
     totalFee: string;
     blockchainFee: string;
@@ -72,6 +73,52 @@ export function updateSessionStatus(
   if (errorMessage) session.errorMessage = errorMessage;
   
   return true;
+}
+
+export function updateSessionAddress(
+  sessionId: string,
+  address: string
+): boolean {
+  const session = sessions.get(sessionId);
+  
+  if (!session) {
+    return false;
+  }
+  
+  session.address = address;
+  
+  return true;
+}
+
+/**
+ * Store or update an address for a session, creating a minimal session if needed.
+ * Used for address-only capture (roundTrip flow) where no transaction exists yet.
+ */
+export function storeOrUpdateAddress(
+  sessionId: string,
+  address: string
+): void {
+  const session = sessions.get(sessionId);
+  
+  if (session) {
+    // Update existing session
+    session.address = address;
+  } else {
+    // Create minimal session for address capture only
+    sessions.set(sessionId, {
+      sessionId,
+      operationType: "fission", // Placeholder, will be set when actual transaction is initiated
+      fromAmount: "0",
+      toAmount: "0",
+      gauAmount: "0",
+      gaucAmount: "0",
+      fromToken: "",
+      toToken: "",
+      address,
+      status: "pending",
+      createdAt: Date.now(),
+    });
+  }
 }
 
 export function deleteSession(sessionId: string): boolean {

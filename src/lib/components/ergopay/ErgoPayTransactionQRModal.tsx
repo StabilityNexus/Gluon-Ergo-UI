@@ -34,7 +34,7 @@ export function ErgoPayTransactionQRModal({
   const [status, setStatus] = useState<"polling" | "success" | "failed" | "insufficient-funds">("polling");
   const [txId, setTxId] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string>("");
-  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const pollIntervalRef = useRef<number | null>(null);
   const attemptCountRef = useRef(0);
   const POLL_INTERVAL_MS = 10000; 
   const MAX_POLL_DURATION_MS = 2 * 60 * 1000; 
@@ -108,7 +108,7 @@ export function ErgoPayTransactionQRModal({
 
     pollForTransaction();
 
-    pollIntervalRef.current = setInterval(pollForTransaction, POLL_INTERVAL_MS);
+    pollIntervalRef.current = window.setInterval(pollForTransaction, POLL_INTERVAL_MS);
   };
 
   useEffect(() => {
@@ -153,6 +153,15 @@ export function ErgoPayTransactionQRModal({
               <div className="flex justify-center rounded-lg bg-white p-4">
                 <QRCodeSVG value={ergoPayUrl} size={256} level="M" includeMargin />
               </div>
+              <Button
+                asChild
+                variant="default"
+                className="w-full md:hidden"
+              >
+                <a href={ergoPayUrl} rel="noopener noreferrer">
+                  Open in Wallet
+                </a>
+              </Button>
               <div className="space-y-2 text-center">
                 <Loader2 className="mx-auto h-6 w-6 animate-spin text-primary" />
                 <p className="text-sm text-muted-foreground">Scan QR code with Ergo Wallet App</p>

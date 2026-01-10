@@ -60,12 +60,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       throw new Error(result.error);
     }
 
+    if (!result.reducedTx) {
+      console.error("[ErgoPay Transmute-to-Gold] Handler returned no reducedTx");
+      updateSessionStatus(sessionId, "error", undefined, "Failed to generate reduced transaction");
+      return res.status(500).json({ 
+        message: "Failed to generate reduced transaction",
+        messageSeverity: "ERROR" 
+      });
+    }
+
     const reducedTx = result.reducedTx;
 
-
-    const protocol = req.headers['x-forwarded-proto'] || 'https';
-    const host = req.headers.host;
-    const replyToUrl = `${protocol}://${host}/api/ergopay/callback/${sessionId}`;
+    // Use hardcoded canonical origin to prevent host header injection
+    const canonicalOrigin = process.env.NODE_ENV === 'development' 
+      ? 'http://localhost:3000' 
+      : 'https://gluon.gold';
+    const replyToUrl = `${canonicalOrigin}/api/ergopay/callback/${sessionId}`;
 
     return res.status(200).json({
       reducedTx,

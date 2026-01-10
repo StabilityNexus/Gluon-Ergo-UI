@@ -13,19 +13,14 @@ interface ErgoPayQRModalProps {
 }
 
 function generateSessionId(): string {
-  const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
-  let result = "";
-  for (let i = 0; i < 6; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return result;
+  return crypto.randomUUID();
 }
 
 export function ErgoPayQRModal({ isOpen, onClose, onAddressReceived }: ErgoPayQRModalProps) {
   const [sessionId] = useState(() => generateSessionId());
   const [status, setStatus] = useState<"polling" | "success" | "failed">("polling");
   const [receivedAddress, setReceivedAddress] = useState<string>("");
-  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const pollIntervalRef = useRef<number | null>(null);
   const attemptCountRef = useRef(0);
   const POLL_INTERVAL_MS = 5000;
   const MAX_ATTEMPTS = 6; 
@@ -83,8 +78,7 @@ export function ErgoPayQRModal({ isOpen, onClose, onAddressReceived }: ErgoPayQR
 
     pollForAddress();
     
-    // Then poll every 5 seconds
-    pollIntervalRef.current = setInterval(pollForAddress, POLL_INTERVAL_MS);
+    pollIntervalRef.current = window.setInterval(pollForAddress, POLL_INTERVAL_MS);
   };
 
 
@@ -127,6 +121,15 @@ export function ErgoPayQRModal({ isOpen, onClose, onAddressReceived }: ErgoPayQR
               <div className="flex justify-center rounded-lg bg-white p-4">
                 <QRCodeSVG value={ergoPayUrl} size={256} level="M" includeMargin />
               </div>
+              <Button
+                asChild
+                variant="default"
+                className="w-full md:hidden"
+              >
+                <a href={ergoPayUrl} rel="noopener noreferrer">
+                  Open in Wallet
+                </a>
+              </Button>
               <div className="space-y-2 text-center">
                 <Loader2 className="mx-auto h-6 w-6 animate-spin text-primary" />
                 <p className="text-sm text-muted-foreground">Scan QR code with Ergo Wallet App</p>

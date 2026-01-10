@@ -103,7 +103,8 @@ const formatErgAmount = (value: number | string | BigNumber): string => {
 
 // Generate a unique session ID for ErgoPay transactions
 const generateSessionId = (): string => {
-  return Math.random().toString(36).substring(2, 10);
+  // Use cryptographically secure random UUID
+  return crypto.randomUUID();
 };
 
 export function ReactorSwap() {

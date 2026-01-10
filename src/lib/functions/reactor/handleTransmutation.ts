@@ -353,9 +353,10 @@ const validateBoxFormat = (box: any): boolean => {
   return !!(
     box &&
     typeof box.boxId === 'string' &&
-    (typeof box.value === 'number' || typeof box.value === 'bigint') &&
+    (typeof box.value === 'number' || typeof box.value === 'bigint' || typeof box.value === 'string') &&
     typeof box.ergoTree === 'string' &&
     Array.isArray(box.assets) &&
+    box.additionalRegisters &&
     typeof box.additionalRegisters === 'object'
   );
 };
@@ -471,7 +472,9 @@ export const handleTransmuteToGoldSwapErgoPay = async ({
     console.error("ErgoPay transmute to gold failed:", error);
 
     // Use the error handler for proper classification
-    const errorDetails = handleTransactionError(error, "transmute to gold");
+    // Fetch fresh boxes to avoid stale data issues
+    const oracleBoxJs = await gluonInstance.getGoldOracleBox();
+    const gluonBoxJs = await gluonInstance.getGluonBox();    const errorDetails = handleTransactionError(error, "transmute to gold", false);
 
     return { error: errorDetails.userMessage };
   }
@@ -588,7 +591,7 @@ export const handleTransmuteFromGoldSwapErgoPay = async ({
     console.error("ErgoPay transmute from gold failed:", error);
 
     // Use the error handler for proper classification
-    const errorDetails = handleTransactionError(error, "transmute from gold");
+    const errorDetails = handleTransactionError(error, "transmute from gold", false);
 
     return { error: errorDetails.userMessage };
   }

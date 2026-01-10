@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { sessionMap } from "../roundTrip/[sessionId]/[address]";
+import { getSession } from "@/lib/utils/session-manager";
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "GET") {
@@ -12,12 +12,13 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
     return res.status(400).json({ error: "Invalid sessionId" });
   }
 
-  const address = sessionMap.get(sessionId);
-
-  if (address) {
+  // Get session from centralized session manager
+  const session = getSession(sessionId);
+  
+  if (session?.address) {
     return res.status(200).json({
       message: "connected",
-      address,
+      address: session.address,
     });
   }
 

@@ -169,9 +169,10 @@ const validateBoxFormat = (box: any): boolean => {
   return !!(
     box &&
     typeof box.boxId === 'string' &&
-    (typeof box.value === 'number' || typeof box.value === 'bigint') &&
+    (typeof box.value === 'number' || typeof box.value === 'bigint' || typeof box.value === 'string') &&
     typeof box.ergoTree === 'string' &&
     Array.isArray(box.assets) &&
+    box.additionalRegisters &&
     typeof box.additionalRegisters === 'object'
   );
 };
@@ -259,7 +260,7 @@ export const handleFissionSwapErgoPay = async (
   } catch (error) {
     console.error("ErgoPay fission failed:", error);
 
-    const errorDetails = handleTransactionError(error, "fission");
+    const errorDetails = handleTransactionError(error, "fission", false);
 
     return { error: errorDetails.userMessage };
   }

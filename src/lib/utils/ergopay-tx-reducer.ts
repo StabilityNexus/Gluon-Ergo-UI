@@ -114,7 +114,7 @@ async function getErgoStateContext(explorerClient: any): Promise<any> {
   const block_headers = lib.BlockHeaders.from_json(explorerHeaders);
   
   const pre_header = lib.PreHeader.from_block_header(
-    block_headers.get(block_headers.len() - 1)
+    block_headers.get(0)
   );
 
   const parameters = lib.Parameters.default_parameters();

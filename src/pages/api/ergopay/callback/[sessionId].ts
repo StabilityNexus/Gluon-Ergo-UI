@@ -26,6 +26,11 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
       return res.status(400).json({ error: "Missing transaction ID" });
     }
 
+    if (typeof txId !== "string") {
+      console.error(` Callback received with invalid txId type for session ${sessionId}:`, typeof txId);
+      return res.status(400).json({ error: "Invalid transaction ID" });
+    }
+
     const updated = updateSessionStatus(sessionId, "submitted", txId);
 
     if (!updated) {

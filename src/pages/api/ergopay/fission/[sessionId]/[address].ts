@@ -75,10 +75,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const reducedTx = result.reducedTx;
 
-
-    const protocol = req.headers['x-forwarded-proto'] || 'https';
-    const host = req.headers.host;
-    const replyToUrl = `${protocol}://${host}/api/ergopay/callback/${sessionId}`;
+    
+    const canonicalOrigin = process.env.NODE_ENV === 'development' 
+      ? 'http://localhost:3000' //please add ip address in place of localhost
+      : 'https://gluon.gold';
+    const replyToUrl = `${canonicalOrigin}/api/ergopay/callback/${sessionId}`;
 
     return res.status(200).json({
       reducedTx,
