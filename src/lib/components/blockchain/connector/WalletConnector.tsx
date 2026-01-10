@@ -19,9 +19,12 @@ export function WalletConnector() {
   const [isOpen, setIsOpen] = useState(false);
   const [ergoAddress, setErgoAddress] = useState<string | null>(null);
   const [ergBalance, setErgoBalance] = useState<string | null>("0");
+  const [gauBalance, setGauBalance] = useState<string>("0");
+  const [gaucBalance, setGaucBalance] = useState<string>("0");
   const [connectingWallet, setConnectingWallet] = useState<string | null>(null);
   const [showErgoPayModal, setShowErgoPayModal] = useState(false);
   const [showErgoPayDrawer, setShowErgoPayDrawer] = useState(false);
+  const [showBrowserWalletDrawer, setShowBrowserWalletDrawer] = useState(false);
   const { address: ergoPayAddress, setAddress: setErgoPayAddress, clearAddress: clearErgoPayAddress, balances: ergoPayBalances, setBalances: setErgoPayBalances } = useErgoPay();
 
   console.log(ergBalance);
@@ -38,6 +41,20 @@ export function WalletConnector() {
               const balance = parseInt(ergBalance.balance) / 1000000000;
               setErgoBalance(balance.toString());
             }
+            
+            // Fetch GAU and GAUC balances
+            const gauToken = ergoTokens.find((item: any) => item.tokenId === TOKEN_ADDRESS.gau);
+            const gaucToken = ergoTokens.find((item: any) => item.tokenId === TOKEN_ADDRESS.gauc);
+            
+            if (gauToken) {
+              const balance = convertFromDecimals(gauToken.balance, gauToken.decimals ?? TOKEN_ADDRESS.decimals);
+              setGauBalance(balance.toString());
+            }
+            
+            if (gaucToken) {
+              const balance = convertFromDecimals(gaucToken.balance, gaucToken.decimals ?? TOKEN_ADDRESS.decimals);
+              setGaucBalance(balance.toString());
+            }
           } catch (error) {
             console.error("Error fetching balance:", error);
           }
@@ -48,6 +65,8 @@ export function WalletConnector() {
     } else if (!isConnected && ergoAddress) {
       setErgoAddress(null);
       setErgoBalance("0");
+      setGauBalance("0");
+      setGaucBalance("0");
     }
   }, [isConnected, ergoWallet, ergoAddress, getChangeAddress, getBalance]);
 
@@ -65,6 +84,20 @@ export function WalletConnector() {
             if (ergBalance) {
               const balance = parseInt(ergBalance.balance) / 1000000000;
               setErgoBalance(balance.toString());
+            }
+            
+            // Fetch GAU and GAUC balances
+            const gauToken = ergoTokens.find((item: any) => item.tokenId === TOKEN_ADDRESS.gau);
+            const gaucToken = ergoTokens.find((item: any) => item.tokenId === TOKEN_ADDRESS.gauc);
+            
+            if (gauToken) {
+              const balance = convertFromDecimals(gauToken.balance, gauToken.decimals ?? TOKEN_ADDRESS.decimals);
+              setGauBalance(balance.toString());
+            }
+            
+            if (gaucToken) {
+              const balance = convertFromDecimals(gaucToken.balance, gaucToken.decimals ?? TOKEN_ADDRESS.decimals);
+              setGaucBalance(balance.toString());
             }
           }
         })
@@ -99,6 +132,20 @@ export function WalletConnector() {
             setErgoBalance(balance.toString());
           }
           
+          // Fetch GAU and GAUC balances
+          const gauToken = ergoTokens.find((item: any) => item.tokenId === TOKEN_ADDRESS.gau);
+          const gaucToken = ergoTokens.find((item: any) => item.tokenId === TOKEN_ADDRESS.gauc);
+          
+          if (gauToken) {
+            const balance = convertFromDecimals(gauToken.balance, gauToken.decimals ?? TOKEN_ADDRESS.decimals);
+            setGauBalance(balance.toString());
+          }
+          
+          if (gaucToken) {
+            const balance = convertFromDecimals(gaucToken.balance, gaucToken.decimals ?? TOKEN_ADDRESS.decimals);
+            setGaucBalance(balance.toString());
+          }
+          
           localStorage.setItem("connectedWallet", walletName);
           setIsOpen(false);
         } catch (error) {
@@ -118,6 +165,9 @@ export function WalletConnector() {
     localStorage.removeItem("connectedWallet");
     setErgoAddress(null);
     setErgoBalance(null);
+    setGauBalance("0");
+    setGaucBalance("0");
+    setShowBrowserWalletDrawer(false);
   };
 
   const fetchErgoPayBalances = useCallback(async (address: string) => {
@@ -169,20 +219,72 @@ export function WalletConnector() {
 
   if (isConnected && ergoAddress) {
     return (
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="outline" className="gap-2">
-            <WalletIcon className="h-4 w-4" />
-            {`${ergoAddress.slice(0, 4)}...${ergoAddress.slice(-4)}`}
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem className="cursor-pointer gap-2" onClick={handleDisconnect}>
-            <LogOut className="h-4 w-4" />
-            Disconnect
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <>
+        <Button variant="outline" className="gap-2" onClick={() => setShowBrowserWalletDrawer(true)}>
+          <WalletIcon className="h-4 w-4" />
+          {`${ergoAddress.slice(0, 4)}...${ergoAddress.slice(-4)}`}
+        </Button>
+        <Drawer open={showBrowserWalletDrawer} onOpenChange={setShowBrowserWalletDrawer}>
+          <DrawerContent className="z-[9999]">
+            <DrawerHeader>
+              <DrawerTitle className="text-center text-xl text-primary">Browser Wallet</DrawerTitle>
+            </DrawerHeader>
+            <div className="flex w-full max-w-md flex-col gap-6 self-center p-6 pb-12">
+              <div className="space-y-2">
+                <h3 className="text-sm font-medium text-primary">Total balance</h3>
+                <div className="flex items-center justify-between rounded-lg border bg-card p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
+                      <span className="text-lg font-bold">Σ</span>
+                    </div>
+                    <span className="text-xl font-semibold">{formatBalance(ergBalance || "0")} ERG</span>
+                  </div>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-sm font-medium text-primary">Token balances</h3>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="flex items-center justify-between rounded-lg border bg-card p-3">
+                    <div className="flex items-center gap-3">
+                      <GauIcon className="h-6 w-6" />
+                      <div>
+                        <p className="text-xs text-muted-foreground">GAU</p>
+                        <p className="text-lg font-semibold">{formatBalance(gauBalance)}</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between rounded-lg border bg-card p-3">
+                    <div className="flex items-center gap-3">
+                      <GaucIcon className="h-6 w-6" />
+                      <div>
+                        <p className="text-xs text-muted-foreground">GAUC</p>
+                        <p className="text-lg font-semibold">{formatBalance(gaucBalance)}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-sm font-medium text-primary">Active address</h3>
+                <div className="group relative rounded-lg border bg-card p-4">
+                  <div className="flex items-center justify-between">
+                    <span className="font-mono text-sm break-all">
+                      {ergoAddress}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <Button
+                onClick={handleDisconnect}
+                variant="default"
+                className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
+              >
+                Disconnect wallet
+              </Button>
+            </div>
+          </DrawerContent>
+        </Drawer>
+      </>
     );
   }
 
