@@ -103,7 +103,7 @@ export function VolumeChart({ isLoading: externalLoading = false, hasError: exte
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5, duration: 0.4 }}>
-      <Card className="border-border bg-card p-6">
+      <Card className="border-border bg-card p-6 mt-8">
         <div className="mb-4 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <BarChart2 className="h-5 w-5 text-primary" />

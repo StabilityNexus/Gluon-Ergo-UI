@@ -1138,14 +1138,14 @@ export function ReactorSwap() {
         transition={{ duration: 0.3, ease: "easeInOut" }}
       >
         <motion.div className="grid grid-cols-1 gap-3 px-4" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.2 }}>
-          {/* GAU Box with yellow/gold background */}
+          {/* GAU Box */}
           <div>
-            <span className="mb-1.5 block px-1 text-xs text-muted-foreground">Balance: {formatTokenAmount(tokens.find((t) => t.symbol === "GAU")?.balance || "0")}</span>
+            <span className="mb-1.5 block px-1 text-xs text-muted-foreground">GAU Balance: {formatTokenAmount(tokens.find((t) => t.symbol === "GAU")?.balance || "0")}</span>
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.2, duration: 0.2 }}
-              className="flex items-center justify-between gap-3 rounded-lg bg-gradient-to-r from-yellow-600/80 to-yellow-700/80 p-4 dark:from-yellow-600/70 dark:to-yellow-700/70"
+              className="flex items-center gap-3 rounded-lg border border-border/50 p-4"
               whileHover={{ scale: 1.01 }}
             >
               <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center">
@@ -1154,7 +1154,7 @@ export function ReactorSwap() {
               <AnimatePresence mode="wait">
                 <motion.span
                   key={`gau-${gauAmount}`}
-                  className="flex-1 text-xl font-bold text-white sm:text-2xl"
+                  className="flex-1 text-xl font-bold sm:text-2xl"
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.8 }}
@@ -1163,24 +1163,17 @@ export function ReactorSwap() {
                   {formatTokenAmount(gauAmount)}
                 </motion.span>
               </AnimatePresence>
-              <motion.div
-                className="flex items-center gap-1.5 rounded-md bg-yellow-800/60 px-3 py-1.5 text-sm font-bold text-white dark:bg-yellow-900/60"
-                whileHover={{ scale: 1.05 }}
-                transition={{ duration: 0.1 }}
-              >
-                GAU
-              </motion.div>
             </motion.div>
           </div>
 
-          {/* GAUC Box with red background */}
+          {/* GAUC Box */}
           <div>
-            <span className="mb-1.5 block px-1 text-xs text-muted-foreground">Balance: {formatTokenAmount(tokens.find((t) => t.symbol === "GAUC")?.balance || "0")}</span>
+            <span className="mb-1.5 block px-1 text-xs text-muted-foreground">GAUC Balance: {formatTokenAmount(tokens.find((t) => t.symbol === "GAUC")?.balance || "0")}</span>
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.25, duration: 0.2 }}
-              className="flex items-center justify-between gap-3 rounded-lg bg-gradient-to-r from-red-600/80 to-red-700/80 p-4 dark:from-red-600/70 dark:to-red-700/70"
+              className="flex items-center gap-3 rounded-lg border border-border/50 p-4"
               whileHover={{ scale: 1.01 }}
             >
               <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center">
@@ -1189,7 +1182,7 @@ export function ReactorSwap() {
               <AnimatePresence mode="wait">
                 <motion.span
                   key={`gauc-${gaucAmount}`}
-                  className="flex-1 text-xl font-bold text-white sm:text-2xl"
+                  className="flex-1 text-xl font-bold sm:text-2xl"
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.8 }}
@@ -1198,13 +1191,6 @@ export function ReactorSwap() {
                   {formatTokenAmount(gaucAmount)}
                 </motion.span>
               </AnimatePresence>
-              <motion.div
-                className="flex items-center gap-1.5 rounded-md bg-red-800/60 px-3 py-1.5 text-sm font-bold text-white dark:bg-red-900/60"
-                whileHover={{ scale: 1.05 }}
-                transition={{ duration: 0.1 }}
-              >
-                GAUC
-              </motion.div>
             </motion.div>
           </div>
         </motion.div>
