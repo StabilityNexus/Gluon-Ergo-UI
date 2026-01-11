@@ -80,7 +80,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(200).json({
       reducedTx,
       address,
-      message: `Fusion: GAU + GAUC → ${session.toAmount} ERG`,
+      message: "Fusion",
       messageSeverity: "INFORMATION",
       replyTo: replyToUrl,
     });

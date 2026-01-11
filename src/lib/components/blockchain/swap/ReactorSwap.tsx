@@ -560,8 +560,62 @@ export function ReactorSwap() {
       } catch (error) {
         console.error("Error fetching balances:", error);
       }
+    } else if (isErgoPayConnectionOnly) {
+      // Handle ErgoPay balances
+      try {
+        let updatedTokens = [...tokens].map((token) => {
+          const defaultToken = defaultTokens.find((dt) => dt.symbol === token.symbol);
+          return { ...token, ...defaultToken };
+        });
+
+        // Update ERG balance
+        updatedTokens = updatedTokens.map((token) => 
+          token.symbol === "ERG" ? { ...token, balance: ergoPayBalances.erg || "0" } : token
+        );
+
+        // Update GAU balance
+        updatedTokens = updatedTokens.map((token) => 
+          token.symbol === "GAU" ? { ...token, balance: ergoPayBalances.gau || "0" } : token
+        );
+
+        // Update GAUC balance
+        updatedTokens = updatedTokens.map((token) => 
+          token.symbol === "GAUC" ? { ...token, balance: ergoPayBalances.gauc || "0" } : token
+        );
+
+        // Update GAU-GAUC pair balance
+        const gauBalanceNum = parseFloat(ergoPayBalances.gau || "0");
+        const gaucBalanceNum = parseFloat(ergoPayBalances.gauc || "0");
+        const pairBalanceVal = Math.min(
+          Number.isNaN(gauBalanceNum) ? 0 : gauBalanceNum, 
+          Number.isNaN(gaucBalanceNum) ? 0 : gaucBalanceNum
+        );
+        const pairBalance = formatTokenAmount(pairBalanceVal.toString());
+        updatedTokens = updatedTokens.map((t) => (t.symbol === "GAU-GAUC" ? { ...t, balance: pairBalance } : t));
+
+        setTokens(updatedTokens);
+
+        // Update current tokens while preserving their selection
+        const currentFromTokenInUpdated = updatedTokens.find((t) => t.symbol === fromToken.symbol);
+        const currentToTokenInUpdated = updatedTokens.find((t) => t.symbol === toToken.symbol);
+
+        if (currentFromTokenInUpdated) {
+          setFromToken((prev) => ({
+            ...prev,
+            balance: currentFromTokenInUpdated.balance,
+          }));
+        }
+        if (currentToTokenInUpdated) {
+          setToToken((prev) => ({
+            ...prev,
+            balance: currentToTokenInUpdated.balance,
+          }));
+        }
+      } catch (error) {
+        console.error("Error updating ErgoPay balances:", error);
+      }
     }
-  }, [isConnected, getBalance, balanceUpdateTrigger, fromToken, toToken]);
+  }, [isConnected, isErgoPayConnectionOnly, ergoPayBalances, getBalance, balanceUpdateTrigger, fromToken, toToken, tokens]);
 
   useEffect(() => {
     updateBalancesRef.current = updateBalances;
@@ -571,7 +625,7 @@ export function ReactorSwap() {
     updateBalancesRef.current();
     const pollingInterval = setInterval(() => updateBalancesRef.current(), 30000);
     return () => clearInterval(pollingInterval);
-  }, [isConnected, getBalance, balanceUpdateTrigger]);
+  }, [isConnected, isErgoPayConnectionOnly, ergoPayBalances, getBalance, balanceUpdateTrigger]);
 
   // Initialize transaction listener and check for pending transactions
   useEffect(() => {

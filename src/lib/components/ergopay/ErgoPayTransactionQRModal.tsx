@@ -165,7 +165,6 @@ export function ErgoPayTransactionQRModal({
               <div className="space-y-2 text-center">
                 <Loader2 className="mx-auto h-6 w-6 animate-spin text-primary" />
                 <p className="text-sm text-muted-foreground">Scan QR code with Ergo Wallet App</p>
-                <p className="text-xs text-muted-foreground">Session ID: {sessionId}</p>
                 <p className="text-xs text-muted-foreground">
                   The wallet will check your balance and return the transaction
                 </p>

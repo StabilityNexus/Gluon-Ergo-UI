@@ -382,13 +382,13 @@ export function WalletConnector() {
                 Ergo Pay
               </TabsTrigger>
             </TabsList>
-            <TabsContent value="browser">
+            <TabsContent value="browser" className="min-h-[240px]">
               {!isInitialized ? (
-                <div className="flex flex-col items-center justify-center gap-2 p-4 text-muted-foreground">
+                <div className="flex flex-col items-center justify-center gap-2 p-4 text-muted-foreground min-h-[240px]">
                   <p className="w-60 text-center">Loading wallets...</p>
                 </div>
               ) : walletList.length === 0 ? (
-                <div className="flex flex-col items-center justify-center gap-2 p-4 text-muted-foreground">
+                <div className="flex flex-col items-center justify-center gap-2 p-4 text-muted-foreground min-h-[240px]">
                   <p className="w-60 text-center">No Ergo wallets installed, learn how to setup your Nautilus Wallet</p>
 
                   <Button
@@ -400,7 +400,7 @@ export function WalletConnector() {
                   </Button>
                 </div>
               ) : (
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-2 min-h-[240px] py-4">
                   {walletList.map((wallet) => (
                     <Button
                       key={wallet.connectName}
@@ -425,8 +425,8 @@ export function WalletConnector() {
                 </div>
               )}
             </TabsContent>
-            <TabsContent value="ergopay">
-              <div className="p-4">
+            <TabsContent value="ergopay" className="min-h-[240px]">
+              <div className="flex flex-col justify-center p-4 min-h-[240px]">
                 <Button
                   onClick={() => {
                     setShowErgoPayModal(true);

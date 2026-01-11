@@ -84,7 +84,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(200).json({
       reducedTx,
       address,
-      message: `Fission: ${session.fromAmount} ERG → ${session.gauAmount} GAU + ${session.gaucAmount} GAUC`,
+      message: "Fission",
       messageSeverity: "INFORMATION",
       replyTo: replyToUrl,
     });

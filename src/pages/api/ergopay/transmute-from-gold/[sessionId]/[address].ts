@@ -80,7 +80,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(200).json({
       reducedTx,
       address,
-      message: `Transmutation: ${session.fromAmount} GAU → ${session.toAmount} GAUC`,
+      message: "Transmutation",
       messageSeverity: "INFORMATION",
       replyTo: replyToUrl,
     });
