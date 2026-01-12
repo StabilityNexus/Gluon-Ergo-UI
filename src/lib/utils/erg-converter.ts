@@ -134,10 +134,10 @@ export const nanoErgsToErgs = (nanoErgs: number | bigint | string): BigNumber =>
   return new BigNumber(nanoErgs.toString()).dividedBy(new BigNumber(10).pow(9));
 };
 
-export const ergsToNanoErgs = (ergs: number | string): bigint => {
+export const ergsToNanoErgs = (ergs: number | string): string => {
   const bn = new BigNumber(ergs.toString());
   const multiplied = bn.times(new BigNumber(10).pow(9));
-  return BigInt(multiplied.integerValue(BigNumber.ROUND_DOWN).toString());
+  return multiplied.integerValue(BigNumber.ROUND_DOWN).toString();
 };
 
 export const UIFriendlyValue = (input: number | bigint | string, divisor?: number): BigNumber => {
