@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { ErgoProvider } from "./ErgoProvider";
 import { ThemeProvider } from "./theme-provider";
+import { ErgoPayProvider } from "./ErgoPayProvider";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = useState(false);
@@ -17,7 +18,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-      <ErgoProvider>{children}</ErgoProvider>
+      <ErgoPayProvider>
+        <ErgoProvider>{children}</ErgoProvider>
+      </ErgoPayProvider>
     </ThemeProvider>
   );
 }
