@@ -426,7 +426,7 @@ export function WalletConnector() {
               )}
             </TabsContent>
             <TabsContent value="ergopay" className="min-h-[240px]">
-              <div className="flex flex-col justify-center p-4 min-h-[240px]">
+              <div className="flex flex-col justify-start p-4 min-h-[240px]">
                 <Button
                   onClick={() => {
                     setShowErgoPayModal(true);
