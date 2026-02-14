@@ -1,9 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
+import { protocolConfig } from "@/lib/config/protocol";
 
 function HeroText() {
   const [titleNumber, setTitleNumber] = useState(0);
-  const titles = useMemo(() => ["Decentralized", "Autonomous", "Permissionless", "Transparent", "Fully Crypto Backed", "Gold-Pegged"], []);
+  const titles = useMemo(
+    () => ["Decentralized", "Autonomous", "Permissionless", "Transparent", "Fully Crypto Backed", protocolConfig.peg.adjective],
+    []
+  );
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {

@@ -31,14 +31,14 @@ export const calculateTransmutationAmounts = async ({
     });
 
     if (numValue <= 0) {
-      return {
-        error: "Amount must be greater than zero.",
-        resetValues: {
-          gauAmount: "0",
-          gaucAmount: "0",
-          toAmount: "0",
-        },
-      };
+    return {
+      error: "Amount must be greater than zero.",
+      resetValues: {
+        neutronAmount: "0",
+        protonAmount: "0",
+        toAmount: "0",
+      },
+    };
     }
 
     // Convert input amount to blockchain decimals
@@ -103,8 +103,8 @@ export const calculateTransmutationAmounts = async ({
     const receiptDetails: ReceiptDetails = {
       inputAmount: numValue,
       outputAmount: {
-        gau: fromTokenSymbol === "GAUC" ? parseFloat(formattedOutput.display) : numValue,
-        gauc: fromTokenSymbol === "GAU" ? parseFloat(formattedOutput.display) : numValue,
+        neutron: fromTokenSymbol === "GAUC" ? parseFloat(formattedOutput.display) : numValue,
+        proton: fromTokenSymbol === "GAU" ? parseFloat(formattedOutput.display) : numValue,
         erg: 0,
       },
       fees: {
@@ -117,15 +117,15 @@ export const calculateTransmutationAmounts = async ({
     };
 
     console.log("🔍 [DEBUG] FINAL OUTPUT", {
-      gauAmount: fromTokenSymbol === "GAUC" ? formattedOutput.display : value,
-      gaucAmount: fromTokenSymbol === "GAU" ? formattedOutput.display : value,
+      neutronAmount: fromTokenSymbol === "GAUC" ? formattedOutput.display : value,
+      protonAmount: fromTokenSymbol === "GAU" ? formattedOutput.display : value,
       toAmount: formattedOutput.display,
       receiptDetails,
     });
 
     return {
-      gauAmount: fromTokenSymbol === "GAUC" ? formattedOutput.display : value,
-      gaucAmount: fromTokenSymbol === "GAU" ? formattedOutput.display : value,
+      neutronAmount: fromTokenSymbol === "GAUC" ? formattedOutput.display : value,
+      protonAmount: fromTokenSymbol === "GAU" ? formattedOutput.display : value,
       toAmount: formattedOutput.display,
       receiptDetails,
       maxErgOutput: "0", // Transmutation doesn't involve ERG, so this is always 0
@@ -139,8 +139,8 @@ export const calculateTransmutationAmounts = async ({
     return {
       error: errorDetails.userMessage,
       resetValues: {
-        gauAmount: "0",
-        gaucAmount: "0",
+        neutronAmount: "0",
+        protonAmount: "0",
         toAmount: "0",
       },
     };

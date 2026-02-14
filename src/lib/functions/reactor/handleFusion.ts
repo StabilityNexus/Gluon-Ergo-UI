@@ -7,28 +7,22 @@ interface FusionParams {
   gluonInstance: any;
   gluonBox: any;
   value: string;
-  gauBalance: string;
-  gaucBalance: string;
+  neutronBalance: string;
+  protonBalance: string;
 }
 
 /**
- * Calculate the maximum possible ERG output based on available GAU/GAUC balances
+ * Calculate the maximum possible ERG output based on available neutron/proton balances
  */
-const calculateMaxErgOutput = async (gluonInstance: any, gluonBox: any, gauBalance: string, gaucBalance: string): Promise<BigNumber> => {
+const calculateMaxErgOutput = async (gluonInstance: any, gluonBox: any, neutronBalance: string, protonBalance: string): Promise<BigNumber> => {
   try {
     // Convert our balances to blockchain decimals (these are BigInts)
-    const gauAmount = BigInt(convertToDecimals(gauBalance));
-    const gaucAmount = BigInt(convertToDecimals(gaucBalance));
+    const neutronAmount = BigInt(convertToDecimals(neutronBalance));
+    const protonAmount = BigInt(convertToDecimals(protonBalance));
 
     console.log("Input Validation:", {
-      displayValues: {
-        gau: gauBalance,
-        gauc: gaucBalance,
-      },
-      nanoValues: {
-        gauNano: gauAmount.toString(),
-        gaucNano: gaucAmount.toString(),
-      },
+      displayValues: { neutron: neutronBalance, proton: protonBalance },
+      nanoValues: { neutronNano: neutronAmount.toString(), protonNano: protonAmount.toString() },
     });
 
     // Get token ratio for 1 ERG
@@ -42,9 +36,9 @@ const calculateMaxErgOutput = async (gluonInstance: any, gluonBox: any, gauBalan
 
     // Calculate maximum ERG we can get based on our token ratios
     // All calculations done in BigInt
-    const maxFromGau = (gauAmount * oneErg) / neutronsNeeded;
-    const maxFromGauc = (gaucAmount * oneErg) / protonsNeeded;
-    const maxPossibleNanoErgs = maxFromGau < maxFromGauc ? maxFromGau : maxFromGauc;
+    const maxFromNeutron = (neutronAmount * oneErg) / neutronsNeeded;
+    const maxFromProton = (protonAmount * oneErg) / protonsNeeded;
+    const maxPossibleNanoErgs = maxFromNeutron < maxFromProton ? maxFromNeutron : maxFromProton;
 
     console.log("Max ERG Calculation:", {
       maxErg: new BigNumber(maxPossibleNanoErgs.toString()).dividedBy(1e9).toFixed(),
@@ -59,12 +53,12 @@ const calculateMaxErgOutput = async (gluonInstance: any, gluonBox: any, gauBalan
 };
 
 /**
- * Calculate the amounts of GAU and GAUC needed for fusion to get the desired ERG amount
+ * Calculate the amounts of neutron and proton tokens needed for fusion to get the desired ERG amount
  */
-export const calculateFusionAmounts = async ({ gluonInstance, gluonBox, value, gauBalance, gaucBalance }: FusionParams): Promise<SwapResult | SwapError> => {
+export const calculateFusionAmounts = async ({ gluonInstance, gluonBox, value, neutronBalance, protonBalance }: FusionParams): Promise<SwapResult | SwapError> => {
   try {
     // Get maximum possible ERG output
-    const maxNanoErgs = await calculateMaxErgOutput(gluonInstance, gluonBox, gauBalance, gaucBalance);
+    const maxNanoErgs = await calculateMaxErgOutput(gluonInstance, gluonBox, neutronBalance, protonBalance);
     // Use BigNumber to preserve precision instead of converting to Number
     const maxErgStr = maxNanoErgs.dividedBy(1e9).toFixed();
 
@@ -75,17 +69,17 @@ export const calculateFusionAmounts = async ({ gluonInstance, gluonBox, value, g
     const { neutrons, protons } = await gluonInstance.fusionWillNeed(gluonBox, Number(desiredNanoErgs));
 
     // Convert to display values
-    const requiredGau = convertFromDecimals(BigInt(neutrons)).toString();
-    const requiredGauc = convertFromDecimals(BigInt(protons)).toString();
+    const requiredNeutron = convertFromDecimals(BigInt(neutrons)).toString();
+    const requiredProton = convertFromDecimals(BigInt(protons)).toString();
 
     // Get fee prediction (using Number since the SDK expects it)
     const fees = await gluonInstance.getTotalFeeAmountFusion(gluonBox, Number(desiredNanoErgs));
 
     const receiptDetails: ReceiptDetails = {
-      inputAmount: parseFloat(requiredGau),
+      inputAmount: parseFloat(requiredNeutron),
       outputAmount: {
-        gau: parseFloat(requiredGau),
-        gauc: parseFloat(requiredGauc),
+        neutron: parseFloat(requiredNeutron),
+        proton: parseFloat(requiredProton),
         erg: parseFloat(value),
       },
       fees: {
@@ -99,8 +93,8 @@ export const calculateFusionAmounts = async ({ gluonInstance, gluonBox, value, g
     };
 
     return {
-      gauAmount: requiredGau,
-      gaucAmount: requiredGauc,
+      neutronAmount: requiredNeutron,
+      protonAmount: requiredProton,
       toAmount: value,
       maxErgOutput: maxErgStr,
       receiptDetails,
@@ -114,8 +108,8 @@ export const calculateFusionAmounts = async ({ gluonInstance, gluonBox, value, g
     return {
       error: errorDetails.userMessage,
       resetValues: {
-        gauAmount: "0",
-        gaucAmount: "0",
+        neutronAmount: "0",
+        protonAmount: "0",
         toAmount: "0",
       },
     };

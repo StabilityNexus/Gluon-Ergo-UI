@@ -2,6 +2,7 @@ import { Button } from "@/lib/components/ui/button";
 import { useRouter } from "next/navigation";
 import { HeroText } from "../../ui/hero-text";
 import { motion } from "framer-motion";
+import { protocolConfig } from "@/lib/config/protocol";
 
 export default function Hero() {
   const router = useRouter();
@@ -21,8 +22,9 @@ export default function Hero() {
 
             <motion.div className="mx-auto mt-5 max-w-3xl" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4, duration: 0.6 }}>
               <p className="text-xl text-muted-foreground">
-                Trade and transact with digital gold-pegged tokens. <br />
-                Secured by the Ergo blockchain and its decentralized gold price oracle.
+                {protocolConfig.ui.hero.tagline}
+                <br />
+                {protocolConfig.ui.hero.subTagline}
               </p>
             </motion.div>
 

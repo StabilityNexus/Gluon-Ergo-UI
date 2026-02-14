@@ -1,4 +1,5 @@
 import Head from "next/head";
+import { protocolConfig } from "@/lib/config/protocol";
 
 interface SEOProps {
   title?: string;
@@ -10,11 +11,12 @@ interface SEOProps {
 }
 
 export function SEO({
-  title = "Gluon Gold | Gold-Pegged Stablecoin on the Ergo Blockchain",
-  description = "Gluon Gold on Ergo is a fully autonomous stablecoin based on the novel Gluon Stablecoin Protocol, pegged to Gold, backed by the ERG cryptocurrency and running in a fully decentralized manner on the Ergo blockchain. Mint, swap and trade gold-pegged stable tokens or leveraged yield tokens according to your stability or volatility needs.",
-  keywords = "Blockchain, Cryptocurrency, Stablecoin, DeFi, Decentralized Finance, Digital Assets, Tokens, Gold, Gluon, Stability, GAU, CAUC, Gold-Pegged Stablecoin, Gold-Pegged Token, Crypto-Backed Stablecoin",
-  image = "/logo/gluon.png",
-  url = "https://www.gluon.gold/",
+  title = protocolConfig.seo.defaultTitle,
+  description = protocolConfig.seo.defaultDescription,
+  keywords = protocolConfig.seo.defaultKeywords,
+  image = protocolConfig.seo.defaultImage,
+  url = protocolConfig.seo.defaultUrl,
+
   type = "website",
 }: SEOProps) {
   const siteTitle = title.includes("Gluon") ? title : `${title} | Gluon`;
