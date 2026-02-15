@@ -1,7 +1,13 @@
 import BigNumber from "bignumber.js";
 
-export type TokenSymbol = "ERG" | "GAU" | "GAUC" | "GAU-GAUC";
-export type SwapAction = "erg-to-gau-gauc" | "gau-gauc-to-erg" | "gauc-to-gau" | "gau-to-gauc";
+// Token symbols - using generic names (Neutron/Proton)
+// These map to the config values but are kept as string literals for type safety
+export type TokenSymbol = "ERG" | "NEUTRON" | "PROTON" | "NEUTRON-PROTON";
+// Legacy type aliases for backward compatibility during migration
+export type LegacyTokenSymbol = "ERG" | "GAU" | "GAUC" | "GAU-GAUC";
+export type SwapAction = "erg-to-pair" | "pair-to-erg" | "volatile-to-stable" | "stable-to-volatile";
+// Legacy swap action types for backward compatibility
+export type LegacySwapAction = "erg-to-gau-gauc" | "gau-gauc-to-erg" | "gauc-to-gau" | "gau-to-gauc";
 
 export interface Token {
   symbol: TokenSymbol;
@@ -20,9 +26,12 @@ export interface TokenPair {
 export interface ReceiptDetails {
   inputAmount: number | BigNumber;
   outputAmount: {
+    stableAsset: number | BigNumber;
+    volatileAsset: number | BigNumber;
+    erg: number | BigNumber;
+    // Legacy fields for backward compatibility
     gau: number | BigNumber;
     gauc: number | BigNumber;
-    erg: number | BigNumber;
   };
   fees: {
     devFee: number | BigNumber;
@@ -46,18 +55,24 @@ export interface GluonBoxes {
 }
 
 export interface SwapResult {
-  gauAmount: string;
-  gaucAmount: string;
+  stableAssetAmount: string;
+  volatileAssetAmount: string;
   toAmount: string;
   maxErgOutput: string;
   receiptDetails: ReceiptDetails;
+  // Legacy fields for backward compatibility
+  gauAmount: string;
+  gaucAmount: string;
 }
 
 export interface SwapError {
   error: string;
   resetValues?: {
+    stableAssetAmount?: string;
+    volatileAssetAmount?: string;
+    toAmount?: string;
+    // Legacy fields for backward compatibility
     gauAmount?: string;
     gaucAmount?: string;
-    toAmount?: string;
   };
 }

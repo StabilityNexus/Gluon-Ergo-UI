@@ -2,6 +2,7 @@ import { GluonStats } from "@/lib/components/blocks/dashboard/GluonStats";
 import PageLayout from "../layout";
 import { MyStats } from "@/lib/components/blocks/dashboard/MyStats";
 import { SEO } from "@/lib/components/layout/SEO";
+import { tokenConfig } from "@/config/tokenConfig";
 import { motion } from "framer-motion";
 import { VolumeChart } from "@/lib/components/blocks/dashboard/VolumeChart";
 
@@ -11,7 +12,7 @@ export default function ReactorDashboard() {
       <SEO
         title="Reactor Dashboard"
         description="Monitor your Gluon portfolio, track token prices, and analyze market statistics in real-time with our comprehensive DeFi dashboard."
-        keywords="Gluon Dashboard, DeFi Stats, GAU Price, GAUC Price, Gold Price, Portfolio Tracker, Ergo DeFi"
+        keywords={`Gluon Dashboard, DeFi Stats, ${tokenConfig.stableAsset.symbol} Price, ${tokenConfig.volatileAsset.symbol} Price, ${tokenConfig.peg.type} Price, Portfolio Tracker, Ergo DeFi`}
       />
       <PageLayout>
         <motion.div

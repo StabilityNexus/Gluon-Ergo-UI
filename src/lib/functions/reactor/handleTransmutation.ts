@@ -2,6 +2,7 @@ import { SwapResult, SwapError, ReceiptDetails, TokenSymbol } from "./types";
 import { convertFromDecimals, nanoErgsToErgs, convertToDecimals } from "@/lib/utils/erg-converter";
 import { formatMicroNumber } from "@/lib/utils/erg-converter";
 import { handleTransactionError, handleTransactionSuccess, handleCalculationError } from "@/lib/utils/error-handler";
+import { tokenConfig } from "@/config/tokenConfig";
 import BigNumber from "bignumber.js";
 
 interface TransmutationParams {
@@ -34,9 +35,12 @@ export const calculateTransmutationAmounts = async ({
       return {
         error: "Amount must be greater than zero.",
         resetValues: {
+          stableAssetAmount: "0",
+          volatileAssetAmount: "0",
+          toAmount: "0",
+          // Legacy fields for backward compatibility
           gauAmount: "0",
           gaucAmount: "0",
-          toAmount: "0",
         },
       };
     }
@@ -58,9 +62,12 @@ export const calculateTransmutationAmounts = async ({
     }
 
     // Get prediction with proper error handling
+    // Note: SDK methods still use "Gold" naming, but we map from generic token symbols
+    const volatileSymbol = tokenConfig.volatileAsset.symbol;
+    const stableSymbol = tokenConfig.stableAsset.symbol;
     let willGet: bigint;
     try {
-      if (fromTokenSymbol === "GAUC") {
+      if (fromTokenSymbol === volatileSymbol || fromTokenSymbol === "GAUC") {
         willGet = BigInt(await gluonInstance.transmuteToGoldWillGet(gluonBox, oracleBox, Number(inputAmount), height));
       } else {
         willGet = BigInt(await gluonInstance.transmuteFromGoldWillGet(gluonBox, oracleBox, Number(inputAmount), height));
@@ -89,10 +96,11 @@ export const calculateTransmutationAmounts = async ({
     });
 
     // Get fee prediction with proper error handling
+    // Note: SDK methods still use "Gold" naming
     let fees;
     try {
       fees =
-        fromTokenSymbol === "GAUC"
+        fromTokenSymbol === volatileSymbol || fromTokenSymbol === "GAUC"
           ? await gluonInstance.getTotalFeeAmountTransmuteToGold(gluonBox, oracleBox, Number(inputAmount))
           : await gluonInstance.getTotalFeeAmountTransmuteFromGold(gluonBox, oracleBox, Number(inputAmount));
     } catch (error) {
@@ -100,12 +108,17 @@ export const calculateTransmutationAmounts = async ({
       throw new Error("Failed to calculate transmutation fees");
     }
 
+    const isFromVolatile = fromTokenSymbol === volatileSymbol || fromTokenSymbol === "GAUC";
+    
     const receiptDetails: ReceiptDetails = {
       inputAmount: numValue,
       outputAmount: {
-        gau: fromTokenSymbol === "GAUC" ? parseFloat(formattedOutput.display) : numValue,
-        gauc: fromTokenSymbol === "GAU" ? parseFloat(formattedOutput.display) : numValue,
+        stableAsset: isFromVolatile ? parseFloat(formattedOutput.display) : numValue,
+        volatileAsset: isFromVolatile ? numValue : parseFloat(formattedOutput.display),
         erg: 0,
+        // Legacy fields for backward compatibility
+        gau: isFromVolatile ? parseFloat(formattedOutput.display) : numValue,
+        gauc: isFromVolatile ? numValue : parseFloat(formattedOutput.display),
       },
       fees: {
         devFee: nanoErgsToErgs(fees.devFee),
@@ -117,18 +130,21 @@ export const calculateTransmutationAmounts = async ({
     };
 
     console.log("🔍 [DEBUG] FINAL OUTPUT", {
-      gauAmount: fromTokenSymbol === "GAUC" ? formattedOutput.display : value,
-      gaucAmount: fromTokenSymbol === "GAU" ? formattedOutput.display : value,
+      stableAssetAmount: isFromVolatile ? formattedOutput.display : value,
+      volatileAssetAmount: isFromVolatile ? value : formattedOutput.display,
       toAmount: formattedOutput.display,
       receiptDetails,
     });
 
     return {
-      gauAmount: fromTokenSymbol === "GAUC" ? formattedOutput.display : value,
-      gaucAmount: fromTokenSymbol === "GAU" ? formattedOutput.display : value,
+      stableAssetAmount: isFromVolatile ? formattedOutput.display : value,
+      volatileAssetAmount: isFromVolatile ? value : formattedOutput.display,
       toAmount: formattedOutput.display,
       receiptDetails,
       maxErgOutput: "0", // Transmutation doesn't involve ERG, so this is always 0
+      // Legacy fields for backward compatibility
+      gauAmount: isFromVolatile ? formattedOutput.display : value,
+      gaucAmount: isFromVolatile ? value : formattedOutput.display,
     };
   } catch (error) {
     console.error("Error calculating transmutation amounts:", error);
@@ -139,9 +155,12 @@ export const calculateTransmutationAmounts = async ({
     return {
       error: errorDetails.userMessage,
       resetValues: {
+        stableAssetAmount: "0",
+        volatileAssetAmount: "0",
+        toAmount: "0",
+        // Legacy fields for backward compatibility
         gauAmount: "0",
         gaucAmount: "0",
-        toAmount: "0",
       },
     };
   }
