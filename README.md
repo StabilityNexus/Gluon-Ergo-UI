@@ -95,6 +95,57 @@ You will have access to the core component file, which means you can edit the wh
 
 > ⚠️ **Note:** Avoid reinstalling existing components when prompted, as this will reset any custom styling in the component files.
 
+## 🧪 Testing
+
+The project includes a comprehensive test suite using Bun's native test runner for utility functions and business logic.
+
+### Running Tests
+
+```bash
+# Run all tests
+bun test
+
+# Run tests in watch mode
+bun test --watch
+
+# Run specific test file
+bun test tests/lib/utils/erg-converter.test.ts
+
+# Run with coverage
+bun test --coverage
+```
+
+### Test Coverage
+
+**Current Status**: ✅ 168/168 tests passing (100% success rate)
+
+- **Utility Functions** (`src/lib/utils`):
+  - `utils.ts` - className merging (8 tests)
+  - `erg-converter.ts` - ERG conversion & formatting (60 tests)
+  - `error-handler.ts` - Error classification (36 tests)
+  - `node-service.ts` - Blockchain API service (15 tests)
+  - `transaction-listener.ts` - Transaction monitoring (12 tests)
+
+- **Business Logic** (`src/lib/functions/reactor`):
+  - `utils.ts` - Token validation & swap actions (37 tests)
+
+### Writing Tests
+
+Test files are located in the `/tests` directory, mirroring the source structure. See [tests/README.md](tests/README.md) for detailed documentation on:
+- Test structure and patterns
+- Writing new tests
+- Mocking strategies
+- Best practices
+
+### What's Not Tested Yet
+
+- React components (UI, layout, blockchain components)
+- User interaction flows
+- Integration tests
+- Visual regression tests
+
+Contributions for component tests are welcome!
+
 ## 📁 Folder Structure
 
 The project follows a modular approach. Components or functions that will be used multiple times should be designed to accept various props or be moved to separate files.
@@ -102,24 +153,34 @@ The project follows a modular approach. Components or functions that will be use
 ### Directory Overview
 
 ```
-src/
-├── lib/
-│   ├── components/          # All React components
-│   │   ├── ui/             # Shadcn UI components
-│   │   ├── blocks/         # Page-specific sections (dashboard, home)
-│   │   ├── layout/         # Layout components (navbar, sidebar, SEO)
-│   │   ├── blockchain/     # Wallet and protocol integrations
-│   │   └── icons/          # Custom icon components
-│   ├── constants/          # Application constants and addresses
-│   ├── functions/          # Business logic and protocol functions
-│   ├── hooks/              # Custom React hooks
-│   ├── providers/          # Context providers (Ergo, theme)
-│   ├── services/           # External service integrations
-│   ├── stores/             # State management (Zustand)
-│   ├── types/              # TypeScript type definitions
-│   └── utils/              # Utility functions and helpers
-├── pages/                  # Next.js pages and API routes
-└── styles/                 # Global styles and CSS
+
+├── public/                 # Static assets (images, logos, fonts)
+├── src/
+│   ├── lib/
+│   │   ├── components/    # All React components
+│   │   │   ├── ui/       # Shadcn UI components
+│   │   │   ├── blocks/   # Page-specific sections (dashboard, home)
+│   │   │   ├── layout/   # Layout components (navbar, sidebar, SEO)
+│   │   │   ├── blockchain/ # Wallet and protocol integrations
+│   │   │   ├── icons/    # Custom icon components
+│   │   │   └── toggle/   # Theme toggle components
+│   │   ├── constants/    # Application constants and token addresses
+│   │   ├── functions/    # Business logic and protocol functions
+│   │   │   └── reactor/  # Reactor swap logic (fission, fusion, transmutation)
+│   │   ├── providers/    # Context providers (Ergo, theme)
+│   │   └── utils/        # Utility functions and helpers
+│   ├── pages/            # Next.js pages and API routes
+│   │   ├── _app.tsx     # App wrapper with providers
+│   │   ├── _document.tsx # HTML document structure
+│   │   ├── index.tsx    # Home page
+│   │   └── dashboard.tsx # Dashboard page
+│   └── styles/           # Global styles and CSS
+└── tests/                # Test files (mirrors src structure)
+    ├── setup.ts         # Global test configuration & mocks
+    └── lib/
+        ├── utils/       # Utility function tests (168 tests)
+        └── functions/   # Business logic tests
+            └── reactor/ # Reactor function tests
 ```
 
 ### Component Organization Guidelines
