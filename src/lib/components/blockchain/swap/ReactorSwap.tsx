@@ -17,9 +17,9 @@ import { createTransactionListener, type WalletState, type ExpectedChanges } fro
 import BigNumber from "bignumber.js";
 import { Token, TokenSymbol, ReceiptDetails } from "@/lib/functions/reactor/types";
 import { defaultTokens, getValidToTokens, getActionType, getDescription, getTitle, formatValue } from "@/lib/functions/reactor/utils";
-import { calculateFissionAmounts, handleFissionSwap } from "@/lib/functions/reactor/handleFission";
-import { calculateFusionAmounts, handleFusionSwap } from "@/lib/functions/reactor/handleFusion";
-import { calculateTransmutationAmounts, handleTransmuteToGoldSwap, handleTransmuteFromGoldSwap } from "@/lib/functions/reactor/handleTransmutation";
+import { calculateFissionAmounts, handleFissionSwap, handleFissionSwapErgoPay } from "@/lib/functions/reactor/handleFission";
+import { calculateFusionAmounts, handleFusionSwap, handleFusionSwapErgoPay } from "@/lib/functions/reactor/handleFusion";
+import { calculateTransmutationAmounts, handleTransmuteToGoldSwap, handleTransmuteFromGoldSwap, handleTransmuteToGoldSwapErgoPay, handleTransmuteFromGoldSwapErgoPay } from "@/lib/functions/reactor/handleTransmutation";
 import { debounce } from "lodash";
 import { handleInitializationError } from "@/lib/utils/error-handler";
 import ErgIcon from "@/lib/components/icons/ErgIcon";
@@ -27,6 +27,8 @@ import GauIcon from "@/lib/components/icons/GauIcon";
 import GaucIcon from "@/lib/components/icons/GaucIcon";
 import GauGaucIcon from "@/lib/components/icons/GauGaucIcon";
 import { motion, AnimatePresence } from "framer-motion";
+import { ErgoPayTransactionQRModal } from "@/lib/components/ergopay/ErgoPayTransactionQRModal";
+import { useErgoPay } from "@/lib/providers/ErgoPayProvider";
 
 const formatTokenAmount = (value: number | string): string => {
   const numValue = typeof value === "string" ? parseFloat(value) : value;
@@ -99,6 +101,12 @@ const formatErgAmount = (value: number | string | BigNumber): string => {
   return bn.decimalPlaces(9, BigNumber.ROUND_DOWN).toFixed();
 };
 
+// Generate a unique session ID for ErgoPay transactions
+const generateSessionId = (): string => {
+  // Use cryptographically secure random UUID
+  return crypto.randomUUID();
+};
+
 export function ReactorSwap() {
   const [lastSubmittedTx, setLastSubmittedTx] = useState<string | null>(null);
   // Minimum ERG to keep in wallet for operations
@@ -140,6 +148,51 @@ export function ReactorSwap() {
   // Transaction listener state
   const [transactionListener] = useState(() => createTransactionListener(nodeService));
   const [hasPendingTransactions, setHasPendingTransactions] = useState(false);
+  
+  // ErgoPay state
+  const [showErgoPayTxModal, setShowErgoPayTxModal] = useState(false);
+  const [ergoPayTxData, setErgoPayTxData] = useState<{
+    sessionId: string;
+    operationType: 'fission' | 'fusion' | 'transmute-to-gold' | 'transmute-from-gold';
+  } | null>(null);
+  const { address: ergoPayAddress, balances: ergoPayBalances } = useErgoPay();
+  const isErgoPayConnectionOnly = !!ergoPayAddress && !isConnected;
+
+  const getTokenBalanceValue = useCallback(
+    (symbol: TokenSymbol): string => {
+      const sanitizeBalance = (value: string | undefined) => (value ? value.replace(/,/g, "") : "0");
+
+      if (isErgoPayConnectionOnly) {
+        switch (symbol) {
+          case "ERG":
+            return ergoPayBalances.erg || "0";
+          case "GAU":
+            return ergoPayBalances.gau || "0";
+          case "GAUC":
+            return ergoPayBalances.gauc || "0";
+          case "GAU-GAUC": {
+            const gau = parseFloat(ergoPayBalances.gau || "0");
+            const gauc = parseFloat(ergoPayBalances.gauc || "0");
+            const minPair = Math.min(Number.isFinite(gau) ? gau : 0, Number.isFinite(gauc) ? gauc : 0);
+            return minPair > 0 ? minPair.toString() : "0";
+          }
+          default:
+            return "0";
+        }
+      }
+
+      if (symbol === "GAU-GAUC") {
+        const gauBalance = parseFloat(sanitizeBalance(tokens.find((t) => t.symbol === "GAU")?.balance));
+        const gaucBalance = parseFloat(sanitizeBalance(tokens.find((t) => t.symbol === "GAUC")?.balance));
+        const minPair = Math.min(Number.isFinite(gauBalance) ? gauBalance : 0, Number.isFinite(gaucBalance) ? gaucBalance : 0);
+        return minPair > 0 ? minPair.toString() : "0";
+      }
+
+      return sanitizeBalance(tokens.find((t) => t.symbol === symbol)?.balance);
+    },
+    [isErgoPayConnectionOnly, ergoPayBalances, tokens]
+  );
+  
   // CLEAR TX HASH WHEN PENDING TRANSACTION IS FINISHED
   //  UI refresh hook for TransactionListener
   useEffect(() => {
@@ -164,6 +217,7 @@ export function ReactorSwap() {
       setLastSubmittedTx(null);
     }
   }, [hasPendingTransactions]);
+  
   // Helper function to capture current wallet state
   const captureWalletState = async (): Promise<WalletState> => {
     const balances = await getBalance();
@@ -277,8 +331,8 @@ export function ReactorSwap() {
           gluonInstance,
           gluonBox,
           value: calculationValue,
-          gauBalance: tokens.find((t) => t.symbol === "GAU")?.balance || "0",
-          gaucBalance: tokens.find((t) => t.symbol === "GAUC")?.balance || "0",
+          gauBalance: getTokenBalanceValue("GAU"),
+          gaucBalance: getTokenBalanceValue("GAUC"),
         });
 
         if ("error" in result) {
@@ -506,8 +560,62 @@ export function ReactorSwap() {
       } catch (error) {
         console.error("Error fetching balances:", error);
       }
+    } else if (isErgoPayConnectionOnly) {
+      // Handle ErgoPay balances
+      try {
+        let updatedTokens = [...tokens].map((token) => {
+          const defaultToken = defaultTokens.find((dt) => dt.symbol === token.symbol);
+          return { ...token, ...defaultToken };
+        });
+
+        // Update ERG balance
+        updatedTokens = updatedTokens.map((token) => 
+          token.symbol === "ERG" ? { ...token, balance: ergoPayBalances.erg || "0" } : token
+        );
+
+        // Update GAU balance
+        updatedTokens = updatedTokens.map((token) => 
+          token.symbol === "GAU" ? { ...token, balance: ergoPayBalances.gau || "0" } : token
+        );
+
+        // Update GAUC balance
+        updatedTokens = updatedTokens.map((token) => 
+          token.symbol === "GAUC" ? { ...token, balance: ergoPayBalances.gauc || "0" } : token
+        );
+
+        // Update GAU-GAUC pair balance
+        const gauBalanceNum = parseFloat(ergoPayBalances.gau || "0");
+        const gaucBalanceNum = parseFloat(ergoPayBalances.gauc || "0");
+        const pairBalanceVal = Math.min(
+          Number.isNaN(gauBalanceNum) ? 0 : gauBalanceNum, 
+          Number.isNaN(gaucBalanceNum) ? 0 : gaucBalanceNum
+        );
+        const pairBalance = formatTokenAmount(pairBalanceVal.toString());
+        updatedTokens = updatedTokens.map((t) => (t.symbol === "GAU-GAUC" ? { ...t, balance: pairBalance } : t));
+
+        setTokens(updatedTokens);
+
+        // Update current tokens while preserving their selection
+        const currentFromTokenInUpdated = updatedTokens.find((t) => t.symbol === fromToken.symbol);
+        const currentToTokenInUpdated = updatedTokens.find((t) => t.symbol === toToken.symbol);
+
+        if (currentFromTokenInUpdated) {
+          setFromToken((prev) => ({
+            ...prev,
+            balance: currentFromTokenInUpdated.balance,
+          }));
+        }
+        if (currentToTokenInUpdated) {
+          setToToken((prev) => ({
+            ...prev,
+            balance: currentToTokenInUpdated.balance,
+          }));
+        }
+      } catch (error) {
+        console.error("Error updating ErgoPay balances:", error);
+      }
     }
-  }, [isConnected, getBalance, balanceUpdateTrigger, fromToken, toToken]);
+  }, [isConnected, isErgoPayConnectionOnly, ergoPayBalances, getBalance, balanceUpdateTrigger, fromToken, toToken, tokens]);
 
   useEffect(() => {
     updateBalancesRef.current = updateBalances;
@@ -517,7 +625,7 @@ export function ReactorSwap() {
     updateBalancesRef.current();
     const pollingInterval = setInterval(() => updateBalancesRef.current(), 30000);
     return () => clearInterval(pollingInterval);
-  }, [isConnected, getBalance, balanceUpdateTrigger]);
+  }, [isConnected, isErgoPayConnectionOnly, ergoPayBalances, getBalance, balanceUpdateTrigger]);
 
   // Initialize transaction listener and check for pending transactions
   useEffect(() => {
@@ -649,7 +757,8 @@ export function ReactorSwap() {
       return;
     }
     if (isFromCard) {
-      const balanceNum = parseFloat(fromToken.balance);
+      const balanceStr = getTokenBalanceValue(fromToken.symbol);
+      const balanceNum = parseFloat(balanceStr);
       if (isNaN(balanceNum)) {
         setFromAmount("0");
         debouncedCalculateAmounts("0", true);
@@ -689,7 +798,7 @@ export function ReactorSwap() {
           maxAmount = availableErg.toString();
         }
       } else if (fromToken.symbol === "GAU" || fromToken.symbol === "GAUC") {
-        maxAmount = fromToken.balance;
+        maxAmount = balanceStr;
       }
       setFromAmount(maxAmount);
     }
@@ -708,9 +817,14 @@ export function ReactorSwap() {
     }
   };
   const handleSwap = async () => {
-    if (!isConnected || isInitializing || !gluonInstance || !gluonBox || !oracleBox || isLoading || isCalculating || hasPendingTransactions) {
+    // Allow swap if either web extension wallet is connected OR ErgoPay address exists
+    const hasWalletConnection = isConnected || !!ergoPayAddress;
+    
+    if (!hasWalletConnection || isInitializing || !gluonInstance || !gluonBox || !oracleBox || isLoading || isCalculating || hasPendingTransactions) {
       console.error("Swap prerequisites not met.", {
         isConnected,
+        ergoPayAddress,
+        hasWalletConnection,
         isInitializing,
         gluonInstance: !!gluonInstance,
         gluonBox: !!gluonBox,
@@ -725,11 +839,11 @@ export function ReactorSwap() {
     setIsLoading(true);
 
     try {
-      // Capture pre-transaction wallet state
-      const preTransactionState = await captureWalletState();
-
-      // Determine action type for transaction listener
-      let actionType = "";
+      // Determine if using ErgoPay or browser wallet
+      const isErgoPayConnection = !!ergoPayAddress && !ergoWallet;
+      
+      // Determine action type for transaction
+      let actionType: 'fission' | 'fusion' | 'transmute-to-gold' | 'transmute-from-gold' | '' = "";
       let inputAmount = "";
       let outputAmounts = { gau: "", gauc: "", erg: "" };
 
@@ -750,6 +864,62 @@ export function ReactorSwap() {
         inputAmount = fromAmount;
         outputAmounts = { gau: "0", gauc: toAmount, erg: "0" };
       }
+
+      // Handle ErgoPay transactions
+      if (isErgoPayConnection && ergoPayAddress) {
+        console.log("🔄 ErgoPay transaction detected:", actionType);
+        
+        // Generate session ID for this transaction
+        const sessionId = generateSessionId();
+        
+        try {
+          // Store session data on server before showing QR
+          const sessionResponse = await fetch('/api/ergopay/session', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              sessionId,
+              operationType: actionType,
+              fromAmount,
+              toAmount,
+              gauAmount,
+              gaucAmount,
+              fromToken: fromToken.symbol,
+              toToken: toToken.symbol,
+              fees: {
+                totalFee: receiptDetails.fees.totalFee.toString(),
+                blockchainFee: (Number(receiptDetails.fees.minerFee) + Number(receiptDetails.fees.oracleFee)).toString(),
+                gluonFee: (Number(receiptDetails.fees.devFee) + Number(receiptDetails.fees.uiFee)).toString(),
+              },
+            }),
+          });
+
+          if (!sessionResponse.ok) {
+            throw new Error('Failed to create session');
+          }
+
+          console.log(`✅ Session created: ${sessionId}`);
+          
+          // Store transaction data for QR modal
+          setErgoPayTxData({
+            sessionId,
+            operationType: actionType as any
+          });
+          
+          // Show QR modal
+          setShowErgoPayTxModal(true);
+        } catch (error) {
+          console.error('Error creating ErgoPay session:', error);
+          alert('Failed to create transaction session. Please try again.');
+        }
+        
+        setIsLoading(false);
+        return;
+      }
+
+      // Handle browser wallet transactions (existing logic)
+      // Capture pre-transaction wallet state
+      const preTransactionState = await captureWalletState();
 
       // Calculate expected changes for transaction listener
       const expectedChanges = calculateExpectedChanges(actionType, inputAmount, outputAmounts, receiptDetails.fees.totalFee);
@@ -837,8 +1007,8 @@ export function ReactorSwap() {
     const calculateMaxErgForFusion = async () => {
       if (!boxesReady || !gluonInstance || !gluonBox) return;
       try {
-        const gauBalanceStr = tokens.find((t) => t.symbol === "GAU")?.balance || "0";
-        const gaucBalanceStr = tokens.find((t) => t.symbol === "GAUC")?.balance || "0";
+        const gauBalanceStr = getTokenBalanceValue("GAU");
+        const gaucBalanceStr = getTokenBalanceValue("GAUC");
         const result = await calculateFusionAmounts({
           gluonInstance,
           gluonBox,
@@ -863,7 +1033,7 @@ export function ReactorSwap() {
     if (fromToken.symbol === "GAU-GAUC" && toToken.symbol === "ERG") {
       calculateMaxErgForFusion();
     }
-  }, [boxesReady, gluonInstance, gluonBox, tokens, fromToken.symbol, toToken.symbol]);
+  }, [boxesReady, gluonInstance, gluonBox, fromToken.symbol, toToken.symbol, getTokenBalanceValue]);
 
   // Skeleton loading component
   const renderSkeletonCard = (isFromCard: boolean) => {
@@ -1218,60 +1388,84 @@ export function ReactorSwap() {
   // const maxAmount = parseFloat(fromToken?.balance || "0"); // what's allowed
 
   const isSwapDisabled = () => {
-    if (isLoading || !isConnected || !boxesReady || isCalculating || (isInitializing && !boxesReady) || hasPendingTransactions) return true;
+    // Allow swap if either web extension wallet is connected OR ErgoPay address exists
+    const hasWalletConnection = isConnected || !!ergoPayAddress;
+    if (isLoading || !hasWalletConnection || !boxesReady || isCalculating || (isInitializing && !boxesReady) || hasPendingTransactions) return true;
 
     const fromVal = parseFloat(fromAmount);
     const toVal = parseFloat(toAmount);
+
+    // For ErgoPay, skip balance checks (server will validate when user scans QR)
+    const isErgoPayConnection = !!ergoPayAddress && !isConnected;
 
     if (fromToken.symbol === "GAU-GAUC" && toToken.symbol === "ERG") {
       const ergOutput = toVal;
       const gauRequired = parseFloat(gauAmount);
       const gaucRequired = parseFloat(gaucAmount);
-      const gauBalance = parseFloat(tokens.find((t) => t.symbol === "GAU")?.balance || "0");
-      const gaucBalance = parseFloat(tokens.find((t) => t.symbol === "GAUC")?.balance || "0");
+      
       if (isNaN(ergOutput) || ergOutput <= 0) return true;
       if (isNaN(gauRequired) || gauRequired <= 0) return true;
       if (isNaN(gaucRequired) || gaucRequired <= 0) return true;
-      if (gauRequired > gauBalance || gaucRequired > gaucBalance) return true;
+      
+      // Skip balance checks for ErgoPay
+      if (!isErgoPayConnection) {
+        const gauBalance = parseFloat(tokens.find((t) => t.symbol === "GAU")?.balance || "0");
+        const gaucBalance = parseFloat(tokens.find((t) => t.symbol === "GAUC")?.balance || "0");
+        if (gauRequired > gauBalance || gaucRequired > gaucBalance) return true;
+      }
 
       // Use precise comparison but allow for display value tolerance
-      try {
-        const ergOutputBN = new BigNumber(toAmount || "0");
-        const maxErgBN = new BigNumber(maxErgOutputPrecise || "0");
+      if (!isErgoPayConnection) {
+        try {
+          const ergOutputBN = new BigNumber(toAmount || "0");
+          const maxErgBN = new BigNumber(maxErgOutputPrecise || "0");
 
-        // Disable if output exceeds max AND it's not close to max (accounting for display rounding)
-        if (ergOutputBN.isGreaterThan(maxErgBN) && !isUserInputMaxValue(toAmount, maxErgOutputPrecise)) {
+          // Disable if output exceeds max AND it's not close to max (accounting for display rounding)
+          if (ergOutputBN.isGreaterThan(maxErgBN) && !isUserInputMaxValue(toAmount, maxErgOutputPrecise)) {
+            return true;
+          }
+        } catch (error) {
+          console.error("Error in precision comparison:", error);
           return true;
         }
-      } catch (error) {
-        console.error("Error in precision comparison:", error);
-        return true;
       }
       return false;
     }
 
     if (fromToken.symbol === "ERG" && toToken.symbol === "GAU-GAUC") {
       const ergInput = fromVal;
-      const ergBalanceStr = fromToken.balance.replace(/,/g, "");
-      const ergBalance = parseFloat(ergBalanceStr);
       if (isNaN(ergInput) || ergInput <= 0) return true;
-      if (ergInput > ergBalance) return true;
-      if (ergBalance - ergInput < MIN_ERG_BUFFER) return true;
+      
+      // Skip balance checks for ErgoPay
+      if (!isErgoPayConnection) {
+        const ergBalanceStr = fromToken.balance.replace(/,/g, "");
+        const ergBalance = parseFloat(ergBalanceStr);
+        if (ergInput > ergBalance) return true;
+        if (ergBalance - ergInput < MIN_ERG_BUFFER) return true;
+      }
 
       return false;
     }
     if (fromToken.symbol === "GAUC" && toToken.symbol === "GAU") {
       const gaucInput = fromVal;
-      const gaucBalance = parseFloat(tokens.find((t) => t.symbol === "GAUC")?.balance || "0");
       if (Number.isNaN(gaucInput) || gaucInput <= 0) return true;
-      if (gaucInput > gaucBalance) return true;
+      
+      // Skip balance checks for ErgoPay
+      if (!isErgoPayConnection) {
+        const gaucBalance = parseFloat(tokens.find((t) => t.symbol === "GAUC")?.balance || "0");
+        if (gaucInput > gaucBalance) return true;
+      }
       return false;
     }
     if (fromToken.symbol === "GAU" && toToken.symbol === "GAUC") {
       const gauInput = fromVal;
-      const gauBalance = parseFloat(tokens.find((t) => t.symbol === "GAU")?.balance || "0");
       if (Number.isNaN(gauInput) || gauInput <= 0) return true;
-      if (gauInput > gauBalance) return true;
+      
+      // Skip balance checks for ErgoPay
+      if (!isErgoPayConnection) {
+        const gauBalance = parseFloat(tokens.find((t) => t.symbol === "GAU")?.balance || "0");
+        if (gauInput > gauBalance) return true;
+      }
       return false;
     }
     return true;
@@ -1641,6 +1835,25 @@ export function ReactorSwap() {
           </CardContent>
         </Card>
       </motion.div>
+
+      {/* ErgoPay Transaction QR Modal */}
+      {ergoPayTxData && (
+        <ErgoPayTransactionQRModal
+          isOpen={showErgoPayTxModal}
+          onClose={() => {
+            setShowErgoPayTxModal(false);
+            setErgoPayTxData(null);
+          }}
+          sessionId={ergoPayTxData.sessionId}
+          operationType={ergoPayTxData.operationType}
+          onTransactionSubmitted={(txId: string) => {
+            console.log("✅ Transaction submitted:", txId);
+            setLastSubmittedTx(txId);
+            // Refresh balances after transaction
+            updateBalances();
+          }}
+        />
+      )}
     </div>
   );
 }

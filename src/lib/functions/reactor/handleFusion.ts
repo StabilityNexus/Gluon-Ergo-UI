@@ -1,6 +1,8 @@
 import { SwapResult, SwapError, ReceiptDetails } from "./types";
 import { convertFromDecimals, nanoErgsToErgs, ergsToNanoErgs, convertToDecimals } from "@/lib/utils/erg-converter";
 import { handleTransactionError, handleTransactionSuccess, handleCalculationError } from "@/lib/utils/error-handler";
+import { getTxReducedB64Safe } from "@/lib/utils/ergopay-tx-reducer";
+import { explorerClient } from "@/lib/utils/explorer-client";
 import BigNumber from "bignumber.js";
 
 interface FusionParams {
@@ -11,12 +13,8 @@ interface FusionParams {
   gaucBalance: string;
 }
 
-/**
- * Calculate the maximum possible ERG output based on available GAU/GAUC balances
- */
 const calculateMaxErgOutput = async (gluonInstance: any, gluonBox: any, gauBalance: string, gaucBalance: string): Promise<BigNumber> => {
   try {
-    // Convert our balances to blockchain decimals (these are BigInts)
     const gauAmount = BigInt(convertToDecimals(gauBalance));
     const gaucAmount = BigInt(convertToDecimals(gaucBalance));
 
@@ -31,17 +29,13 @@ const calculateMaxErgOutput = async (gluonInstance: any, gluonBox: any, gauBalan
       },
     });
 
-    // Get token ratio for 1 ERG
-    const oneErg = BigInt(1e9); // 1 ERG in nanoErgs
+    const oneErg = BigInt(1e9);
     const _fusionNeedRes = await gluonInstance.fusionWillNeed(gluonBox, Number(oneErg));
     const { neutrons: neutronsForOneErg, protons: protonsForOneErg } = _fusionNeedRes;
 
-    // Convert to BigInt immediately
     const neutronsNeeded = BigInt(neutronsForOneErg);
     const protonsNeeded = BigInt(protonsForOneErg);
 
-    // Calculate maximum ERG we can get based on our token ratios
-    // All calculations done in BigInt
     const maxFromGau = (gauAmount * oneErg) / neutronsNeeded;
     const maxFromGauc = (gaucAmount * oneErg) / protonsNeeded;
     const maxPossibleNanoErgs = maxFromGau < maxFromGauc ? maxFromGau : maxFromGauc;
@@ -58,27 +52,18 @@ const calculateMaxErgOutput = async (gluonInstance: any, gluonBox: any, gauBalan
   }
 };
 
-/**
- * Calculate the amounts of GAU and GAUC needed for fusion to get the desired ERG amount
- */
 export const calculateFusionAmounts = async ({ gluonInstance, gluonBox, value, gauBalance, gaucBalance }: FusionParams): Promise<SwapResult | SwapError> => {
   try {
-    // Get maximum possible ERG output
     const maxNanoErgs = await calculateMaxErgOutput(gluonInstance, gluonBox, gauBalance, gaucBalance);
-    // Use BigNumber to preserve precision instead of converting to Number
     const maxErgStr = maxNanoErgs.dividedBy(1e9).toFixed();
 
-    // Convert desired ERG to nanoERGs (as BigInt for comparison)
     const desiredNanoErgs = BigInt(ergsToNanoErgs(value));
 
-    // Calculate required token amounts using SDK's function
     const { neutrons, protons } = await gluonInstance.fusionWillNeed(gluonBox, Number(desiredNanoErgs));
 
-    // Convert to display values
     const requiredGau = convertFromDecimals(BigInt(neutrons)).toString();
     const requiredGauc = convertFromDecimals(BigInt(protons)).toString();
 
-    // Get fee prediction (using Number since the SDK expects it)
     const fees = await gluonInstance.getTotalFeeAmountFusion(gluonBox, Number(desiredNanoErgs));
 
     const receiptDetails: ReceiptDetails = {
@@ -108,7 +93,6 @@ export const calculateFusionAmounts = async ({ gluonInstance, gluonBox, value, g
   } catch (error) {
     console.error("Error calculating fusion amounts:", error);
 
-    // Use the error handler for proper classification
     const errorDetails = handleCalculationError(error, "fusion");
 
     return {
@@ -134,7 +118,6 @@ export const handleFusionSwap = async (
   try {
     console.log("amount being passed", amount);
 
-    // Validate inputs
     if (!gluonInstance || !gluonBox || !oracleBox) {
       throw new Error("Required boxes not initialized");
     }
@@ -143,7 +126,6 @@ export const handleFusionSwap = async (
       throw new Error("Wallet not connected. Please disconnect and reconnect your wallet.");
     }
 
-    // Additional validation for wallet API methods
     if (!ergoWallet.sign_tx || !ergoWallet.submit_tx) {
       throw new Error("Wallet API not fully initialized. Please refresh the page and reconnect.");
     }
@@ -164,21 +146,17 @@ export const handleFusionSwap = async (
       throw new Error("Failed to get required boxes");
     }
 
-    // Convert the desired ERG output amount to nanoERGs
     const nanoErgsToFuse = ergsToNanoErgs(amount);
     console.log("amount to nano ergs", nanoErgsToFuse);
 
-    // Get required token amounts for verification
     const { neutrons, protons } = await gluonInstance.fusionWillNeed(gluonBox, Number(nanoErgsToFuse));
     console.log("neutrons", neutrons);
     console.log("protons", protons);
 
-    // Verify we have valid amounts
     if (!neutrons || !protons || neutrons <= 0 || protons <= 0) {
       throw new Error("Invalid fusion amounts - insufficient tokens required");
     }
 
-    // Convert to proper display values
     const requiredGau = convertFromDecimals(BigInt(neutrons)).toString();
     const requiredGauc = convertFromDecimals(BigInt(protons)).toString();
 
@@ -195,7 +173,6 @@ export const handleFusionSwap = async (
       },
     });
 
-    // Create unsigned transaction
     const unsignedTransaction = await gluonInstance.fusionForEip12(gluonBoxJs, oracleBoxJs, userBoxes, Number(nanoErgsToFuse));
 
     if (!unsignedTransaction) {
@@ -204,13 +181,11 @@ export const handleFusionSwap = async (
 
     console.log("Signing and submitting transaction...");
 
-    // Sign transaction
     const signature = await ergoWallet?.sign_tx(unsignedTransaction);
     if (!signature) {
       throw new Error("Failed to sign transaction");
     }
 
-    // Submit transaction
     const txHash = await ergoWallet?.submit_tx(signature);
     if (!txHash) {
       throw new Error("Failed to submit transaction");
@@ -218,15 +193,124 @@ export const handleFusionSwap = async (
 
     console.log("Transaction submitted successfully. TxId:", txHash);
 
-    // Handle success with toast notification
     handleTransactionSuccess(txHash, "fusion");
 
     return { txHash };
   } catch (error) {
     console.error("Fusion failed:", error);
 
-    // Use the error handler for proper classification and toast notification
     const errorDetails = handleTransactionError(error, "fusion");
+
+    return { error: errorDetails.userMessage };
+  }
+};
+
+const validateBoxFormat = (box: any): boolean => {
+  return !!(
+    box &&
+    typeof box.boxId === 'string' &&
+    (typeof box.value === 'number' || typeof box.value === 'bigint' || typeof box.value === 'string') &&
+    typeof box.ergoTree === 'string' &&
+    Array.isArray(box.assets) &&
+    box.additionalRegisters &&
+    typeof box.additionalRegisters === 'object'
+  );
+};
+
+export const handleFusionSwapErgoPay = async (
+  gluonInstance: any,
+  gluonBox: any,
+  oracleBox: any,
+  userAddress: string,
+  amount: string,
+  nodeService: any
+): Promise<{ txId?: string; reducedTx?: string; error?: string }> => {
+  try {
+    console.log("🔍 ERGOPAY FUSION INPUT:", {
+      userAddress,
+      amount,
+      type: typeof amount,
+    });
+
+    if (!gluonInstance || !gluonBox || !oracleBox) {
+      throw new Error("Required boxes not initialized");
+    }
+
+    if (!userAddress) {
+      throw new Error("User address required for ErgoPay");
+    }
+
+    if (!amount || parseFloat(amount) <= 0) {
+      throw new Error("Invalid amount entered");
+    }
+
+    const height = await nodeService.getNetworkHeight();
+    if (!height) {
+      throw new Error("Failed to get network height");
+    }
+
+    const oracleBoxJs = await gluonInstance.getGoldOracleBox();
+    const gluonBoxJs = await gluonInstance.getGluonBox();
+
+    if (!oracleBoxJs || !gluonBoxJs) {
+      throw new Error("Failed to get fresh protocol boxes");
+    }
+
+    const nanoErgsToFuse = ergsToNanoErgs(amount);
+    console.log("🔍 ERGOPAY FUSION NANO ERGS:", {
+      nanoErgsToFuse: nanoErgsToFuse.toString(),
+    });
+
+    const { neutrons, protons } = await gluonInstance.fusionWillNeed(gluonBox, Number(nanoErgsToFuse));
+    console.log("🔍 ERGOPAY FUSION WILL NEED:", {
+      neutrons: neutrons.toString(),
+      protons: protons.toString(),
+    });
+
+    if (!neutrons || !protons || neutrons <= 0 || protons <= 0) {
+      throw new Error("Invalid fusion amounts - insufficient tokens required");
+    }
+
+    console.log("Fetching user boxes from explorer...");
+    const userBoxesResponse = await explorerClient.getApiV1AddressesP1Boxes(userAddress);
+    const userBoxes = userBoxesResponse.data.items || [];
+
+    if (!userBoxes || userBoxes.length === 0) {
+      throw new Error("No unspent boxes found for address. Please ensure your wallet has funds.");
+    }
+
+    console.log(`Found ${userBoxes.length} boxes for user`);
+
+    const invalidBoxes = userBoxes.filter((box: any) => !validateBoxFormat(box));
+    if (invalidBoxes.length > 0) {
+      console.error("Invalid box format detected:", invalidBoxes);
+      throw new Error(`Invalid box format from explorer API. This should not happen - please report this issue.`);
+    }
+    console.log("✅ All boxes validated successfully");
+
+    console.log("Creating unsigned transaction (EIP-12 JSON)...");
+    const unsignedTransaction = await gluonInstance.fusionForEip12(
+      gluonBoxJs,
+      oracleBoxJs,
+      userBoxes,
+      Number(nanoErgsToFuse)
+    );
+
+    if (!unsignedTransaction) {
+      throw new Error("Failed to create unsigned transaction");
+    }
+
+    console.log("Reducing transaction for ErgoPay...");
+
+    const [txId, reducedTx] = await getTxReducedB64Safe(unsignedTransaction, explorerClient);
+
+    console.log("Transaction reduced successfully. TxId:", txId);
+
+    return { txId, reducedTx };
+  } catch (error) {
+    console.error("ErgoPay fusion failed:", error);
+
+    const errorDetails = handleTransactionError(error, "fusion", false);
 
     return { error: errorDetails.userMessage };
   }
