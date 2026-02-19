@@ -62,8 +62,6 @@ This UI was built with Next.js, Tailwind CSS, Shadcn UI, Zustand, Framer Motion,
 
 Install bun, if you don't have it already, you can find it [here](https://bun.sh/docs/installation).
 
-If you don't want to use bun, you can always use NPM or PNPM.
-
 1. Install dependencies:
 
 ```bash
@@ -82,12 +80,6 @@ To install new shadcn components:
 
 ```bash
 bun x shadcn@latest add <component-name>
-```
-
-or with NPM / PNPM:
-
-```bash
-npx shadcn@latest add <component-name>
 ```
 
 While working with shadcn, all components are installed to src/lib/components/ui
