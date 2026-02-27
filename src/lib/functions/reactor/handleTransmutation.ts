@@ -2,6 +2,8 @@ import { SwapResult, SwapError, ReceiptDetails, TokenSymbol } from "./types";
 import { convertFromDecimals, nanoErgsToErgs, convertToDecimals } from "@/lib/utils/erg-converter";
 import { formatMicroNumber } from "@/lib/utils/erg-converter";
 import { handleTransactionError, handleTransactionSuccess, handleCalculationError } from "@/lib/utils/error-handler";
+import { getTxReducedB64Safe } from "@/lib/utils/ergopay-tx-reducer";
+import { explorerClient } from "@/lib/utils/explorer-client";
 import BigNumber from "bignumber.js";
 
 interface TransmutationParams {
@@ -339,6 +341,257 @@ export const handleTransmuteFromGoldSwap = async ({
 
     // Use the error handler for proper classification and toast notification
     const errorDetails = handleTransactionError(error, "transmute from gold");
+
+    return { error: errorDetails.userMessage };
+  }
+};
+
+/**
+ * Validates box format to ensure compatibility with SDK
+ */
+const validateBoxFormat = (box: any): boolean => {
+  return !!(
+    box &&
+    typeof box.boxId === 'string' &&
+    (typeof box.value === 'number' || typeof box.value === 'bigint' || typeof box.value === 'string') &&
+    typeof box.ergoTree === 'string' &&
+    Array.isArray(box.assets) &&
+    box.additionalRegisters &&
+    typeof box.additionalRegisters === 'object'
+  );
+};
+
+/**
+ * ErgoPay Transmute To Gold Handler - Returns reduced transaction for mobile wallet signing
+ * Transmutes GAUC (protons) to GAU (neutrons)
+ * 
+ * NOTE: This implementation uses the SAME `transmuteToGold()` method as browser wallet internally.
+ * transmuteToGoldForEip12() just calls transmuteToGold() and converts format - transaction logic is IDENTICAL.
+ */
+export const handleTransmuteToGoldSwapErgoPay = async ({
+  gluonInstance,
+  gluonBoxJs,
+  oracleBoxJs,
+  userAddress,
+  nodeService,
+  amount,
+}: {
+  gluonInstance: any;
+  gluonBoxJs: any;
+  oracleBoxJs: any;
+  userAddress: string;
+  nodeService: any;
+  amount: string;
+}): Promise<{ txId?: string; reducedTx?: string; error?: string }> => {
+  try {
+    console.log("🔍 ERGOPAY TRANSMUTE TO GOLD INPUT:", {
+      userAddress,
+      amount,
+      type: typeof amount,
+    });
+
+    // Fetch fresh boxes to avoid stale data issues
+    const oracleBoxJs = await gluonInstance.getGoldOracleBox();
+    const gluonBoxJs = await gluonInstance.getGluonBox();
+
+    // Validate inputs
+    if (!gluonInstance || !gluonBoxJs || !oracleBoxJs) {
+      throw new Error("Required boxes not initialized");
+    }
+
+    if (!userAddress) {
+      throw new Error("User address required for ErgoPay");
+    }
+
+    if (!amount || parseFloat(amount) <= 0) {
+      throw new Error("Invalid amount entered");
+    }
+
+    const height = await nodeService.getNetworkHeight();
+    if (!height) {
+      throw new Error("Failed to get network height");
+    }
+
+    if (!oracleBoxJs || !gluonBoxJs) {
+      throw new Error("Failed to get fresh protocol boxes");
+    }
+
+    const oracleBuyBackJs = await gluonInstance.getOracleBuyBackBoxJs();
+    if (!oracleBuyBackJs) {
+      throw new Error("Failed to get oracle buyback box");
+    }
+
+    const protonsToTransmute = convertToDecimals(amount);
+    console.log("🔍 ERGOPAY TRANSMUTE TO GOLD AMOUNT:", {
+      protonsToTransmute: protonsToTransmute.toString(),
+    });
+
+    // Fetch user boxes from explorer instead of wallet
+    console.log("Fetching user boxes from explorer...");
+    const userBoxesResponse = await explorerClient.getApiV1AddressesP1Boxes(userAddress);
+    const userBoxes = userBoxesResponse.data.items || [];
+
+    if (!userBoxes || userBoxes.length === 0) {
+      throw new Error("No unspent boxes found for address. Please ensure your wallet has funds.");
+    }
+
+    console.log(`Found ${userBoxes.length} boxes for user`);
+
+    // Validate box format for safety
+    const invalidBoxes = userBoxes.filter((box: any) => !validateBoxFormat(box));
+    if (invalidBoxes.length > 0) {
+      console.error("Invalid box format detected:", invalidBoxes);
+      throw new Error(`Invalid box format from explorer API. This should not happen - please report this issue.`);
+    }
+    console.log("✅ All boxes validated successfully");
+
+    // Create unsigned transaction in EIP-12 JSON format for ErgoPay
+    console.log("Creating unsigned transaction (EIP-12 JSON)...");
+    const unsignedTransaction = await gluonInstance.transmuteToGoldForEip12(
+      gluonBoxJs,
+      oracleBoxJs,
+      userBoxes,
+      oracleBuyBackJs,
+      Number(protonsToTransmute),
+      height
+    );
+
+    if (!unsignedTransaction) {
+      throw new Error("Failed to create unsigned transaction");
+    }
+
+    console.log("Reducing transaction for ErgoPay...");
+
+    // Reduce transaction using WASM
+    const [txId, reducedTx] = await getTxReducedB64Safe(unsignedTransaction, explorerClient);
+
+    console.log("Transaction reduced successfully. TxId:", txId);
+
+    return { txId, reducedTx };
+  } catch (error) {
+    console.error("ErgoPay transmute to gold failed:", error);
+
+    // Use the error handler for proper classification
+    // Fetch fresh boxes to avoid stale data issues
+    const oracleBoxJs = await gluonInstance.getGoldOracleBox();
+    const gluonBoxJs = await gluonInstance.getGluonBox();    const errorDetails = handleTransactionError(error, "transmute to gold", false);
+
+    return { error: errorDetails.userMessage };
+  }
+};
+
+/**
+ * ErgoPay Transmute From Gold Handler - Returns reduced transaction for mobile wallet signing
+ * Transmutes GAU (neutrons) to GAUC (protons)
+ * 
+ * NOTE: This implementation uses the SAME `transmuteFromGold()` method as browser wallet internally.
+ * transmuteFromGoldForEip12() just calls transmuteFromGold() and converts format - transaction logic is IDENTICAL.
+ */
+export const handleTransmuteFromGoldSwapErgoPay = async ({
+  gluonInstance,
+  gluonBoxJs,
+  oracleBoxJs,
+  userAddress,
+  nodeService,
+  amount,
+}: {
+  gluonInstance: any;
+  gluonBoxJs: any;
+  oracleBoxJs: any;
+  userAddress: string;
+  nodeService: any;
+  amount: string;
+}): Promise<{ txId?: string; reducedTx?: string; error?: string }> => {
+  try {
+    console.log("🔍 ERGOPAY TRANSMUTE FROM GOLD INPUT:", {
+      userAddress,
+      amount,
+      type: typeof amount,
+    });
+
+    // Fetch fresh boxes to avoid stale data issues
+    const oracleBoxJs = await gluonInstance.getGoldOracleBox();
+    const gluonBoxJs = await gluonInstance.getGluonBox();
+
+    // Validate inputs
+    if (!gluonInstance || !gluonBoxJs || !oracleBoxJs) {
+      throw new Error("Required boxes not initialized");
+    }
+
+    if (!userAddress) {
+      throw new Error("User address required for ErgoPay");
+    }
+
+    if (!amount || parseFloat(amount) <= 0) {
+      throw new Error("Invalid amount entered");
+    }
+
+    const height = await nodeService.getNetworkHeight();
+    if (!height) {
+      throw new Error("Failed to get network height");
+    }
+
+    if (!oracleBoxJs || !gluonBoxJs) {
+      throw new Error("Failed to get fresh protocol boxes");
+    }
+
+    const oracleBuyBackJs = await gluonInstance.getOracleBuyBackBoxJs();
+    if (!oracleBuyBackJs) {
+      throw new Error("Failed to get oracle buyback box");
+    }
+
+    const neutronsToDecay = convertToDecimals(amount);
+    console.log("🔍 ERGOPAY TRANSMUTE FROM GOLD AMOUNT:", {
+      neutronsToDecay: neutronsToDecay.toString(),
+    });
+
+    // Fetch user boxes from explorer instead of wallet
+    console.log("Fetching user boxes from explorer...");
+    const userBoxesResponse = await explorerClient.getApiV1AddressesP1Boxes(userAddress);
+    const userBoxes = userBoxesResponse.data.items || [];
+
+    if (!userBoxes || userBoxes.length === 0) {
+      throw new Error("No unspent boxes found for address. Please ensure your wallet has funds.");
+    }
+
+    console.log(`Found ${userBoxes.length} boxes for user`);
+
+    // Validate box format for safety
+    const invalidBoxes = userBoxes.filter((box: any) => !validateBoxFormat(box));
+    if (invalidBoxes.length > 0) {
+      console.error("Invalid box format detected:", invalidBoxes);
+      throw new Error(`Invalid box format from explorer API. This should not happen - please report this issue.`);
+    }
+    console.log("✅ All boxes validated successfully");
+
+    // Create unsigned transaction in EIP-12 JSON format for ErgoPay
+    console.log("Creating unsigned transaction (EIP-12 JSON)...");
+    const unsignedTransaction = await gluonInstance.transmuteFromGoldForEip12(
+      gluonBoxJs,
+      oracleBoxJs,
+      userBoxes,
+      oracleBuyBackJs,
+      Number(neutronsToDecay),
+      height
+    );
+
+    if (!unsignedTransaction) {
+      throw new Error("Failed to create unsigned transaction");
+    }
+
+    console.log("Reducing transaction for ErgoPay...");
+
+    // Reduce transaction using WASM
+    const [txId, reducedTx] = await getTxReducedB64Safe(unsignedTransaction, explorerClient);
+
+    console.log("Transaction reduced successfully. TxId:", txId);
+
+    return { txId, reducedTx };
+  } catch (error) {
+    console.error("ErgoPay transmute from gold failed:", error);
+
+    // Use the error handler for proper classification
+    const errorDetails = handleTransactionError(error, "transmute from gold", false);
 
     return { error: errorDetails.userMessage };
   }
