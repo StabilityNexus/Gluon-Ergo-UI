@@ -20,8 +20,8 @@ export interface TokenPair {
 export interface ReceiptDetails {
   inputAmount: number | BigNumber;
   outputAmount: {
-    gau: number | BigNumber;
-    gauc: number | BigNumber;
+    neutron: number | BigNumber;
+    proton: number | BigNumber;
     erg: number | BigNumber;
   };
   fees: {
@@ -46,8 +46,8 @@ export interface GluonBoxes {
 }
 
 export interface SwapResult {
-  gauAmount: string;
-  gaucAmount: string;
+  neutronAmount: string;
+  protonAmount: string;
   toAmount: string;
   maxErgOutput: string;
   receiptDetails: ReceiptDetails;
@@ -56,8 +56,8 @@ export interface SwapResult {
 export interface SwapError {
   error: string;
   resetValues?: {
-    gauAmount?: string;
-    gaucAmount?: string;
+    neutronAmount?: string;
+    protonAmount?: string;
     toAmount?: string;
   };
 }

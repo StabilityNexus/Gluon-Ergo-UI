@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils/utils";
 import { useRouter } from "next/router";
 import { WalletConnector } from "../blockchain/connector/WalletConnector";
 import { useTheme } from "next-themes";
+import { protocolConfig } from "@/lib/config/protocol";
 
 const navItems = [
   { href: "/reactor", label: "Reactor" },
@@ -54,7 +55,7 @@ export function TopNavbar() {
           <div className="flex items-center">
             <Link href="/" className="flex items-center">
               <Image src={theme === "dark" ? "/logo/gluon.png" : "/logo/gluon-light.png"} alt="Gluon Logo" width={28} height={28} priority />
-              {isDesktop && <p className="ml-2 font-sans text-2xl font-medium">GLUON GOLD</p>}
+              {isDesktop && <p className="ml-2 font-sans text-2xl font-medium">{protocolConfig.ui.labels.navbarTitle}</p>}
             </Link>
           </div>
 

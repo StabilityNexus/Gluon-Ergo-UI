@@ -8,6 +8,7 @@ import GaucIcon from "@/lib/components/icons/GaucIcon";
 import { useRef, forwardRef, useState, useEffect } from "react";
 import { cn } from "@/lib/utils/utils";
 import { motion } from "framer-motion";
+import { protocolConfig } from "@/lib/config/protocol";
 
 const Circle = forwardRef<HTMLDivElement, { className?: string; children?: React.ReactNode }>(({ className, children }, ref) => {
   return (
@@ -185,17 +186,17 @@ export const Features = () => (
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.5, duration: 0.5 }}
                 >
-                  Get exposure to Gold with GAU.
+                  Get exposure to {protocolConfig.peg.asset} with {protocolConfig.tokens.neutron.ticker}.
                   <br />
-                  GAU is the stablecoin pegged to 1g of Gold.
-                  <br />
-                  <br />
-                  Get leveraged volatility and yield with GAUC.
-                  <br />
-                  GAUC tokenizes the reserve surplus.
+                  {protocolConfig.tokens.neutron.ticker} is the stable token pegged to {protocolConfig.peg.asset}.
                   <br />
                   <br />
-                  Both GAU and GAUC are fully backed by ERG.
+                  Get leveraged volatility and yield with {protocolConfig.tokens.proton.ticker}.
+                  <br />
+                  {protocolConfig.tokens.proton.ticker} tokenizes the reserve surplus.
+                  <br />
+                  <br />
+                  Both {protocolConfig.tokens.neutron.ticker} and {protocolConfig.tokens.proton.ticker} are fully backed by ERG.
                 </motion.p>
               </div>
             </div>
@@ -204,22 +205,22 @@ export const Features = () => (
                 {
                   icon: Maximize2,
                   title: "Fission",
-                  description: "Splits $ERG tokens into $GAU stable tokeons and $GAUC volatile tokeons",
+                  description: "Split ERG into the stable and leveraged tokens of the Gluon protocol.",
                 },
                 {
                   icon: Minimize2,
                   title: "Fusion",
-                  description: "Merges $GAU stable tokeons and $GAUC volatile tokeons into $ERG tokens",
+                  description: "Merge the stable and leveraged tokens back into ERG.",
                 },
                 {
                   icon: Repeat,
-                  title: "Transmute to Gold",
-                  description: "Transmutes $GAUC volatile tokeons into $GAU stable tokeons",
+                  title: "Transmute to Stable",
+                  description: "Convert the leveraged token into the stable token.",
                 },
                 {
                   icon: Repeat,
-                  title: "Transmute from Gold",
-                  description: "Transmutes $GAU stable tokeons into $GAUC volatile tokeons",
+                  title: "Transmute to Leveraged",
+                  description: "Convert the stable token into the leveraged token.",
                 },
               ].map((item, index) => (
                 <motion.div
@@ -245,17 +246,13 @@ export const Features = () => (
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.4, duration: 0.5 }}
           >
-            {/* Fission: ERG -> GAU + GAUC */}
             <TokenFlow title="Fission" fromTokens={["ERG"]} toTokens={["GAU", "GAUC"]} />
 
-            {/* Fusion: GAU + GAUC -> ERG */}
             <TokenFlow title="Fusion" fromTokens={["GAU", "GAUC"]} toTokens={["ERG"]} reverse={false} />
 
-            {/* Transmute To Gold: GAUC -> GAU */}
-            <TokenFlow title="Transmute To Gold" fromTokens={["GAUC"]} toTokens={["GAU"]} />
+            <TokenFlow title="Transmute to Stable" fromTokens={["GAUC"]} toTokens={["GAU"]} />
 
-            {/* Transmute From Gold: GAU -> GAUC */}
-            <TokenFlow title="Transmute From Gold" fromTokens={["GAU"]} toTokens={["GAUC"]} reverse={false} />
+            <TokenFlow title="Transmute to Leveraged" fromTokens={["GAU"]} toTokens={["GAUC"]} reverse={false} />
           </motion.div>
         </CardSpotlight>
       </motion.div>
