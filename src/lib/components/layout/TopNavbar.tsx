@@ -13,6 +13,7 @@ import { useTheme } from "next-themes";
 const navItems = [
   { href: "/reactor", label: "Reactor" },
   { href: "/swap", label: "Swap" },
+  { href: "/history", label: "History" },
   {
     href: "https://docs.stability.nexus/gluon-protocols/gluon-overview",
     label: "Docs",
@@ -68,7 +69,7 @@ export function TopNavbar() {
               {/* Right - Actions */}
               <div className="flex items-center gap-2">
                 <ThemeToggle />
-                {pathname?.startsWith("/reactor") || pathname?.startsWith("/test") || pathname?.startsWith("/swap") ? <WalletConnector /> : null}
+                {pathname?.startsWith("/reactor") || pathname?.startsWith("/test") || pathname?.startsWith("/swap") || pathname?.startsWith("/history") ? <WalletConnector /> : null}
               </div>
             </>
           ) : (
@@ -76,7 +77,7 @@ export function TopNavbar() {
               {/* Mobile view */}
               <div className="flex items-center gap-2">
                 <ThemeToggle />
-                {pathname?.startsWith("/reactor") || pathname?.startsWith("/test") || pathname?.startsWith("/swap") ? <WalletConnector /> : null}
+                {pathname?.startsWith("/reactor") || pathname?.startsWith("/test") || pathname?.startsWith("/swap") || pathname?.startsWith("/history") ? <WalletConnector /> : null}
               </div>
             </>
           )}
