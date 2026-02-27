@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Card } from "@/lib/components/ui/card";
 import { Loader2, BarChart2 } from "lucide-react";
 import { nanoErgsToErgs } from "@/lib/utils/erg-converter";
+import { tokenConfig } from "@/config/tokenConfig";
 import { motion } from "framer-motion";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 
@@ -136,8 +137,8 @@ export function VolumeChart({ isLoading: externalLoading = false, hasError: exte
                 <YAxis tickFormatter={(value) => value.toFixed(1)} tick={{ fontSize: 9.5 }} width={45} />
                 <Tooltip formatter={(value: number) => [`${value.toFixed(2)} ERG`]} labelFormatter={(label) => `Day ${label}`} />
                 <Legend wrapperStyle={{ fontSize: 9.5 }} />
-                <Bar dataKey="VolumeProtonsToNeutrons" name="GAUC → GAU" fill="#facc15" />
-                <Bar dataKey="VolumeNeutronsToProtons" name="GAU → GAUC" fill="#ef4444" />
+                <Bar dataKey="VolumeProtonsToNeutrons" name={`${tokenConfig.volatileAsset.displayName} → ${tokenConfig.stableAsset.displayName}`} fill="#facc15" />
+                <Bar dataKey="VolumeNeutronsToProtons" name={`${tokenConfig.stableAsset.displayName} → ${tokenConfig.volatileAsset.displayName}`} fill="#ef4444" />
               </BarChart>
             </ResponsiveContainer>
           </div>

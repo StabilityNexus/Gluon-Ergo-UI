@@ -1,83 +1,95 @@
 import { TOKEN_ADDRESS } from "@/lib/constants/token";
 import { Token, TokenSymbol, SwapAction } from "./types";
+import { tokenConfig } from "@/config/tokenConfig";
 import BigNumber from "bignumber.js";
 
 export const VALID_PAIRS = [
-  { from: "ERG", to: "GAU-GAUC" },
-  { from: "GAU-GAUC", to: "ERG" },
-  { from: "GAU", to: "GAUC" },
-  { from: "GAUC", to: "GAU" },
+  { from: "ERG", to: tokenConfig.pairToken.symbol },
+  { from: tokenConfig.pairToken.symbol, to: "ERG" },
+  { from: tokenConfig.stableAsset.symbol, to: tokenConfig.volatileAsset.symbol },
+  { from: tokenConfig.volatileAsset.symbol, to: tokenConfig.stableAsset.symbol },
 ] as const;
 
 export const defaultTokens: Token[] = [
   {
     symbol: "ERG",
-    name: "Ergo",
+    name: tokenConfig.baseAsset.name,
     color: "bg-blue-500",
     balance: "0",
     tokenId: "ERG",
     decimals: 9, // Full blockchain precision
   },
   {
-    symbol: "GAU",
-    name: "Gluon Gold",
+    symbol: tokenConfig.stableAsset.symbol as TokenSymbol,
+    name: tokenConfig.stableAsset.displayName,
     color: "bg-yellow-500",
     balance: "0",
-    tokenId: TOKEN_ADDRESS.gau,
+    tokenId: TOKEN_ADDRESS.stableAsset,
     decimals: 9, // Full blockchain precision
   },
   {
-    symbol: "GAUC",
-    name: "Gluon Gold Certificate",
+    symbol: tokenConfig.volatileAsset.symbol as TokenSymbol,
+    name: tokenConfig.volatileAsset.displayName,
     color: "bg-red-500",
     balance: "0",
-    tokenId: TOKEN_ADDRESS.gauc,
+    tokenId: TOKEN_ADDRESS.volatileAsset,
     decimals: 9, // Full blockchain precision
   },
   {
-    symbol: "GAU-GAUC",
-    name: "Gluon Pair",
+    symbol: tokenConfig.pairToken.symbol as TokenSymbol,
+    name: tokenConfig.pairToken.name,
     color: "bg-purple-500",
     balance: "0",
-    tokenId: "GAU-GAUC_PAIR_TOKEN_ID_PLACEHOLDER",
+    tokenId: `${tokenConfig.pairToken.symbol}_PAIR_TOKEN_ID_PLACEHOLDER`,
     decimals: 9, // Full blockchain precision
   },
 ];
 
 export const getValidToTokens = (fromSymbol: TokenSymbol, tokens: Token[]): Token[] => {
+  const pairSymbol = tokenConfig.pairToken.symbol;
+  const stableSymbol = tokenConfig.stableAsset.symbol;
+  const volatileSymbol = tokenConfig.volatileAsset.symbol;
+  
   if (fromSymbol === "ERG") {
-    return tokens.filter((t) => t.symbol === "GAU-GAUC");
+    return tokens.filter((t) => t.symbol === pairSymbol);
   }
-  if (fromSymbol === "GAU-GAUC") {
+  if (fromSymbol === pairSymbol) {
     return tokens.filter((t) => t.symbol === "ERG");
   }
-  if (fromSymbol === "GAU") {
-    return tokens.filter((t) => t.symbol === "GAUC");
+  if (fromSymbol === stableSymbol) {
+    return tokens.filter((t) => t.symbol === volatileSymbol);
   }
-  if (fromSymbol === "GAUC") {
-    return tokens.filter((t) => t.symbol === "GAU");
+  if (fromSymbol === volatileSymbol) {
+    return tokens.filter((t) => t.symbol === stableSymbol);
   }
   return [];
 };
 
 export const getActionType = (fromSymbol: TokenSymbol, toSymbol: TokenSymbol): SwapAction | null => {
-  if (fromSymbol === "ERG" && toSymbol === "GAU-GAUC") return "erg-to-gau-gauc";
-  if (fromSymbol === "GAU-GAUC" && toSymbol === "ERG") return "gau-gauc-to-erg";
-  if (fromSymbol === "GAUC" && toSymbol === "GAU") return "gauc-to-gau";
-  if (fromSymbol === "GAU" && toSymbol === "GAUC") return "gau-to-gauc";
+  const pairSymbol = tokenConfig.pairToken.symbol;
+  const stableSymbol = tokenConfig.stableAsset.symbol;
+  const volatileSymbol = tokenConfig.volatileAsset.symbol;
+  
+  if (fromSymbol === "ERG" && toSymbol === pairSymbol) return "erg-to-pair";
+  if (fromSymbol === pairSymbol && toSymbol === "ERG") return "pair-to-erg";
+  if (fromSymbol === volatileSymbol && toSymbol === stableSymbol) return "volatile-to-stable";
+  if (fromSymbol === stableSymbol && toSymbol === volatileSymbol) return "stable-to-volatile";
   return null;
 };
 
 export const getDescription = (action: SwapAction | null): string => {
+  const stableName = tokenConfig.stableAsset.displayName;
+  const volatileName = tokenConfig.volatileAsset.displayName;
+  
   switch (action) {
-    case "erg-to-gau-gauc":
-      return "You are using fission to convert ERG into GAU and GAUC.";
-    case "gau-gauc-to-erg":
-      return "You are using fusion to convert GAU and GAUC into ERG.";
-    case "gauc-to-gau":
-      return "You are using transmutation to convert GAUC into GAU.";
-    case "gau-to-gauc":
-      return "You are using transmutation to convert GAU into GAUC.";
+    case "erg-to-pair":
+      return `You are using fission to convert ERG into ${stableName} and ${volatileName}.`;
+    case "pair-to-erg":
+      return `You are using fusion to convert ${stableName} and ${volatileName} into ERG.`;
+    case "volatile-to-stable":
+      return `You are using transmutation to convert ${volatileName} into ${stableName}.`;
+    case "stable-to-volatile":
+      return `You are using transmutation to convert ${stableName} into ${volatileName}.`;
     default:
       return "Select tokens to swap.";
   }
@@ -85,12 +97,12 @@ export const getDescription = (action: SwapAction | null): string => {
 
 export const getTitle = (action: SwapAction | null): string => {
   switch (action) {
-    case "erg-to-gau-gauc":
+    case "erg-to-pair":
       return "FISSION";
-    case "gau-gauc-to-erg":
+    case "pair-to-erg":
       return "FUSION";
-    case "gauc-to-gau":
-    case "gau-to-gauc":
+    case "volatile-to-stable":
+    case "stable-to-volatile":
       return "TRANSMUTATION";
     default:
       return "REACTOR";
