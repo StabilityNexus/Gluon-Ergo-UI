@@ -47,9 +47,13 @@ export class TransactionListener {
   private nodeService: NodeService;
   private pollingInterval: NodeJS.Timeout | null = null;
   private isListening = false;
-
+  private getBalanceProvider?: () => Promise<Array<{ tokenId: string; balance: string }>>;
   constructor(nodeService: NodeService) {
     this.nodeService = nodeService;
+  }
+  /** Provide the listener with a wallet getBalance function (call from ReactorSwap) */
+  setBalanceProvider(fn: () => Promise<Array<{ tokenId: string; balance: string }>>): void {
+    this.getBalanceProvider = fn;
   }
 
   /**
@@ -104,7 +108,6 @@ export class TransactionListener {
       // Check mempool first (faster and more efficient)
       try {
         const mempoolTx = await this.nodeService.getUnconfirmedTransactionById(txHash);
-        
         if (mempoolTx) {
           console.log("Transaction still in mempool, waiting...");
           return false;
@@ -129,12 +132,26 @@ export class TransactionListener {
             height: confirmedTx.inclusionHeight,
           });
 
-          // Update transaction state
           const pendingTransactions = this.getPendingTransactions();
           if (pendingTransactions[txHash]) {
             pendingTransactions[txHash].isConfirmed = true;
             pendingTransactions[txHash].confirmationHeight = confirmedTx.inclusionHeight;
+            // NEW: record when confirmation observed
+            (pendingTransactions[txHash] as any).confirmationTimestamp = Date.now();
             localStorage.setItem(LISTENER_CONFIG.LOCALSTORAGE_KEY, JSON.stringify(pendingTransactions));
+          }
+
+          // NEW: if we have a balance provider, try an immediate compare (after tiny buffer)
+          if (this.getBalanceProvider) {
+            const balanceFn = this.getBalanceProvider; // <-- FIX: capture the function safely
+
+            setTimeout(async () => {
+              try {
+                await this.compareWithWallet(txHash, balanceFn); // <-- use captured function
+              } catch (err) {
+                console.error("Immediate compareWithWallet failed:", err);
+              }
+            }, 700);
           }
 
           return true;
@@ -148,7 +165,7 @@ export class TransactionListener {
       // Check if we should cleanup based on retry count
       const pendingTransactions = this.getPendingTransactions();
       const transactionState = pendingTransactions[txHash];
-      
+
       if (transactionState && transactionState.retryCount >= 5) {
         console.warn("⚠️ Transaction not found in blockchain or mempool after multiple attempts, cleaning up:", txHash.slice(0, 8) + "...");
         toast.error("Transaction not found", {
@@ -157,7 +174,7 @@ export class TransactionListener {
         });
         return true; // Signal to cleanup
       }
-      
+
       return false;
     } catch (error) {
       console.error("Error checking transaction status:", error);
@@ -366,12 +383,17 @@ export class TransactionListener {
 
         // Check wallet update (with buffer time after confirmation)
         if (transactionState.isConfirmed) {
-          const timeSinceConfirmation = currentTime - (transactionState.timestamp + 30000); // Rough estimate
+          const confirmedAt = (transactionState as any).confirmationTimestamp || transactionState.timestamp;
+          const timeSinceConfirmation = currentTime - confirmedAt;
 
           if (timeSinceConfirmation >= LISTENER_CONFIG.WALLET_UPDATE_BUFFER_TIME) {
-            // We need getBalance function - will be passed from ReactorSwap
-            // For now, we'll handle this in the main component
             console.log("⏳ Ready to check wallet update for:", txHash.slice(0, 8) + "...");
+            // Attempt compare if we have a provider
+            if (this.getBalanceProvider) {
+              await this.compareWithWallet(txHash, this.getBalanceProvider);
+            } else {
+              console.warn("No getBalance provider set on TransactionListener; cannot compare wallet state immediately.");
+            }
           }
         }
       } catch (error) {
@@ -441,7 +463,7 @@ export class TransactionListener {
 
       // Edge-safe absolute value calculation using pure BigInt operations
       const ergDiffAbs = ergDiff < BigInt(0) ? -ergDiff : ergDiff;
-      
+
       return ergDiffAbs <= tolerance && gauDiff === BigInt(0) && gaucDiff === BigInt(0);
     } catch (error) {
       console.error("Error comparing states:", error);
