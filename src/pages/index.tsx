@@ -12,10 +12,8 @@ export default function Home() {
         keywords="Gluon, Ergo, DeFi, Gold, Stablecoin, Gold-pegged tokens, Cryptocurrency, Blockchain, GAU, GAUC, Digital Gold"
       />
       <PageLayout>
-        <div className="mx-auto w-full max-w-7xl space-y-12 rounded-2xl border border-border/50 bg-card/30 px-4 py-8 shadow-lg backdrop-blur-sm sm:px-6 lg:px-8">
           <Hero />
           <Features />
-        </div>
       </PageLayout>
     </>
   );

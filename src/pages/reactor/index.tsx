@@ -14,12 +14,8 @@ export default function ReactorDashboard() {
         keywords="Gluon Dashboard, DeFi Stats, GAU Price, GAUC Price, Gold Price, Portfolio Tracker, Ergo DeFi"
       />
       <PageLayout>
-        <motion.div
-          className="mx-auto w-full max-w-7xl space-y-8 rounded-2xl border border-border/50 bg-card/30 px-4 py-8 shadow-lg backdrop-blur-sm sm:px-6 lg:px-8"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: "easeOut" }}
-        >
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: "easeOut" }}>
+          
           <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.5 }}>
             <GluonStats />
           </motion.div>
@@ -31,6 +27,7 @@ export default function ReactorDashboard() {
           <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.5 }}>
             <MyStats />
           </motion.div>
+
         </motion.div>
       </PageLayout>
     </>
