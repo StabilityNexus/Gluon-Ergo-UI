@@ -12,9 +12,7 @@ export default function ReactorPage() {
         keywords={`Gluon Swap, Token Exchange, ERG to ${tokenConfig.stableAsset.symbol}, ${tokenConfig.stableAsset.symbol} to ${tokenConfig.volatileAsset.symbol}, DeFi Trading, Ergo DEX, Decentralized Exchange`}
       />
       <PageLayout>
-        <div className="mx-auto w-full max-w-7xl rounded-2xl border border-border/50 bg-card/30 px-4 py-8 shadow-lg backdrop-blur-sm sm:px-6 lg:px-8">
           <ReactorSwap />
-        </div>
       </PageLayout>
     </>
   );
