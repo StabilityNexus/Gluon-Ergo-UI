@@ -139,6 +139,11 @@ export function ReactorSwap() {
 
   // Transaction listener state
   const [transactionListener] = useState(() => createTransactionListener(nodeService));
+  useEffect(() => {
+    if (transactionListener && typeof getBalance === "function") {
+      transactionListener.setBalanceProvider(getBalance);
+    }
+  }, [transactionListener, getBalance]);
   const [hasPendingTransactions, setHasPendingTransactions] = useState(false);
   // CLEAR TX HASH WHEN PENDING TRANSACTION IS FINISHED
   //  UI refresh hook for TransactionListener
@@ -455,9 +460,9 @@ export function ReactorSwap() {
               updatedTokens = updatedTokens.map((t) =>
                 t.symbol === "GAU"
                   ? {
-                    ...t,
-                    balance: formatMicroNumber(gauDecimalBalance).display,
-                  }
+                      ...t,
+                      balance: formatMicroNumber(gauDecimalBalance).display,
+                    }
                   : t
               );
             } else if (tokenBalance.tokenId === TOKEN_ADDRESS.gauc) {
@@ -466,9 +471,9 @@ export function ReactorSwap() {
               updatedTokens = updatedTokens.map((t) =>
                 t.symbol === "GAUC"
                   ? {
-                    ...t,
-                    balance: formatMicroNumber(gaucDecimalBalance).display,
-                  }
+                      ...t,
+                      balance: formatMicroNumber(gaucDecimalBalance).display,
+                    }
                   : t
               );
             }
@@ -678,7 +683,7 @@ export function ReactorSwap() {
             actualTotalFee,
             walletBuffer,
             availableErg,
-            maxAmount
+            maxAmount,
           });
         } catch (error) {
           console.error("Error calculating max amount:", error);
@@ -1093,12 +1098,13 @@ export function ReactorSwap() {
                     // block NaN and negatives
                     if (isNaN(floatValue) || floatValue < 0) return false;
 
-
                     return true;
                   }}
                   className={cn(
                     "w-full min-w-[80px] border-0 bg-transparent text-left text-2xl font-bold focus:outline-none focus-visible:ring-0 sm:text-right sm:text-3xl",
-                    isFromCard || (fromToken.symbol === "GAU-GAUC" && toToken.symbol === "ERG") ? "text-black dark:text-white placeholder:text-black dark:placeholder:text-white" : "text-muted-foreground",
+                    isFromCard || (fromToken.symbol === "GAU-GAUC" && toToken.symbol === "ERG")
+                      ? "text-black placeholder:text-black dark:text-white dark:placeholder:text-white"
+                      : "text-muted-foreground",
                     isFieldDisabled && "cursor-not-allowed opacity-50"
                   )}
                   disabled={isFieldDisabled}
@@ -1290,20 +1296,20 @@ export function ReactorSwap() {
                 <p className="text-sm text-muted-foreground">{getDescription(currentAction)}</p>
                 {initError && <p className="text-sm text-red-500">{initError}</p>}
                 {hasPendingTransactions && <p className="animate-pulse text-sm text-blue-500">🔄 Transaction pending - waiting for wallet update...</p>}
-               {lastSubmittedTx && (
-  <div className="text-xs text-blue-400 flex items-center gap-2">
-    <span>Transaction Hash:</span>
-    <a
-      href={`https://sigmaspace.io/transactions/${lastSubmittedTx}`}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="underline hover:text-blue-300 flex items-center gap-1"
-    >
-      {lastSubmittedTx.slice(0, 40)}...
-      <ExternalLink className="w-3 h-3" />
-    </a>
-  </div>
-)}
+                {lastSubmittedTx && (
+                  <div className="flex items-center gap-2 text-xs text-blue-400">
+                    <span>Transaction Hash:</span>
+                    <a
+                      href={`https://sigmaspace.io/transactions/${lastSubmittedTx}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1 underline hover:text-blue-300"
+                    >
+                      {lastSubmittedTx.slice(0, 40)}...
+                      <ExternalLink className="h-3 w-3" />
+                    </a>
+                  </div>
+                )}
               </div>
               {/* <Button
                 variant="ghost"
