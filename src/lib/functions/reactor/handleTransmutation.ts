@@ -67,7 +67,7 @@ export const calculateTransmutationAmounts = async ({
     const stableSymbol = tokenConfig.stableAsset.symbol;
     let willGet: bigint;
     try {
-      if (fromTokenSymbol === volatileSymbol || fromTokenSymbol === "GAUC") {
+      if (fromTokenSymbol === volatileSymbol) {
         willGet = BigInt(await gluonInstance.transmuteToGoldWillGet(gluonBox, oracleBox, Number(inputAmount), height));
       } else {
         willGet = BigInt(await gluonInstance.transmuteFromGoldWillGet(gluonBox, oracleBox, Number(inputAmount), height));
@@ -100,7 +100,7 @@ export const calculateTransmutationAmounts = async ({
     let fees;
     try {
       fees =
-        fromTokenSymbol === volatileSymbol || fromTokenSymbol === "GAUC"
+        fromTokenSymbol === volatileSymbol
           ? await gluonInstance.getTotalFeeAmountTransmuteToGold(gluonBox, oracleBox, Number(inputAmount))
           : await gluonInstance.getTotalFeeAmountTransmuteFromGold(gluonBox, oracleBox, Number(inputAmount));
     } catch (error) {
@@ -108,7 +108,7 @@ export const calculateTransmutationAmounts = async ({
       throw new Error("Failed to calculate transmutation fees");
     }
 
-    const isFromVolatile = fromTokenSymbol === volatileSymbol || fromTokenSymbol === "GAUC";
+    const isFromVolatile = fromTokenSymbol === volatileSymbol;
     
     const receiptDetails: ReceiptDetails = {
       inputAmount: numValue,

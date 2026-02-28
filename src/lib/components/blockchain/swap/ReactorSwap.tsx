@@ -128,7 +128,7 @@ export function ReactorSwap() {
   const [boxesReady, setBoxesReady] = useState(false);
   const [receiptDetails, setReceiptDetails] = useState<ReceiptDetails>({
     inputAmount: 0,
-    outputAmount: { gau: 0, gauc: 0, erg: 0 },
+    outputAmount: { stableAsset: 0, volatileAsset: 0, erg: 0, gau: 0, gauc: 0 },
     fees: {
       devFee: 0,
       uiFee: 0,
@@ -260,7 +260,7 @@ export function ReactorSwap() {
       setGaucAmount("0");
       setReceiptDetails({
         inputAmount: 0,
-        outputAmount: { gau: 0, gauc: 0, erg: 0 },
+        outputAmount: { stableAsset: 0, volatileAsset: 0, erg: 0, gau: 0, gauc: 0 },
         fees: { devFee: 0, uiFee: 0, oracleFee: 0, minerFee: 0, totalFee: 0 },
         maxErgOutput: maxErgOutput,
       });
@@ -275,7 +275,7 @@ export function ReactorSwap() {
       const stableSymbol = tokenConfig.stableAsset.symbol;
       const volatileSymbol = tokenConfig.volatileAsset.symbol;
       
-      if ((fromToken.symbol === pairSymbol || fromToken.symbol === "GAU-GAUC") && toToken.symbol === "ERG") {
+      if (fromToken.symbol === pairSymbol && toToken.symbol === "ERG") {
         // Check if user input is equivalent to our max value (use precise for calculation)
         const calculationValue = isUserInputMaxValue(value, maxErgOutputPrecise) ? maxErgOutputPrecise : value;
 
@@ -291,10 +291,10 @@ export function ReactorSwap() {
           gluonInstance,
           gluonBox,
           value: calculationValue,
-          stableAssetBalance: tokens.find((t) => t.symbol === stableSymbol)?.balance || tokens.find((t) => t.symbol === "GAU")?.balance || "0",
-          volatileAssetBalance: tokens.find((t) => t.symbol === volatileSymbol)?.balance || tokens.find((t) => t.symbol === "GAUC")?.balance || "0",
-          gauBalance: tokens.find((t) => t.symbol === "GAU")?.balance || "0",
-          gaucBalance: tokens.find((t) => t.symbol === "GAUC")?.balance || "0",
+          stableAssetBalance: tokens.find((t) => t.symbol === stableSymbol)?.balance || "0",
+          volatileAssetBalance: tokens.find((t) => t.symbol === volatileSymbol)?.balance || "0",
+          gauBalance: tokens.find((t) => t.symbol === stableSymbol)?.balance || "0",
+          gaucBalance: tokens.find((t) => t.symbol === volatileSymbol)?.balance || "0",
         });
 
         if ("error" in result) {
@@ -315,7 +315,7 @@ export function ReactorSwap() {
         setGauAmount(result.gauAmount || result.stableAssetAmount);
         setGaucAmount(result.gaucAmount || result.volatileAssetAmount);
         setReceiptDetails(result.receiptDetails);
-      } else if (fromToken.symbol === "ERG" && (toToken.symbol === pairSymbol || toToken.symbol === "GAU-GAUC")) {
+      } else if (fromToken.symbol === "ERG" && toToken.symbol === pairSymbol) {
         console.log("🔄 Calculating Fission amounts");
         result = await calculateFissionAmounts({
           gluonInstance,
@@ -342,7 +342,7 @@ export function ReactorSwap() {
         setGauAmount(stableAmt);
         setGaucAmount(volatileAmt);
         setReceiptDetails(result.receiptDetails);
-      } else if ((fromToken.symbol === volatileSymbol || fromToken.symbol === "GAUC") && (toToken.symbol === stableSymbol || toToken.symbol === "GAU")) {
+      } else if (fromToken.symbol === volatileSymbol && toToken.symbol === stableSymbol) {
         // Only calculate if we're changing the input amount
         if (!isFromInput) return;
 
@@ -364,7 +364,7 @@ export function ReactorSwap() {
         // Simply update the output amount
         setToAmount(result.toAmount);
         setReceiptDetails(result.receiptDetails);
-      } else if ((fromToken.symbol === stableSymbol || fromToken.symbol === "GAU") && (toToken.symbol === volatileSymbol || toToken.symbol === "GAUC")) {
+      } else if (fromToken.symbol === stableSymbol && toToken.symbol === volatileSymbol) {
         // Only calculate if we're changing the input amount
         if (!isFromInput) return;
 
@@ -416,7 +416,7 @@ export function ReactorSwap() {
       setGaucAmount("0");
       setReceiptDetails({
         inputAmount: 0,
-        outputAmount: { gau: 0, gauc: 0, erg: 0 },
+        outputAmount: { stableAsset: 0, volatileAsset: 0, erg: 0, gau: 0, gauc: 0 },
         fees: { devFee: 0, uiFee: 0, oracleFee: 0, minerFee: 0, totalFee: 0 },
         maxErgOutput: maxErgOutput,
       });
@@ -425,7 +425,7 @@ export function ReactorSwap() {
     }
     // For pair token to ERG, we need to calculate when the ERG (To) amount changes
     const pairSymbol = tokenConfig.pairToken.symbol;
-    if (!isFromInput && (fromToken.symbol === pairSymbol || fromToken.symbol === "GAU-GAUC") && toToken.symbol === "ERG") {
+    if (!isFromInput && fromToken.symbol === pairSymbol && toToken.symbol === "ERG") {
       debouncedCalculateAmounts(stringValue, isFromInput);
     } else if (isFromInput) {
       // For all other cases, only calculate when input changes
@@ -482,6 +482,10 @@ export function ReactorSwap() {
         });
 
         if (Array.isArray(balances) && balances.length > 0) {
+          const pairSymbol = tokenConfig.pairToken.symbol;
+          const stableSymbol = tokenConfig.stableAsset.symbol;
+          const volatileSymbol = tokenConfig.volatileAsset.symbol;
+
           const ergBalanceData = balances.find((b) => b.tokenId === "ERG" || !b.tokenId);
           if (ergBalanceData && ergBalanceData.balance) {
             const ergRawBalance = BigInt(ergBalanceData.balance);
@@ -493,9 +497,8 @@ export function ReactorSwap() {
             if (tokenBalance.tokenId === TOKEN_ADDRESS.stableAsset || tokenBalance.tokenId === TOKEN_ADDRESS.gau) {
               const stableRawBalance = tokenBalance.balance && tokenBalance.balance !== "NaN" ? BigInt(tokenBalance.balance) : BigInt(0);
               const stableDecimalBalance = convertFromDecimals(stableRawBalance);
-              const stableSymbol = tokenConfig.stableAsset.symbol;
               updatedTokens = updatedTokens.map((t) =>
-                t.symbol === stableSymbol || t.symbol === "GAU"
+                t.symbol === stableSymbol
                   ? {
                       ...t,
                       balance: formatMicroNumber(stableDecimalBalance).display,
@@ -505,9 +508,8 @@ export function ReactorSwap() {
             } else if (tokenBalance.tokenId === TOKEN_ADDRESS.volatileAsset || tokenBalance.tokenId === TOKEN_ADDRESS.gauc) {
               const volatileRawBalance = tokenBalance.balance && tokenBalance.balance !== "NaN" ? BigInt(tokenBalance.balance) : BigInt(0);
               const volatileDecimalBalance = convertFromDecimals(volatileRawBalance);
-              const volatileSymbol = tokenConfig.volatileAsset.symbol;
               updatedTokens = updatedTokens.map((t) =>
-                t.symbol === volatileSymbol || t.symbol === "GAUC"
+                t.symbol === volatileSymbol
                   ? {
                       ...t,
                       balance: formatMicroNumber(volatileDecimalBalance).display,
@@ -517,14 +519,14 @@ export function ReactorSwap() {
             }
           });
 
-          const gauToken = updatedTokens.find((t) => t.symbol === "GAU");
-          const gaucToken = updatedTokens.find((t) => t.symbol === "GAUC");
+          const gauToken = updatedTokens.find((t) => t.symbol === stableSymbol);
+          const gaucToken = updatedTokens.find((t) => t.symbol === volatileSymbol);
           if (gauToken && gaucToken) {
             const gauBalanceNum = parseFloat(gauToken.balance);
             const gaucBalanceNum = parseFloat(gaucToken.balance);
             const pairBalanceVal = Math.min(Number.isNaN(gauBalanceNum) ? 0 : gauBalanceNum, Number.isNaN(gaucBalanceNum) ? 0 : gaucBalanceNum);
             const pairBalance = formatTokenAmount(pairBalanceVal.toString());
-            updatedTokens = updatedTokens.map((t) => (t.symbol === "GAU-GAUC" ? { ...t, balance: pairBalance } : t));
+            updatedTokens = updatedTokens.map((t) => (t.symbol === pairSymbol ? { ...t, balance: pairBalance } : t));
           }
         }
 
@@ -612,7 +614,7 @@ export function ReactorSwap() {
     debouncedCalculateAmounts.cancel();
     setReceiptDetails({
       inputAmount: 0,
-      outputAmount: { gau: 0, gauc: 0, erg: 0 },
+      outputAmount: { stableAsset: 0, volatileAsset: 0, erg: 0, gau: 0, gauc: 0 },
       fees: { devFee: 0, uiFee: 0, oracleFee: 0, minerFee: 0, totalFee: 0 },
       maxErgOutput,
     });
@@ -630,7 +632,7 @@ export function ReactorSwap() {
     debouncedCalculateAmounts.cancel();
     setReceiptDetails({
       inputAmount: 0,
-      outputAmount: { gau: 0, gauc: 0, erg: 0 },
+      outputAmount: { stableAsset: 0, volatileAsset: 0, erg: 0, gau: 0, gauc: 0 },
       fees: { devFee: 0, uiFee: 0, oracleFee: 0, minerFee: 0, totalFee: 0 },
       maxErgOutput,
     });
@@ -652,7 +654,7 @@ export function ReactorSwap() {
       setGaucAmount("0");
       setReceiptDetails({
         inputAmount: 0,
-        outputAmount: { gau: 0, gauc: 0, erg: 0 },
+        outputAmount: { stableAsset: 0, volatileAsset: 0, erg: 0, gau: 0, gauc: 0 },
         fees: { devFee: 0, uiFee: 0, oracleFee: 0, minerFee: 0, totalFee: 0 },
         maxErgOutput,
       });
@@ -665,6 +667,10 @@ export function ReactorSwap() {
   };
 
   const handleMax = async (isFromCard: boolean) => {
+    const pairSymbol = tokenConfig.pairToken.symbol;
+    const stableSymbol = tokenConfig.stableAsset.symbol;
+    const volatileSymbol = tokenConfig.volatileAsset.symbol;
+
     console.log("🔍 handleMax called with:", {
       isFromCard,
       fromToken: fromToken.symbol,
@@ -672,12 +678,12 @@ export function ReactorSwap() {
       displayValue: maxErgOutput,
       preciseValue: maxErgOutputPrecise,
     });
-    if (isFromCard && fromToken.symbol === "GAU-GAUC") {
-      console.log("❌ Ignoring MAX for GAU-GAUC in FROM field");
+    if (isFromCard && fromToken.symbol === pairSymbol) {
+      console.log("❌ Ignoring MAX for pair token in FROM field");
       return;
     }
     let maxAmount = "0";
-    if (!isFromCard && fromToken.symbol === "GAU-GAUC" && toToken.symbol === "ERG") {
+    if (!isFromCard && fromToken.symbol === pairSymbol && toToken.symbol === "ERG") {
       maxAmount = maxErgOutput;
       console.log("🎯 Setting MAX for GAU-GAUC to ERG conversion", {
         displayValue: maxErgOutput,
@@ -731,7 +737,7 @@ export function ReactorSwap() {
           const availableErg = Math.max(0, balanceNum - estimatedTotalFeeERG - walletBuffer);
           maxAmount = availableErg.toString();
         }
-      } else if (fromToken.symbol === "GAU" || fromToken.symbol === "GAUC") {
+      } else if (fromToken.symbol === stableSymbol || fromToken.symbol === volatileSymbol) {
         maxAmount = fromToken.balance;
       }
       setFromAmount(maxAmount);
@@ -744,7 +750,7 @@ export function ReactorSwap() {
       setGaucAmount("0");
       setReceiptDetails({
         inputAmount: 0,
-        outputAmount: { gau: 0, gauc: 0, erg: 0 },
+        outputAmount: { stableAsset: 0, volatileAsset: 0, erg: 0, gau: 0, gauc: 0 },
         fees: { devFee: 0, uiFee: 0, oracleFee: 0, minerFee: 0, totalFee: 0 },
         maxErgOutput: maxErgOutput,
       });
@@ -780,19 +786,19 @@ export function ReactorSwap() {
       const stableSymbol = tokenConfig.stableAsset.symbol;
       const volatileSymbol = tokenConfig.volatileAsset.symbol;
       
-      if (fromToken.symbol === "ERG" && (toToken.symbol === pairSymbol || toToken.symbol === "GAU-GAUC")) {
+      if (fromToken.symbol === "ERG" && toToken.symbol === pairSymbol) {
         actionType = "fission";
         inputAmount = fromAmount;
         outputAmounts = { gau: gauAmount, gauc: gaucAmount, erg: "0" };
-      } else if ((fromToken.symbol === pairSymbol || fromToken.symbol === "GAU-GAUC") && toToken.symbol === "ERG") {
+      } else if (fromToken.symbol === pairSymbol && toToken.symbol === "ERG") {
         actionType = "fusion";
         inputAmount = toAmount; // For fusion, we target ERG output
         outputAmounts = { gau: "0", gauc: "0", erg: toAmount };
-      } else if ((fromToken.symbol === volatileSymbol || fromToken.symbol === "GAUC") && (toToken.symbol === stableSymbol || toToken.symbol === "GAU")) {
+      } else if (fromToken.symbol === volatileSymbol && toToken.symbol === stableSymbol) {
         actionType = "volatile-to-stable";
         inputAmount = fromAmount;
         outputAmounts = { gau: toAmount, gauc: "0", erg: "0" };
-      } else if ((fromToken.symbol === stableSymbol || fromToken.symbol === "GAU") && (toToken.symbol === volatileSymbol || toToken.symbol === "GAUC")) {
+      } else if (fromToken.symbol === stableSymbol && toToken.symbol === volatileSymbol) {
         actionType = "stable-to-volatile";
         inputAmount = fromAmount;
         outputAmounts = { gau: "0", gauc: toAmount, erg: "0" };
@@ -812,11 +818,11 @@ export function ReactorSwap() {
       let result;
       const utxos = await getUtxos();
 
-      if (fromToken.symbol === "ERG" && (toToken.symbol === pairSymbol || toToken.symbol === "GAU-GAUC")) {
+      if (fromToken.symbol === "ERG" && toToken.symbol === pairSymbol) {
         result = await handleFissionSwap(gluonInstance, gluonBox, oracleBox, utxos, nodeService, ergoWallet, fromAmount);
-      } else if ((fromToken.symbol === pairSymbol || fromToken.symbol === "GAU-GAUC") && toToken.symbol === "ERG") {
+      } else if (fromToken.symbol === pairSymbol && toToken.symbol === "ERG") {
         result = await handleFusionSwap(gluonInstance, gluonBox, oracleBox, utxos, nodeService, ergoWallet, toAmount);
-      } else if ((fromToken.symbol === volatileSymbol || fromToken.symbol === "GAUC") && (toToken.symbol === stableSymbol || toToken.symbol === "GAU")) {
+      } else if (fromToken.symbol === volatileSymbol && toToken.symbol === stableSymbol) {
         result = await handleTransmuteToGoldSwap({
           gluonInstance,
           gluonBoxJs: gluonBox,
@@ -826,7 +832,7 @@ export function ReactorSwap() {
           ergoWallet,
           amount: fromAmount,
         });
-      } else if ((fromToken.symbol === stableSymbol || fromToken.symbol === "GAU") && (toToken.symbol === volatileSymbol || toToken.symbol === "GAUC")) {
+      } else if (fromToken.symbol === stableSymbol && toToken.symbol === volatileSymbol) {
         result = await handleTransmuteFromGoldSwap({
           gluonInstance,
           gluonBoxJs: gluonBox,
@@ -864,7 +870,7 @@ export function ReactorSwap() {
         setGaucAmount("0");
         setReceiptDetails({
           inputAmount: 0,
-          outputAmount: { gau: 0, gauc: 0, erg: 0 },
+          outputAmount: { stableAsset: 0, volatileAsset: 0, erg: 0, gau: 0, gauc: 0 },
           fees: { devFee: 0, uiFee: 0, oracleFee: 0, minerFee: 0, totalFee: 0 },
           maxErgOutput: maxErgOutput,
         });
@@ -887,8 +893,8 @@ export function ReactorSwap() {
         const pairSymbol = tokenConfig.pairToken.symbol;
         const stableSymbol = tokenConfig.stableAsset.symbol;
         const volatileSymbol = tokenConfig.volatileAsset.symbol;
-        const gauBalanceStr = tokens.find((t) => t.symbol === stableSymbol || t.symbol === "GAU")?.balance || "0";
-        const gaucBalanceStr = tokens.find((t) => t.symbol === volatileSymbol || t.symbol === "GAUC")?.balance || "0";
+        const gauBalanceStr = tokens.find((t) => t.symbol === stableSymbol)?.balance || "0";
+        const gaucBalanceStr = tokens.find((t) => t.symbol === volatileSymbol)?.balance || "0";
         const result = await calculateFusionAmounts({
           gluonInstance,
           gluonBox,
@@ -913,7 +919,7 @@ export function ReactorSwap() {
       }
     };
     const pairSymbol = tokenConfig.pairToken.symbol;
-    if ((fromToken.symbol === pairSymbol || fromToken.symbol === "GAU-GAUC") && toToken.symbol === "ERG") {
+    if (fromToken.symbol === pairSymbol && toToken.symbol === "ERG") {
       calculateMaxErgForFusion();
     }
   }, [boxesReady, gluonInstance, gluonBox, tokens, fromToken.symbol, toToken.symbol]);
@@ -1004,12 +1010,10 @@ export function ReactorSwap() {
     const pairSymbol = tokenConfig.pairToken.symbol;
     const stableSymbol = tokenConfig.stableAsset.symbol;
     const volatileSymbol = tokenConfig.volatileAsset.symbol;
-    const shouldRenderInputOrDisplay = currentToken.symbol !== pairSymbol && currentToken.symbol !== "GAU-GAUC";
+    const shouldRenderInputOrDisplay = currentToken.symbol !== pairSymbol;
     const isTransmutation = 
       (fromToken.symbol === volatileSymbol && toToken.symbol === stableSymbol) || 
-      (fromToken.symbol === stableSymbol && toToken.symbol === volatileSymbol) ||
-      (fromToken.symbol === "GAUC" && toToken.symbol === "GAU") || 
-      (fromToken.symbol === "GAU" && toToken.symbol === "GAUC");
+      (fromToken.symbol === stableSymbol && toToken.symbol === volatileSymbol);
     const isFieldDisabled = isInputDisabled || (!isFromCard && isTransmutation);
 
     // Helper function to get token icon
@@ -1084,7 +1088,7 @@ export function ReactorSwap() {
         <motion.div className="mb-2 flex justify-between" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1, duration: 0.2 }}>
           <span className="text-sm text-muted-foreground">{isFromCard ? "From" : "To"}</span>
           <AnimatePresence mode="wait">
-            {isFromCard && currentToken.symbol !== pairSymbol && currentToken.symbol !== "GAU-GAUC" && (
+            {isFromCard && currentToken.symbol !== pairSymbol && (
               <motion.span
                 key={`${currentToken.symbol}-${currentToken.balance}`}
                 className="text-sm text-muted-foreground"
@@ -1096,7 +1100,7 @@ export function ReactorSwap() {
                 Balance: {formatTokenAmount(currentToken.balance)} {currentToken.symbol}
               </motion.span>
             )}
-            {fromToken.symbol === "GAU-GAUC" && toToken.symbol === "ERG" && !isFromCard && (
+            {fromToken.symbol === pairSymbol && toToken.symbol === "ERG" && !isFromCard && (
               <motion.span
                 key={`max-${maxErgOutput}`}
                 className="text-sm text-muted-foreground"
@@ -1160,7 +1164,7 @@ export function ReactorSwap() {
                   }}
                   className={cn(
                     "w-full min-w-[80px] border-0 bg-transparent text-left text-2xl font-bold focus:outline-none focus-visible:ring-0 sm:text-right sm:text-3xl",
-                    isFromCard || (fromToken.symbol === "GAU-GAUC" && toToken.symbol === "ERG")
+                    isFromCard || (fromToken.symbol === pairSymbol && toToken.symbol === "ERG")
                       ? "text-black placeholder:text-black dark:text-white dark:placeholder:text-white"
                       : "text-muted-foreground",
                     isFieldDisabled && "cursor-not-allowed opacity-50"
@@ -1170,8 +1174,8 @@ export function ReactorSwap() {
                 />
               </motion.div>
               {(isFromCard
-                ? currentToken.symbol !== "GAU-GAUC" // Show MAX in FROM for non-GAU-GAUC
-                : fromToken.symbol === "GAU-GAUC" && currentToken.symbol === "ERG") && // Show MAX in TO only for GAU-GAUC to ERG
+                ? currentToken.symbol !== pairSymbol // Show MAX in FROM for non-pair token
+                : fromToken.symbol === pairSymbol && currentToken.symbol === "ERG") && // Show MAX in TO only for pair to ERG
                 boxesReady &&
                 !isCalculating && (
                   <button
@@ -1186,13 +1190,16 @@ export function ReactorSwap() {
           ) : null}
         </motion.div>
 
-        {(currentToken.symbol === tokenConfig.pairToken.symbol || currentToken.symbol === "GAU-GAUC") && renderGauGaucCard(isFromCard)}
+        {currentToken.symbol === tokenConfig.pairToken.symbol && renderGauGaucCard(isFromCard)}
       </motion.div>
     );
   };
 
   const renderGauGaucCard = (isFromCard?: boolean) => {
     console.log(isFromCard);
+    const stableSymbol = tokenConfig.stableAsset.symbol;
+    const volatileSymbol = tokenConfig.volatileAsset.symbol;
+
     return (
       <motion.div
         className="w-full flex-1 space-y-3 py-4"
@@ -1204,7 +1211,7 @@ export function ReactorSwap() {
         <motion.div className="grid grid-cols-1 gap-3 px-4" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.2 }}>
           {/* GAU Box */}
           <div>
-            <span className="mb-1.5 block px-1 text-xs text-muted-foreground">GAU Balance: {formatTokenAmount(tokens.find((t) => t.symbol === "GAU")?.balance || "0")}</span>
+            <span className="mb-1.5 block px-1 text-xs text-muted-foreground">GAU Balance: {formatTokenAmount(tokens.find((t) => t.symbol === stableSymbol)?.balance || "0")}</span>
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -1232,7 +1239,7 @@ export function ReactorSwap() {
 
           {/* GAUC Box */}
           <div>
-            <span className="mb-1.5 block px-1 text-xs text-muted-foreground">GAUC Balance: {formatTokenAmount(tokens.find((t) => t.symbol === "GAUC")?.balance || "0")}</span>
+            <span className="mb-1.5 block px-1 text-xs text-muted-foreground">GAUC Balance: {formatTokenAmount(tokens.find((t) => t.symbol === volatileSymbol)?.balance || "0")}</span>
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -1268,17 +1275,21 @@ export function ReactorSwap() {
   // const maxAmount = parseFloat(fromToken?.balance || "0"); // what's allowed
 
   const isSwapDisabled = () => {
+    const pairSymbol = tokenConfig.pairToken.symbol;
+    const stableSymbol = tokenConfig.stableAsset.symbol;
+    const volatileSymbol = tokenConfig.volatileAsset.symbol;
+
     if (isLoading || !isConnected || !boxesReady || isCalculating || (isInitializing && !boxesReady) || hasPendingTransactions) return true;
 
     const fromVal = parseFloat(fromAmount);
     const toVal = parseFloat(toAmount);
 
-    if (fromToken.symbol === "GAU-GAUC" && toToken.symbol === "ERG") {
+    if (fromToken.symbol === pairSymbol && toToken.symbol === "ERG") {
       const ergOutput = toVal;
       const gauRequired = parseFloat(gauAmount);
       const gaucRequired = parseFloat(gaucAmount);
-      const gauBalance = parseFloat(tokens.find((t) => t.symbol === "GAU")?.balance || "0");
-      const gaucBalance = parseFloat(tokens.find((t) => t.symbol === "GAUC")?.balance || "0");
+      const gauBalance = parseFloat(tokens.find((t) => t.symbol === stableSymbol)?.balance || "0");
+      const gaucBalance = parseFloat(tokens.find((t) => t.symbol === volatileSymbol)?.balance || "0");
       if (isNaN(ergOutput) || ergOutput <= 0) return true;
       if (isNaN(gauRequired) || gauRequired <= 0) return true;
       if (isNaN(gaucRequired) || gaucRequired <= 0) return true;
@@ -1300,7 +1311,7 @@ export function ReactorSwap() {
       return false;
     }
 
-    if (fromToken.symbol === "ERG" && toToken.symbol === "GAU-GAUC") {
+    if (fromToken.symbol === "ERG" && toToken.symbol === pairSymbol) {
       const ergInput = fromVal;
       const ergBalanceStr = fromToken.balance.replace(/,/g, "");
       const ergBalance = parseFloat(ergBalanceStr);
@@ -1310,22 +1321,26 @@ export function ReactorSwap() {
 
       return false;
     }
-    if (fromToken.symbol === "GAUC" && toToken.symbol === "GAU") {
+    if (fromToken.symbol === volatileSymbol && toToken.symbol === stableSymbol) {
       const gaucInput = fromVal;
-      const gaucBalance = parseFloat(tokens.find((t) => t.symbol === "GAUC")?.balance || "0");
+      const gaucBalance = parseFloat(tokens.find((t) => t.symbol === volatileSymbol)?.balance || "0");
       if (Number.isNaN(gaucInput) || gaucInput <= 0) return true;
       if (gaucInput > gaucBalance) return true;
       return false;
     }
-    if (fromToken.symbol === "GAU" && toToken.symbol === "GAUC") {
+    if (fromToken.symbol === stableSymbol && toToken.symbol === volatileSymbol) {
       const gauInput = fromVal;
-      const gauBalance = parseFloat(tokens.find((t) => t.symbol === "GAU")?.balance || "0");
+      const gauBalance = parseFloat(tokens.find((t) => t.symbol === stableSymbol)?.balance || "0");
       if (Number.isNaN(gauInput) || gauInput <= 0) return true;
       if (gauInput > gauBalance) return true;
       return false;
     }
     return true;
   };
+
+  const pairSymbol = tokenConfig.pairToken.symbol;
+  const stableSymbol = tokenConfig.stableAsset.symbol;
+  const volatileSymbol = tokenConfig.volatileAsset.symbol;
 
   return (
     <div className="flex w-full flex-col gap-6 xl:flex-row xl:items-start xl:justify-evenly">
@@ -1539,7 +1554,7 @@ export function ReactorSwap() {
                     exit={{ opacity: 0, scale: 0.8 }}
                     transition={{ duration: 0.15 }}
                   >
-                    {fromToken.symbol !== "GAU-GAUC"
+                    {fromToken.symbol !== pairSymbol
                       ? `${formatTokenAmount(formatValue(receiptDetails.inputAmount))} ${fromToken.symbol}`
                       : `${formatTokenAmount(gauAmount)} GAU - ${formatTokenAmount(gaucAmount)} GAUC`}
                   </motion.span>
@@ -1646,7 +1661,7 @@ export function ReactorSwap() {
                     )}
                   </AnimatePresence>
                   <AnimatePresence mode="wait">
-                    {toToken.symbol === "GAU-GAUC" && (
+                    {toToken.symbol === pairSymbol && (
                       <motion.div
                         key={`output-pair-${receiptDetails.outputAmount.gau}-${receiptDetails.outputAmount.gauc}`}
                         initial={{ opacity: 0, scale: 0.8, y: 10 }}
@@ -1660,7 +1675,7 @@ export function ReactorSwap() {
                     )}
                   </AnimatePresence>
                   <AnimatePresence mode="wait">
-                    {(toToken.symbol === tokenConfig.stableAsset.symbol || toToken.symbol === "GAU") && (currentAction === "volatile-to-stable" || currentAction === "gauc-to-gau") && (
+                    {toToken.symbol === stableSymbol && currentAction === "volatile-to-stable" && (
                       <motion.span
                         key={`output-gau-${receiptDetails.outputAmount.gau}`}
                         initial={{ opacity: 0, scale: 0.8, y: 10 }}
@@ -1673,7 +1688,7 @@ export function ReactorSwap() {
                     )}
                   </AnimatePresence>
                   <AnimatePresence mode="wait">
-                    {(toToken.symbol === tokenConfig.volatileAsset.symbol || toToken.symbol === "GAUC") && (currentAction === "stable-to-volatile" || currentAction === "gau-to-gauc") && (
+                    {toToken.symbol === volatileSymbol && currentAction === "stable-to-volatile" && (
                       <motion.span
                         key={`output-gauc-${receiptDetails.outputAmount.gauc}`}
                         initial={{ opacity: 0, scale: 0.8, y: 10 }}
