@@ -1209,9 +1209,9 @@ export function ReactorSwap() {
         transition={{ duration: 0.3, ease: "easeInOut" }}
       >
         <motion.div className="grid grid-cols-1 gap-3 px-4" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.2 }}>
-          {/* GAU Box */}
+          {/* Stable Asset Box */}
           <div>
-            <span className="mb-1.5 block px-1 text-xs text-muted-foreground">GAU Balance: {formatTokenAmount(tokens.find((t) => t.symbol === stableSymbol)?.balance || "0")}</span>
+            <span className="mb-1.5 block px-1 text-xs text-muted-foreground">{stableSymbol} Balance: {formatTokenAmount(tokens.find((t) => t.symbol === stableSymbol)?.balance || "0")}</span>
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -1237,9 +1237,9 @@ export function ReactorSwap() {
             </motion.div>
           </div>
 
-          {/* GAUC Box */}
+          {/* Volatile Asset Box */}
           <div>
-            <span className="mb-1.5 block px-1 text-xs text-muted-foreground">GAUC Balance: {formatTokenAmount(tokens.find((t) => t.symbol === volatileSymbol)?.balance || "0")}</span>
+            <span className="mb-1.5 block px-1 text-xs text-muted-foreground">{volatileSymbol} Balance: {formatTokenAmount(tokens.find((t) => t.symbol === volatileSymbol)?.balance || "0")}</span>
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -1556,7 +1556,7 @@ export function ReactorSwap() {
                   >
                     {fromToken.symbol !== pairSymbol
                       ? `${formatTokenAmount(formatValue(receiptDetails.inputAmount))} ${fromToken.symbol}`
-                      : `${formatTokenAmount(gauAmount)} GAU - ${formatTokenAmount(gaucAmount)} GAUC`}
+                      : `${formatTokenAmount(gauAmount)} ${stableSymbol} - ${formatTokenAmount(gaucAmount)} ${volatileSymbol}`}
                   </motion.span>
                 </AnimatePresence>
               </motion.div>
@@ -1669,8 +1669,8 @@ export function ReactorSwap() {
                         exit={{ opacity: 0, scale: 0.8, y: -10 }}
                         transition={{ duration: 0.2 }}
                       >
-                        <div>{formatTokenAmount(formatValue(receiptDetails.outputAmount.gau))} GAU</div>
-                        <div>{formatTokenAmount(formatValue(receiptDetails.outputAmount.gauc))} GAUC</div>
+                        <div>{formatTokenAmount(formatValue(receiptDetails.outputAmount.gau))} {stableSymbol}</div>
+                        <div>{formatTokenAmount(formatValue(receiptDetails.outputAmount.gauc))} {volatileSymbol}</div>
                       </motion.div>
                     )}
                   </AnimatePresence>

@@ -48,25 +48,25 @@ export const tokenConfig: TokenConfig = {
     symbol: "ERG",
   },
   stableAsset: {
-    name: "Neutron",
-    symbol: "NEUTRON",
-    displayName: "Neutron",
-    description: "The stablecoin pegged to the base asset.",
+    name: "GAU",
+    symbol: "GAU",
+    displayName: "GAU",
+    description: "The stablecoin pegged to 1g of gold.",
   },
   volatileAsset: {
-    name: "Proton",
-    symbol: "PROTON",
-    displayName: "Proton",
+    name: "GAUC",
+    symbol: "GAUC",
+    displayName: "GAUC",
     description: "Tokenizes the reserve surplus and provides leveraged volatility and yield.",
   },
   peg: {
-    type: "Asset",
-    unit: "1 unit",
-    description: "Pegged to the base asset value.",
+    type: "Gold",
+    unit: "1g",
+    description: "Pegged to 1 gram of gold.",
   },
   pairToken: {
-    name: "Neutron-Proton Pair",
-    symbol: "NEUTRON-PROTON",
+    name: "GAU-GAUC Pair",
+    symbol: "GAU-GAUC",
   },
 };
 
