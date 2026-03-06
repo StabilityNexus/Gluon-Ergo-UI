@@ -9,14 +9,15 @@ import { Badge } from "@/lib/components/ui/badge";
 import { Card, CardContent } from "@/lib/components/ui/card";
 import { Copy, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
+import { tokenConfig } from "@/config/tokenConfig";
 
 // Inline utility functions (previously from analytics-utils)
 const getActionTypeLabel = (actionType: string): string => {
   const labels: Record<string, string> = {
     fission: "Fission",
     fusion: "Fusion",
-    "transmute-to-gold": "Transmute to Gold",
-    "transmute-from-gold": "Transmute from Gold",
+    "transmute-to-gold": `Transmute to ${tokenConfig.stableAsset.symbol}`,
+    "transmute-from-gold": `Transmute to ${tokenConfig.volatileAsset.symbol}`,
   };
   return labels[actionType] || actionType;
 };
@@ -96,14 +97,14 @@ export const TransactionCard = ({ transaction }: TransactionCardProps) => {
               </span>
             </div>
             <div>
-              <span className="text-muted-foreground">GAU:</span>
+              <span className="text-muted-foreground">{tokenConfig.stableAsset.symbol}:</span>
               <span className={`ml-2 ${Number(transaction.expectedChanges.gau) >= 0 ? "text-green-500" : "text-red-500"}`}>
                 {Number(transaction.expectedChanges.gau) >= 0 ? "+" : ""}
                 {nanoErgsToErgs(transaction.expectedChanges.gau).toString()}
               </span>
             </div>
             <div>
-              <span className="text-muted-foreground">GAUC:</span>
+              <span className="text-muted-foreground">{tokenConfig.volatileAsset.symbol}:</span>
               <span className={`ml-2 ${Number(transaction.expectedChanges.gauc) >= 0 ? "text-green-500" : "text-red-500"}`}>
                 {Number(transaction.expectedChanges.gauc) >= 0 ? "+" : ""}
                 {nanoErgsToErgs(transaction.expectedChanges.gauc).toString()}

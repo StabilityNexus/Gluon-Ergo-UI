@@ -13,6 +13,7 @@ import { Download, RefreshCw, Wallet } from "lucide-react";
 import { SEO } from "@/lib/components/layout/SEO";
 import { useErgo } from "@/lib/providers/ErgoProvider";
 import { WalletConnector } from "@/lib/components/blockchain/connector/WalletConnector";
+import { tokenConfig } from "@/config/tokenConfig";
 
 const PAGE_SIZE = 20; // Number of transactions per page
 
@@ -166,10 +167,10 @@ export default function TransactionHistory() {
                 Fusion
               </Button>
               <Button variant={typeFilter === "transmute-to-gold" ? "default" : "outline"} size="sm" onClick={() => setTypeFilter("transmute-to-gold")}>
-                To Gold
+                To {tokenConfig.stableAsset.symbol}
               </Button>
               <Button variant={typeFilter === "transmute-from-gold" ? "default" : "outline"} size="sm" onClick={() => setTypeFilter("transmute-from-gold")}>
-                From Gold
+                To {tokenConfig.volatileAsset.symbol}
               </Button>
             </div>
           </div>

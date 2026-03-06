@@ -4,24 +4,25 @@
 
 import { TransactionRecord } from "./indexed-db";
 import { nanoErgsToErgs } from "./erg-converter";
+import { tokenConfig } from "@/config/tokenConfig";
 
 /**
  * Convert transactions to CSV format
  */
 export const exportToCSV = (transactions: TransactionRecord[]): string => {
   // CSV headers
-  const headers = ["Transaction Hash", "Timestamp", "Date", "Action Type", "Status", "ERG Change", "GAU Change", "GAUC Change", "Fees (ERG)", "Block Height", "Confirmation Time"];
+  const headers = ["Transaction Hash", "Timestamp", "Date", "Action Type", "Status", "ERG Change", `${tokenConfig.stableAsset.symbol} Change`, `${tokenConfig.volatileAsset.symbol} Change`, "Fees (ERG)", "Block Height", "Confirmation Time"];
 
   // CSV rows
   const rows = transactions.map((tx) => {
     const date = new Date(tx.timestamp).toISOString();
     const ergChange = nanoErgsToErgs(tx.expectedChanges.erg).toString();
-    const gauChange = nanoErgsToErgs(tx.expectedChanges.gau).toString();
-    const gaucChange = nanoErgsToErgs(tx.expectedChanges.gauc).toString();
+    const stableChange = nanoErgsToErgs(tx.expectedChanges.gau).toString();
+    const volatileChange = nanoErgsToErgs(tx.expectedChanges.gauc).toString();
     const fees = nanoErgsToErgs(tx.expectedChanges.fees.replace("-", "")).toString();
     const confirmationTime = tx.confirmationTime ? new Date(tx.confirmationTime).toISOString() : "";
 
-    return [tx.id, tx.timestamp, date, tx.actionType, tx.status, ergChange, gauChange, gaucChange, fees, tx.confirmationHeight || "", confirmationTime];
+    return [tx.id, tx.timestamp, date, tx.actionType, tx.status, ergChange, stableChange, volatileChange, fees, tx.confirmationHeight || "", confirmationTime];
   });
 
   // Combine headers and rows

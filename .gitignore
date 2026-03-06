@@ -35,7 +35,11 @@ yarn-error.log*
 .pnpm-debug.log*
 
 # env files (can opt-in for committing if needed)
+.env.local
 .env*
+!.env.example
+!.env.gold
+!.env.dollar
 
 # vercel
 .vercel
@@ -46,3 +50,7 @@ next-env.d.ts
 
 # ignore sdk modules
 lib/gluon-gold-sdk/node_modules
+
+# development context (do not commit)
+DEV_CONTEXT.md
+SESSION_NOTES.md

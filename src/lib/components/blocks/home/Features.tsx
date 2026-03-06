@@ -192,12 +192,10 @@ export const Features = () => (
                 >
                   {tokenConfig.stableAsset.description}
                   <br />
-                  {tokenConfig.stableAsset.displayName} is the stablecoin {tokenConfig.peg.description.toLowerCase()}.
+                  {tokenConfig.stableAsset.symbol} is {tokenConfig.stableAsset.description.replace(/^The /, 'the ')}
                   <br />
                   <br />
-                  {tokenConfig.volatileAsset.description}
-                  <br />
-                  {tokenConfig.volatileAsset.displayName} tokenizes the reserve surplus.
+                  {tokenConfig.volatileAsset.symbol} tokenizes the reserve surplus and provides leveraged volatility and yield.
                   <br />
                   <br />
                   Both {tokenConfig.stableAsset.displayName} and {tokenConfig.volatileAsset.displayName} are fully backed by ERG.

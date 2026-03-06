@@ -4,7 +4,7 @@ interface GauIconProps {
   className?: string;
 }
 
-// GAU Icon - Gold colored token
+// Stable asset icon - configurable colored token
 const GauIcon: React.FC<GauIconProps> = ({ className = "w-8 h-8" }) => {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 262.27 262.27" className={className}>
