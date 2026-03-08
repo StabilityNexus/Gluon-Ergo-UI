@@ -50,7 +50,3 @@ next-env.d.ts
 
 # ignore sdk modules
 lib/gluon-gold-sdk/node_modules
-
-# development context (do not commit)
-DEV_CONTEXT.md
-SESSION_NOTES.md
