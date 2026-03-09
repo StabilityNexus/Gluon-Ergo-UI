@@ -4,7 +4,7 @@ interface GauGaucIconProps {
   className?: string;
 }
 
-// GAU-GAUC Combined Icon - Red to Yellow gradient
+// Combined stable/volatile asset icon - gradient
 const GauGaucIcon: React.FC<GauGaucIconProps> = ({ className = "w-6 h-6" }) => {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 262.27 262.27" className={className}>

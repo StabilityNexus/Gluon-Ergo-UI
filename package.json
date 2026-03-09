@@ -5,6 +5,8 @@
   "scripts": {
     "check:sdk": "node -e \"const fs=require('fs'); if(!fs.existsSync('lib/gluon-gold-sdk/dist')){ process.exit(1) }\" || bun run build:sdk",
     "dev": "bun run check:sdk && next dev",
+    "dev:gold": "node -e \"require('fs').copyFileSync('.env.gold', '.env.local')\" && bun run dev",
+    "dev:dollar": "node -e \"require('fs').copyFileSync('.env.dollar', '.env.local')\" && bun run dev",
     "buildtest": "next build",
     "build": "bun run build:sdk && next build",
     "start": "next start",

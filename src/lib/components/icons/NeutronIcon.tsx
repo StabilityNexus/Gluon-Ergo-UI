@@ -4,7 +4,7 @@ interface NeutronIconProps {
   className?: string;
 }
 
-// Neutron Icon - Base asset colored token
+// Stable asset icon (internal reference: neutron)
 const NeutronIcon: React.FC<NeutronIconProps> = ({ className = "w-8 h-8" }) => {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 262.27 262.27" className={className}>

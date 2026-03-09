@@ -1,4 +1,5 @@
 import Head from "next/head";
+import { tokenConfig, formatPegAsset } from "@/config/tokenConfig";
 
 interface SEOProps {
   title?: string;
@@ -10,9 +11,9 @@ interface SEOProps {
 }
 
 export function SEO({
-  title = "Gluon Gold | Gold-Pegged Stablecoin on the Ergo Blockchain",
-  description = "Gluon Gold on Ergo is a fully autonomous stablecoin based on the novel Gluon Stablecoin Protocol, pegged to Gold, backed by the ERG cryptocurrency and running in a fully decentralized manner on the Ergo blockchain. Mint, swap and trade gold-pegged stable tokens or leveraged yield tokens according to your stability or volatility needs.",
-  keywords = "Blockchain, Cryptocurrency, Stablecoin, DeFi, Decentralized Finance, Digital Assets, Tokens, Gold, Gluon, Stability, GAU, CAUC, Gold-Pegged Stablecoin, Gold-Pegged Token, Crypto-Backed Stablecoin",
+  title = `Gluon ${tokenConfig.peg.type} | ${tokenConfig.peg.type}-Pegged Stablecoin on the Ergo Blockchain`,
+  description = `Gluon ${tokenConfig.peg.type} on Ergo is a fully autonomous stablecoin based on the novel Gluon Stablecoin Protocol, pegged to ${tokenConfig.peg.type}, backed by the ERG cryptocurrency and running in a fully decentralized manner on the Ergo blockchain. Mint, swap and trade ${formatPegAsset()}-pegged stable tokens or leveraged yield tokens according to your stability or volatility needs.`,
+  keywords = `Blockchain, Cryptocurrency, Stablecoin, DeFi, Decentralized Finance, Digital Assets, Tokens, ${tokenConfig.peg.type}, Gluon, Stability, ${tokenConfig.stableAsset.symbol}, ${tokenConfig.volatileAsset.symbol}, ${tokenConfig.peg.type}-Pegged Stablecoin, ${tokenConfig.peg.type}-Pegged Token, Crypto-Backed Stablecoin`,
   image = "/logo/gluon.png",
   url = "https://www.gluon.gold/",
   type = "website",
