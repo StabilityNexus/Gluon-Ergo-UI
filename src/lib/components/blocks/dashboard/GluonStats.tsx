@@ -80,7 +80,7 @@ export function GluonStats() {
         const gluon = new sdk.Gluon();
         gluon.config.NETWORK = process.env.NEXT_PUBLIC_DEPLOYMENT || "testnet";
         const gluonBox = await gluon.getGluonBox();
-        const oracleBox = await gluon.getGoldOracleBox();
+        const oracleBox = await gluon.getOracleBox();
 
         // Fetch basic stats
         const [gaucPrice, goldPrice, normalizedReserveRatio, tvl] = await Promise.all([

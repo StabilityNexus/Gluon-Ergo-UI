@@ -75,7 +75,7 @@ export function MyStats() {
         const gluon = new sdk.Gluon();
         gluon.config.NETWORK = process.env.NEXT_PUBLIC_DEPLOYMENT || "testnet";
         const gluonBox = await gluon.getGluonBox();
-        const oracleBox = await gluon.getGoldOracleBox();
+        const oracleBox = await gluon.getOracleBox();
 
         const [gaucPrice, goldKgPrice] = await Promise.all([gluonBox.protonPrice(oracleBox), oracleBox.getPrice()]);
 

@@ -190,7 +190,7 @@ export const handleTransmuteToNeutronSwap = async ({
     });
 
     // Fetch fresh boxes to avoid stale data issues
-    const oracleBoxJs = await gluonInstance.getGoldOracleBox();
+    const oracleBoxJs = await gluonInstance.getOracleBox();
     const gluonBoxJs = await gluonInstance.getGluonBox();
 
     // Validate inputs
