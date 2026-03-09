@@ -3,22 +3,17 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "check:sdk": "node -e \"const fs=require('fs'); if(!fs.existsSync('lib/gluon-gold-sdk/dist')){ process.exit(1) }\" || bun run build:sdk",
-    "dev": "bun run check:sdk && next dev",
+    "dev": "next dev",
     "buildtest": "next build",
-    "build": "bun run build:sdk && next build",
+    "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "build:sdk": "cd lib/gluon-gold-sdk && bun install && bun run build",
     "test": "bun test",
     "test:watch": "bun test --watch",
     "test:coverage": "bun test --coverage",
     "format": "prettier --write .",
     "prepare": "husky"
   },
-  "workspaces": [
-    "lib/*"
-  ],
   "dependencies": {
     "@fleet-sdk/core": "^0.8.1",
     "@radix-ui/react-dialog": "^1.1.4",
@@ -39,7 +34,7 @@
     "ergo-lib-wasm-browser": "^0.28.0",
     "ergo-lib-wasm-nodejs": "^0.28.0",
     "framer-motion": "^11.17.0",
-    "gluon-gold-sdk": "file:lib/gluon-gold-sdk",
+    "gluon-ergo-sdk": "*",
     "json-bigint": "^1.0.0",
     "lodash": "^4.17.21",
     "lucide-react": "^0.471.0",

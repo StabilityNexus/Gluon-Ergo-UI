@@ -19,7 +19,7 @@ import { Token, TokenSymbol, ReceiptDetails } from "@/lib/functions/reactor/type
 import { defaultTokens, getValidToTokens, getActionType, getDescription, getTitle, formatValue } from "@/lib/functions/reactor/utils";
 import { calculateFissionAmounts, handleFissionSwap } from "@/lib/functions/reactor/handleFission";
 import { calculateFusionAmounts, handleFusionSwap } from "@/lib/functions/reactor/handleFusion";
-import { calculateTransmutationAmounts, handleTransmuteToGoldSwap, handleTransmuteFromGoldSwap } from "@/lib/functions/reactor/handleTransmutation";
+import { calculateTransmutationAmounts, handleTransmuteToNeutronSwap, handleTransmuteToProtonSwap } from "@/lib/functions/reactor/handleTransmutation";
 import { debounce } from "lodash";
 import { handleInitializationError } from "@/lib/utils/error-handler";
 import ErgIcon from "@/lib/components/icons/ErgIcon";
@@ -439,12 +439,12 @@ export function ReactorSwap() {
       setBoxesReady(false);
       setInitError(null);
       try {
-        const sdk = await import("gluon-gold-sdk");
+        const sdk = await import("gluon-ergo-sdk");
         const gluon = new sdk.Gluon();
         gluon.config.NETWORK = process.env.NEXT_PUBLIC_DEPLOYMENT || "testnet";
         setGluonInstance(gluon);
         const gBox = await gluon.getGluonBox();
-        const oBox = await gluon.getGoldOracleBox();
+        const oBox = await gluon.getOracleBox();
         if (!gBox || !oBox) {
           throw new Error("Failed to initialize Gluon boxes");
         }
@@ -823,7 +823,7 @@ export function ReactorSwap() {
       } else if (fromToken.symbol === pairSymbol && toToken.symbol === "ERG") {
         result = await handleFusionSwap(gluonInstance, gluonBox, oracleBox, utxos, nodeService, ergoWallet, toAmount);
       } else if (fromToken.symbol === volatileSymbol && toToken.symbol === stableSymbol) {
-        result = await handleTransmuteToGoldSwap({
+        result = await handleTransmuteToNeutronSwap({
           gluonInstance,
           gluonBoxJs: gluonBox,
           oracleBoxJs: oracleBox,
@@ -833,7 +833,7 @@ export function ReactorSwap() {
           amount: fromAmount,
         });
       } else if (fromToken.symbol === stableSymbol && toToken.symbol === volatileSymbol) {
-        result = await handleTransmuteFromGoldSwap({
+        result = await handleTransmuteToProtonSwap({
           gluonInstance,
           gluonBoxJs: gluonBox,
           oracleBoxJs: oracleBox,

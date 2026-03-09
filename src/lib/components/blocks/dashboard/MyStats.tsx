@@ -66,7 +66,7 @@ export function MyStats() {
             json: () => ({ price: null }),
           })),
           getBalance(),
-          import("gluon-gold-sdk"),
+          import("gluon-ergo-sdk"),
         ]);
 
         const { price: ergPrice } = await ergPriceRes.json();

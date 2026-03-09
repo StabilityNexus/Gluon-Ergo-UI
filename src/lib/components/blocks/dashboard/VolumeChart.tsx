@@ -33,7 +33,7 @@ export function VolumeChart({ isLoading: externalLoading = false, hasError: exte
         setLoadingChart(true);
         setChartError(false);
 
-        const sdk = await import("gluon-gold-sdk");
+        const sdk = await import("gluon-ergo-sdk");
         const gluon = new sdk.Gluon();
         gluon.config.NETWORK = process.env.NEXT_PUBLIC_DEPLOYMENT || "testnet";
 

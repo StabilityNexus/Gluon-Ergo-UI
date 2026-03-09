@@ -68,9 +68,9 @@ export const calculateTransmutationAmounts = async ({
     let willGet: bigint;
     try {
       if (fromTokenSymbol === volatileSymbol) {
-        willGet = BigInt(await gluonInstance.transmuteToGoldWillGet(gluonBox, oracleBox, Number(inputAmount), height));
+        willGet = BigInt(await gluonInstance.transmuteToNeutronWillGet(gluonBox, oracleBox, Number(inputAmount), height));
       } else {
-        willGet = BigInt(await gluonInstance.transmuteFromGoldWillGet(gluonBox, oracleBox, Number(inputAmount), height));
+        willGet = BigInt(await gluonInstance.transmuteToProtonWillGet(gluonBox, oracleBox, Number(inputAmount), height));
       }
 
       console.log("🔍 [DEBUG] TRANSMUTATION PREDICTION RAW", {
@@ -101,8 +101,8 @@ export const calculateTransmutationAmounts = async ({
     try {
       fees =
         fromTokenSymbol === volatileSymbol
-          ? await gluonInstance.getTotalFeeAmountTransmuteToGold(gluonBox, oracleBox, Number(inputAmount))
-          : await gluonInstance.getTotalFeeAmountTransmuteFromGold(gluonBox, oracleBox, Number(inputAmount));
+          ? await gluonInstance.getTotalFeeAmountTransmuteToNeutron(gluonBox, oracleBox, Number(inputAmount))
+          : await gluonInstance.getTotalFeeAmountTransmuteToProton(gluonBox, oracleBox, Number(inputAmount));
     } catch (error) {
       console.error("Failed to get transmutation fees:", error);
       throw new Error("Failed to calculate transmutation fees");
@@ -166,7 +166,7 @@ export const calculateTransmutationAmounts = async ({
   }
 };
 
-export const handleTransmuteToGoldSwap = async ({
+export const handleTransmuteToNeutronSwap = async ({
   gluonInstance,
   gluonBoxJs,
   oracleBoxJs,
@@ -184,7 +184,7 @@ export const handleTransmuteToGoldSwap = async ({
   amount: string;
 }): Promise<{ txHash?: string; error?: string }> => {
   try {
-    console.log("🔍 TRANSMUTE TO GOLD SWAP INPUT:", {
+    console.log("🔍 TRANSMUTE TO NEUTRON SWAP INPUT:", {
       amount,
       type: typeof amount,
     });
@@ -226,12 +226,12 @@ export const handleTransmuteToGoldSwap = async ({
     }
 
     const protonsToTransmute = convertToDecimals(amount);
-    console.log("🔍 TRANSMUTE TO GOLD AMOUNT:", {
+    console.log("🔍 TRANSMUTE TO NEUTRON AMOUNT:", {
       protonsToTransmute: protonsToTransmute.toString(),
     });
 
     // Create unsigned transaction
-    const unsignedTransaction = await gluonInstance.transmuteToGoldForEip12(gluonBoxJs, oracleBoxJs, userBoxes, oracleBuyBackJs, Number(protonsToTransmute), height);
+    const unsignedTransaction = await gluonInstance.transmuteToNeutronForEip12(gluonBoxJs, oracleBoxJs, userBoxes, oracleBuyBackJs, Number(protonsToTransmute), height);
 
     if (!unsignedTransaction) {
       throw new Error("Failed to create unsigned transaction");
@@ -254,20 +254,20 @@ export const handleTransmuteToGoldSwap = async ({
     console.log("Transaction submitted successfully. TxId:", txHash);
 
     // Handle success with toast notification
-    handleTransactionSuccess(txHash, "transmute to gold");
+    handleTransactionSuccess(txHash, "transmute to neutron");
 
     return { txHash };
   } catch (error) {
-    console.error("TransmuteToGold failed:", error);
+    console.error("TransmuteToNeutron failed:", error);
 
     // Use the error handler for proper classification and toast notification
-    const errorDetails = handleTransactionError(error, "transmute to gold");
+    const errorDetails = handleTransactionError(error, "transmute to neutron");
 
     return { error: errorDetails.userMessage };
   }
 };
 
-export const handleTransmuteFromGoldSwap = async ({
+export const handleTransmuteToProtonSwap = async ({
   gluonInstance,
   gluonBoxJs,
   oracleBoxJs,
@@ -285,13 +285,13 @@ export const handleTransmuteFromGoldSwap = async ({
   amount: string;
 }): Promise<{ txHash?: string; error?: string }> => {
   try {
-    console.log("🔍 TRANSMUTE FROM GOLD SWAP INPUT:", {
+    console.log("🔍 TRANSMUTE TO PROTON SWAP INPUT:", {
       amount,
       type: typeof amount,
     });
 
     // Fetch fresh boxes to avoid stale data issues
-    const oracleBoxJs = await gluonInstance.getGoldOracleBox();
+    const oracleBoxJs = await gluonInstance.getOracleBox();
     const gluonBoxJs = await gluonInstance.getGluonBox();
 
     // Validate inputs
@@ -322,12 +322,12 @@ export const handleTransmuteFromGoldSwap = async ({
     }
 
     const neutronsToDecay = convertToDecimals(amount);
-    console.log("🔍 TRANSMUTE FROM GOLD AMOUNT:", {
+    console.log("🔍 TRANSMUTE TO PROTON AMOUNT:", {
       neutronsToDecay: neutronsToDecay.toString(),
     });
 
     // Create unsigned transaction
-    const unsignedTransaction = await gluonInstance.transmuteFromGoldForEip12(gluonBoxJs, oracleBoxJs, userBoxes, oracleBuyBackJs, Number(neutronsToDecay), height);
+    const unsignedTransaction = await gluonInstance.transmuteToProtonForEip12(gluonBoxJs, oracleBoxJs, userBoxes, oracleBuyBackJs, Number(neutronsToDecay), height);
 
     if (!unsignedTransaction) {
       throw new Error("Failed to create unsigned transaction");
@@ -350,14 +350,14 @@ export const handleTransmuteFromGoldSwap = async ({
     console.log("Transaction submitted successfully. TxId:", txHash);
 
     // Handle success with toast notification
-    handleTransactionSuccess(txHash, "transmute from gold");
+    handleTransactionSuccess(txHash, "transmute to proton");
 
     return { txHash };
   } catch (error) {
-    console.error("TransmuteFromGold failed:", error);
+    console.error("TransmuteToProton failed:", error);
 
     // Use the error handler for proper classification and toast notification
-    const errorDetails = handleTransactionError(error, "transmute from gold");
+    const errorDetails = handleTransactionError(error, "transmute to proton");
 
     return { error: errorDetails.userMessage };
   }
