@@ -22,7 +22,7 @@ export const defaultTokens: Token[] = [
   {
     symbol: tokenConfig.stableAsset.symbol as TokenSymbol,
     name: tokenConfig.stableAsset.displayName,
-    color: "bg-yellow-500",
+    color: tokenConfig.theme.stableToken,
     balance: "0",
     tokenId: TOKEN_ADDRESS.stableAsset,
     decimals: 9, // Full blockchain precision
@@ -30,7 +30,7 @@ export const defaultTokens: Token[] = [
   {
     symbol: tokenConfig.volatileAsset.symbol as TokenSymbol,
     name: tokenConfig.volatileAsset.displayName,
-    color: "bg-red-500",
+    color: tokenConfig.theme.volatileToken,
     balance: "0",
     tokenId: TOKEN_ADDRESS.volatileAsset,
     decimals: 9, // Full blockchain precision

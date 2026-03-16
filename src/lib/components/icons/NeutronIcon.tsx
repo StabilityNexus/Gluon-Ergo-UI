@@ -1,4 +1,5 @@
 import React from "react";
+import { tokenConfig } from "@/config/tokenConfig";
 
 interface NeutronIconProps {
   className?: string;
@@ -11,7 +12,7 @@ const NeutronIcon: React.FC<NeutronIconProps> = ({ className = "w-8 h-8" }) => {
       <defs>
         <style>
           {`
-            .neutron-fill{fill:#ffd007;}
+            .neutron-fill{fill:${tokenConfig.theme.stableToken};}
             .neutron-stroke{fill:none;stroke:#000;stroke-miterlimit:10;stroke-width:7px;}
           `}
         </style>

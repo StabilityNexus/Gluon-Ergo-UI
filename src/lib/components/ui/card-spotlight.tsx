@@ -4,6 +4,18 @@ import { useMotionValue, motion, useMotionTemplate } from "framer-motion";
 import React, { PointerEvent as ReactPointerEvent, useState, useEffect } from "react";
 import { CanvasRevealEffect } from "./canvas-reveal-effect";
 import { cn } from "@/lib/utils/utils";
+import { tokenConfig } from "@/config/tokenConfig";
+
+const hexToRgb = (hexColor: string): [number, number, number] => {
+  const normalized = hexColor.replace("#", "");
+  const expanded = normalized.length === 3 ? normalized.split("").map((c) => c + c).join("") : normalized;
+  if (!/^[0-9a-fA-F]{6}$/.test(expanded)) return [128, 128, 128];
+  return [
+    parseInt(expanded.slice(0, 2), 16),
+    parseInt(expanded.slice(2, 4), 16),
+    parseInt(expanded.slice(4, 6), 16),
+  ];
+};
 
 export const CardSpotlight = ({
   children,
@@ -63,17 +75,20 @@ export const CardSpotlight = ({
     }
   };
 
-  // Theme-aware colors
-  const canvasColors = isDarkTheme
-    ? [
-        [245, 194, 66], // darker yellow
-        [245, 114, 66], // darker red
-      ]
-    : [
-        [253, 230, 138], // light yellow
-        [252, 165, 165], // light red
-      ];
+  // Protocol-aware colors
+  const stableRgb = hexToRgb(tokenConfig.theme.stableToken);
+  const volatileRgb = hexToRgb(tokenConfig.theme.volatileToken);
 
+  // Adjust brightness based on theme for the best spotlight effect
+  const adjustRgb = (rgb: [number, number, number], factor: number): [number, number, number] => [
+    Math.min(255, rgb[0] * factor),
+    Math.min(255, rgb[1] * factor),
+    Math.min(255, rgb[2] * factor),
+  ];
+
+  const canvasColors = isDarkTheme
+    ? [adjustRgb(stableRgb, 0.9), adjustRgb(volatileRgb, 0.9)]
+    : [adjustRgb(stableRgb, 1.2), adjustRgb(volatileRgb, 1.2)];
   return (
     <div
       className={cn("group/spotlight relative rounded-md border border-border bg-background p-10", className)}

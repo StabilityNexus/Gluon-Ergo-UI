@@ -1,4 +1,5 @@
 import React from "react";
+import { tokenConfig } from "@/config/tokenConfig";
 
 interface GauIconProps {
   className?: string;
@@ -11,7 +12,7 @@ const GauIcon: React.FC<GauIconProps> = ({ className = "w-8 h-8" }) => {
       <defs>
         <style>
           {`
-            .gau-fill{fill:#ffd007;}
+            .gau-fill{fill:${tokenConfig.theme.stableToken};}
             .gau-stroke{fill:none;stroke:#000;stroke-miterlimit:10;stroke-width:7px;}
           `}
         </style>

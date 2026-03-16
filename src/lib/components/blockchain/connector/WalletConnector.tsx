@@ -170,7 +170,7 @@ export function WalletConnector() {
 
                   <Button
                     variant="ghost"
-                    className="mt-2 border shadow-sm hover:bg-white hover:text-black"
+                    className="mt-2 border border-border shadow-sm transition-colors hover:bg-[color-mix(in_oklab,hsl(var(--background))_93%,hsl(var(--primary))_7%)] hover:text-[hsl(var(--button-hover-foreground))]"
                     onClick={() => window.open("https://ergoplatform.org/en/blog/2022-03-10-storing-crypto-on-ergo-nautilus-wallet/", "_blank")}
                   >
                     Get Started with Ergo <ArrowUpRight />

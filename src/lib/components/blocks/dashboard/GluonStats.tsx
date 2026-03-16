@@ -306,7 +306,7 @@ export function GluonStats() {
 
         {/* Token Grid - Responsive */}
         <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
-          {renderStatCard(tokenConfig.peg.unit, `${tokenConfig.peg.type} (from Oracle)`, stats.goldPrice, <Scale className="h-8 w-8 text-yellow-700" />, "ERG", 0.1)}
+          {renderStatCard(tokenConfig.peg.unit, `${tokenConfig.peg.type} (from Oracle)`, stats.goldPrice, <Scale className="h-8 w-8" style={{ color: tokenConfig.theme.primary }} />, "ERG", 0.1)}
 
           {renderStatCard(tokenConfig.stableAsset.displayName, `${tokenConfig.peg.type} Pegged Token`, stats.gauPrice, <NeutronIcon className="h-8 w-8" />, "ERG", 0.2)}
 
@@ -418,7 +418,7 @@ export function GluonStats() {
             
             <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.5, duration: 0.3 }} className="text-center">
               <div className="mb-4 flex items-center justify-center">
-                <TrendingDown className="mr-2 h-6 w-6 text-amber-600" />
+                <TrendingDown className="mr-2 h-6 w-6" style={{ color: tokenConfig.theme.primary }} />
               </div>
               <AnimatePresence mode="wait">
                 {isLoading ? (
@@ -449,7 +449,7 @@ export function GluonStats() {
               className="text-center"
             >
               <div className="flex items-center justify-center mb-4">
-                <TrendingUp className="h-6 w-6 text-amber-600 mr-2" />
+                <TrendingUp className="h-6 w-6 mr-2" style={{ color: tokenConfig.theme.primary }} />
               </div>
               <AnimatePresence mode="wait">
                 {isLoading ? (

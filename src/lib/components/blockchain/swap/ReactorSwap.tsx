@@ -1040,33 +1040,33 @@ export function ReactorSwap() {
       switch (symbol) {
         case "ERG":
           return {
-            trigger: "bg-muted hover:bg-muted/80 border-border text-foreground",
+            trigger: "bg-muted border border-border text-foreground transition-colors",
             content: "border-border",
-            item: "focus:bg-accent focus:text-accent-foreground",
+            item: "data-[highlighted]:bg-muted data-[highlighted]:text-primary focus:bg-muted focus:text-primary",
           };
         case "GAU":
           return {
-            trigger: "bg-muted hover:bg-muted/80 border-border text-foreground",
+            trigger: "bg-muted border border-border text-foreground transition-colors",
             content: "border-border",
-            item: "focus:bg-accent focus:text-accent-foreground",
+            item: "data-[highlighted]:bg-muted data-[highlighted]:text-primary focus:bg-muted focus:text-primary",
           };
         case "GAUC":
           return {
-            trigger: "bg-muted hover:bg-muted/80 border-border text-foreground",
+            trigger: "bg-muted border border-border text-foreground transition-colors",
             content: "border-border",
-            item: "focus:bg-accent focus:text-accent-foreground",
+            item: "data-[highlighted]:bg-muted data-[highlighted]:text-primary focus:bg-muted focus:text-primary",
           };
         case "GAU-GAUC":
           return {
-            trigger: "bg-muted hover:bg-muted/80 border-border text-foreground",
+            trigger: "bg-muted border border-border text-foreground transition-colors",
             content: "border-border",
-            item: "focus:bg-accent focus:text-accent-foreground",
+            item: "data-[highlighted]:bg-muted data-[highlighted]:text-primary focus:bg-muted focus:text-primary",
           };
         default:
           return {
-            trigger: "bg-muted hover:bg-muted/80 border-border text-foreground",
+            trigger: "bg-muted border border-border text-foreground transition-colors",
             content: "border-border",
-            item: "focus:bg-accent focus:text-accent-foreground",
+            item: "data-[highlighted]:bg-muted data-[highlighted]:text-primary focus:bg-muted focus:text-primary",
           };
       }
     };
@@ -1180,7 +1180,7 @@ export function ReactorSwap() {
                 !isCalculating && (
                   <button
                     onClick={() => handleMax(isFromCard)}
-                    className="mt-2 text-sm font-semibold text-foreground transition-colors hover:text-foreground/80 sm:ml-2 sm:mt-0"
+                    className="mt-2 rounded-md px-2 py-1 text-sm font-semibold text-foreground transition-colors hover:bg-[color-mix(in_oklab,hsl(var(--background))_93%,hsl(var(--primary))_7%)] hover:text-[hsl(var(--button-hover-foreground))] sm:ml-2 sm:mt-0"
                     disabled={isInputDisabled}
                   >
                     MAX
@@ -1351,7 +1351,7 @@ export function ReactorSwap() {
             <div className="flex items-start justify-between">
               <div className="space-y-1.5">
                 <h2 className="text-4xl font-bold">Reactor</h2>
-                <p className="text-2xl font-semibold text-primary dark:text-accent-foreground">{getTitle(currentAction)}</p>
+                <p className="text-2xl font-semibold text-primary">{getTitle(currentAction)}</p>
                 <p className="text-sm text-muted-foreground">{getDescription(currentAction)}</p>
                 {initError && <p className="text-sm text-red-500">{initError}</p>}
                 {hasPendingTransactions && <p className="animate-pulse text-sm text-blue-500">🔄 Transaction pending - waiting for wallet update...</p>}
@@ -1362,7 +1362,7 @@ export function ReactorSwap() {
                       href={`https://sigmaspace.io/transactions/${lastSubmittedTx}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-1 underline hover:text-blue-300"
+                      className="flex items-center gap-1 underline transition-colors hover:text-primary"
                     >
                       {lastSubmittedTx.slice(0, 40)}...
                       <ExternalLink className="h-3 w-3" />
@@ -1423,7 +1423,7 @@ export function ReactorSwap() {
                         <Button
                           variant="outline"
                           size="icon"
-                          className="relative rounded-full border-border bg-card shadow-md transition-all duration-200 hover:bg-accent hover:text-accent-foreground hover:shadow-lg"
+                          className="relative rounded-full border-border bg-card shadow-md transition-all duration-200 hover:bg-[color-mix(in_oklab,hsl(var(--card))_90%,hsl(var(--primary))_10%)] hover:text-primary hover:shadow-lg"
                           onClick={handleSwapTokens}
                           disabled={!boxesReady || isCalculating || (isInitializing && !boxesReady)}
                         >
@@ -1496,7 +1496,7 @@ export function ReactorSwap() {
                   whileTap={{ scale: isSwapDisabled() ? 1 : 0.98 }}
                 >
                   <Button
-                    className={cn("relative mt-4 h-12 w-full overflow-hidden bg-yellow-500", !isSwapDisabled() ? "hover:bg-yellow-600" : "cursor-not-allowed opacity-50")}
+                    className={cn("relative mt-4 h-12 w-full overflow-hidden bg-primary", !isSwapDisabled() ? "hover:bg-primary/90" : "cursor-not-allowed opacity-50")}
                     onClick={handleSwap}
                     disabled={isSwapDisabled()}
                   >

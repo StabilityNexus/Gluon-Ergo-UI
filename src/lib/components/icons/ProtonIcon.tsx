@@ -1,4 +1,5 @@
 import React from "react";
+import { tokenConfig } from "@/config/tokenConfig";
 
 interface ProtonIconProps {
   className?: string;
@@ -11,7 +12,7 @@ const ProtonIcon: React.FC<ProtonIconProps> = ({ className = "w-8 h-8" }) => {
       <defs>
         <style>
           {`
-            .proton-fill{fill:#e4201f;}
+            .proton-fill{fill:${tokenConfig.theme.volatileToken};}
             .proton-stroke{fill:none;stroke:#fff;stroke-miterlimit:10;stroke-width:7px;}
           `}
         </style>
