@@ -36,10 +36,15 @@ interface TransactionCardProps {
 }
 
 export const TransactionCard = ({ transaction }: TransactionCardProps) => {
-  const handleCopyHash = () => {
-    navigator.clipboard.writeText(transaction.id);
+const handleCopyHash = async () => {
+  try {
+    await navigator.clipboard.writeText(transaction.id);
     toast.success("Transaction hash copied!");
-  };
+  } catch (error) {
+    toast.error("Failed to copy transaction hash.");
+    console.error("Clipboard write failed:", error);
+  }
+};
 
   const getExplorerUrl = (txHash: string) => {
     const isTestnet = process.env.NEXT_PUBLIC_DEPLOYMENT === "testnet";
