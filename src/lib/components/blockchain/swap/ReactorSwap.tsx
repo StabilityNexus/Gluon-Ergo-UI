@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils/utils";
 import { useErgo } from "@/lib/providers/ErgoProvider";
 import { NumericFormat, type NumberFormatValues } from "react-number-format";
 import { NodeService } from "@/lib/utils/node-service";
-import { TOKEN_ADDRESS } from "@/lib/constants/token";
+import { TOKEN_ADDRESS, ACTION_TYPES } from "@/lib/constants/token";
 import { convertFromDecimals, formatMicroNumber, nanoErgsToErgs, convertToDecimals, ergsToNanoErgs } from "@/lib/utils/erg-converter";
 import { createTransactionListener, type WalletState, type ExpectedChanges } from "@/lib/utils/transaction-listener";
 import BigNumber from "bignumber.js";
@@ -212,20 +212,20 @@ export function ReactorSwap() {
         changes.gauc = convertToDecimals(outputAmounts.gauc || "0").toString();
         break;
 
-      case "fusion":
+      case ACTION_TYPES.FUSION:
         // GAU + GAUC → ERG
         changes.erg = (parseFloat(outputAmounts.erg || "0") * 1000000000).toString(); // Output ERG to nanoERGs
         changes.gau = (-convertToDecimals(gauAmount)).toString(); // Used GAU tokens
         changes.gauc = (-convertToDecimals(gaucAmount)).toString(); // Used GAUC tokens
         break;
 
-      case "transmute-to-gold":
+      case ACTION_TYPES.TRANSMUTE_TO_PEG:
         // GAUC → GAU
         changes.gauc = (-convertToDecimals(inputAmount)).toString();
         changes.gau = convertToDecimals(outputAmounts.gau || "0").toString();
         break;
 
-      case "transmute-from-gold":
+      case ACTION_TYPES.TRANSMUTE_FROM_PEG:
         // GAU → GAUC
         changes.gau = (-convertToDecimals(inputAmount)).toString();
         changes.gauc = convertToDecimals(outputAmounts.gauc || "0").toString();

@@ -1,12 +1,12 @@
 import { NodeService } from "./node-service";
 import { toast } from "sonner";
-import { TOKEN_ADDRESS } from "@/lib/constants/token";
+import { TOKEN_ADDRESS, ACTION_TYPES } from "@/lib/constants/token";
 
 // Transaction state interface
 export interface TransactionState {
   txHash: string;
   timestamp: number;
-  actionType: string; // 'fission', 'fusion', 'transmute-to-gold', 'transmute-from-gold'
+  actionType: string; // ACTION_TYPES.FISSION, ACTION_TYPES.FUSION, ACTION_TYPES.TRANSMUTE_TO_PEG, ACTION_TYPES.TRANSMUTE_FROM_PEG
   preTransactionState: WalletState;
   expectedChanges: ExpectedChanges;
   isConfirmed: boolean;

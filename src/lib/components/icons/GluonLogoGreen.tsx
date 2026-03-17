@@ -5,7 +5,8 @@ export const GluonLogoGreen = ({ className }: { className?: string }) => {
   const logoColor = tokenConfig.theme.primary;
 
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 214.73 223.66" className={className}>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 214.73 223.66" className={className} aria-label="Gluon Logo">
+      <title>Gluon Logo</title>
       <defs>
         <style>
           {`

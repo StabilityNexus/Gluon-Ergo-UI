@@ -14,6 +14,7 @@ import { SEO } from "@/lib/components/layout/SEO";
 import { useErgo } from "@/lib/providers/ErgoProvider";
 import { WalletConnector } from "@/lib/components/blockchain/connector/WalletConnector";
 import { tokenConfig } from "@/config/tokenConfig";
+import { ACTION_TYPES } from "@/lib/constants/token";
 
 const PAGE_SIZE = 20; // Number of transactions per page
 
@@ -161,16 +162,16 @@ export default function TransactionHistory() {
               <Button variant={typeFilter === "all" ? "default" : "outline"} size="sm" className={filterButtonHoverClass} onClick={() => setTypeFilter("all")}>
                 All Types
               </Button>
-              <Button variant={typeFilter === "fission" ? "default" : "outline"} size="sm" className={filterButtonHoverClass} onClick={() => setTypeFilter("fission")}>
+              <Button variant={typeFilter === ACTION_TYPES.FISSION ? "default" : "outline"} size="sm" className={filterButtonHoverClass} onClick={() => setTypeFilter(ACTION_TYPES.FISSION)}>
                 Fission
               </Button>
-              <Button variant={typeFilter === "fusion" ? "default" : "outline"} size="sm" className={filterButtonHoverClass} onClick={() => setTypeFilter("fusion")}>
+              <Button variant={typeFilter === ACTION_TYPES.FUSION ? "default" : "outline"} size="sm" className={filterButtonHoverClass} onClick={() => setTypeFilter(ACTION_TYPES.FUSION)}>
                 Fusion
               </Button>
-              <Button variant={typeFilter === "transmute-to-gold" ? "default" : "outline"} size="sm" className={filterButtonHoverClass} onClick={() => setTypeFilter("transmute-to-gold")}>
+              <Button variant={typeFilter === ACTION_TYPES.TRANSMUTE_TO_PEG ? "default" : "outline"} size="sm" className={filterButtonHoverClass} onClick={() => setTypeFilter(ACTION_TYPES.TRANSMUTE_TO_PEG)}>
                 To {tokenConfig.peg.type}
               </Button>
-              <Button variant={typeFilter === "transmute-from-gold" ? "default" : "outline"} size="sm" className={filterButtonHoverClass} onClick={() => setTypeFilter("transmute-from-gold")}>
+              <Button variant={typeFilter === ACTION_TYPES.TRANSMUTE_FROM_PEG ? "default" : "outline"} size="sm" className={filterButtonHoverClass} onClick={() => setTypeFilter(ACTION_TYPES.TRANSMUTE_FROM_PEG)}>
                 From {tokenConfig.peg.type}
               </Button>
             </div>

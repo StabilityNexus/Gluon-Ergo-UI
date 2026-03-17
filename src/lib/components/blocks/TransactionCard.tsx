@@ -10,12 +10,18 @@ import { Card, CardContent } from "@/lib/components/ui/card";
 import { Copy, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { tokenConfig } from "@/config/tokenConfig";
+import { ACTION_TYPES } from "@/lib/constants/token";
 
 // Inline utility functions (previously from analytics-utils)
 const getActionTypeLabel = (actionType: string): string => {
   const labels: Record<string, string> = {
-    fission: "Fission",
-    fusion: "Fusion",
+    [ACTION_TYPES.FISSION]: "Fission",
+    [ACTION_TYPES.FUSION]: "Fusion",
+    [ACTION_TYPES.TRANSMUTE_TO_PEG]: `To ${tokenConfig.peg.type}`,
+    [ACTION_TYPES.TRANSMUTE_FROM_PEG]: `From ${tokenConfig.peg.type}`,
+    // Legacy support for old hardcoded keys
+    "fission": "Fission",
+    "fusion": "Fusion",
     "transmute-to-gold": `To ${tokenConfig.peg.type}`,
     "transmute-from-gold": `From ${tokenConfig.peg.type}`,
   };
@@ -80,6 +86,7 @@ export const TransactionCard = ({ transaction }: TransactionCardProps) => {
               {transaction.id.slice(0, 8)}...{transaction.id.slice(-8)}
             </code>
             <button
+              type="button"
               onClick={handleCopyHash}
               className="rounded p-1 transition-colors hover:bg-[color-mix(in_oklab,hsl(var(--background))_93%,hsl(var(--primary))_7%)] hover:text-[hsl(var(--button-hover-foreground))]"
               title="Copy transaction hash"
