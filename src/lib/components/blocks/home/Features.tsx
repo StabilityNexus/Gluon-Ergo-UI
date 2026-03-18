@@ -144,8 +144,8 @@ const TokenFlow = ({
                   reverse={reverse}
                   duration={2.5}
                   delay={(fromIndex + toIndex) * 0.3}
-                  gradientStartColor="#ffd007"
-                  gradientStopColor="#ffd007"
+                  gradientStartColor={tokenConfig.theme.glow}
+                  gradientStopColor={tokenConfig.theme.glow}
                   pathColor="#857773"
                   pathWidth={2}
                   pathOpacity={0.2}
@@ -195,7 +195,9 @@ export const Features = () => (
                   {tokenConfig.stableAsset.symbol} is {tokenConfig.stableAsset.description.replace(/^The /, 'the ')}
                   <br />
                   <br />
-                  {tokenConfig.volatileAsset.symbol} tokenizes the reserve surplus and provides leveraged volatility and yield.
+                  {tokenConfig.volatileAsset.description}
+                  <br />
+                  {tokenConfig.volatileAsset.symbol} tokenizes the reserve surplus.
                   <br />
                   <br />
                   Both {tokenConfig.stableAsset.displayName} and {tokenConfig.volatileAsset.displayName} are fully backed by ERG.

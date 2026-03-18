@@ -43,7 +43,7 @@ export function SEO({
       <meta property="twitter:image" content={image} />
 
       {/* Favicon */}
-      <link rel="icon" href="/favicon.ico" />
+      <link rel="icon" href={tokenConfig.favicon} />
     </Head>
   );
 }

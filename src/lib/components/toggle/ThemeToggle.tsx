@@ -4,6 +4,7 @@ import * as React from "react";
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { motion } from "framer-motion";
+import { tokenConfig } from "@/config/tokenConfig";
 import { Toggle } from "@/lib/components/ui/toggle";
 
 export function ThemeToggle() {
@@ -46,7 +47,7 @@ export function ThemeToggle() {
           }}
           style={{ originX: "50%", originY: "50%" }}
         >
-          <Moon className="h-4 w-4" />
+          <Moon className="h-4 w-4" style={{ color: tokenConfig.theme.primary }} />
         </motion.div>
       </div>
       <span className="sr-only">Toggle theme</span>

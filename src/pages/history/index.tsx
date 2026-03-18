@@ -14,6 +14,7 @@ import { SEO } from "@/lib/components/layout/SEO";
 import { useErgo } from "@/lib/providers/ErgoProvider";
 import { WalletConnector } from "@/lib/components/blockchain/connector/WalletConnector";
 import { tokenConfig } from "@/config/tokenConfig";
+import { ACTION_TYPES } from "@/lib/constants/token";
 
 const PAGE_SIZE = 20; // Number of transactions per page
 
@@ -25,6 +26,7 @@ export default function TransactionHistory() {
   const [typeFilter, setTypeFilter] = useState<TransactionRecord["actionType"] | "all">("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [walletAddress, setWalletAddress] = useState<string>("");
+  const filterButtonHoverClass = "hover:bg-[color-mix(in_oklab,hsl(var(--background))_93%,hsl(var(--primary))_7%)] hover:text-[hsl(var(--button-hover-foreground))] transition-colors";
 
   const loadTransactions = useCallback(async () => {
     setLoading(true);
@@ -140,16 +142,16 @@ export default function TransactionHistory() {
           <div className="mb-4 md:mb-6 space-y-3">
             {/* Status Filter */}
             <div className="flex flex-wrap gap-2">
-              <Button variant={filter === "all" ? "default" : "outline"} size="sm" onClick={() => setFilter("all")}>
+              <Button variant={filter === "all" ? "default" : "outline"} size="sm" className={filterButtonHoverClass} onClick={() => setFilter("all")}>
                 All ({transactionCounts.all})
               </Button>
-              <Button variant={filter === "pending" ? "default" : "outline"} size="sm" onClick={() => setFilter("pending")}>
+              <Button variant={filter === "pending" ? "default" : "outline"} size="sm" className={filterButtonHoverClass} onClick={() => setFilter("pending")}>
                 Pending ({transactionCounts.pending})
               </Button>
-              <Button variant={filter === "confirmed" ? "default" : "outline"} size="sm" onClick={() => setFilter("confirmed")}>
+              <Button variant={filter === "confirmed" ? "default" : "outline"} size="sm" className={filterButtonHoverClass} onClick={() => setFilter("confirmed")}>
                 Confirmed ({transactionCounts.confirmed})
               </Button>
-              <Button variant={filter === "timeout" ? "default" : "outline"} size="sm" onClick={() => setFilter("timeout")}>
+              <Button variant={filter === "timeout" ? "default" : "outline"} size="sm" className={filterButtonHoverClass} onClick={() => setFilter("timeout")}>
                 Timeout ({transactionCounts.timeout})
               </Button>
             </div>
@@ -157,20 +159,20 @@ export default function TransactionHistory() {
             {/* Type Filter */}
             <div className="flex flex-wrap gap-2">
               <span className="text-sm text-muted-foreground self-center mr-2 hidden md:inline">Type:</span>
-              <Button variant={typeFilter === "all" ? "default" : "outline"} size="sm" onClick={() => setTypeFilter("all")}>
+              <Button variant={typeFilter === "all" ? "default" : "outline"} size="sm" className={filterButtonHoverClass} onClick={() => setTypeFilter("all")}>
                 All Types
               </Button>
-              <Button variant={typeFilter === "fission" ? "default" : "outline"} size="sm" onClick={() => setTypeFilter("fission")}>
+              <Button variant={typeFilter === ACTION_TYPES.FISSION ? "default" : "outline"} size="sm" className={filterButtonHoverClass} onClick={() => setTypeFilter(ACTION_TYPES.FISSION)}>
                 Fission
               </Button>
-              <Button variant={typeFilter === "fusion" ? "default" : "outline"} size="sm" onClick={() => setTypeFilter("fusion")}>
+              <Button variant={typeFilter === ACTION_TYPES.FUSION ? "default" : "outline"} size="sm" className={filterButtonHoverClass} onClick={() => setTypeFilter(ACTION_TYPES.FUSION)}>
                 Fusion
               </Button>
-              <Button variant={typeFilter === "transmute-to-gold" ? "default" : "outline"} size="sm" onClick={() => setTypeFilter("transmute-to-gold")}>
-                To {tokenConfig.stableAsset.symbol}
+              <Button variant={typeFilter === ACTION_TYPES.TRANSMUTE_TO_PEG ? "default" : "outline"} size="sm" className={filterButtonHoverClass} onClick={() => setTypeFilter(ACTION_TYPES.TRANSMUTE_TO_PEG)}>
+                To {tokenConfig.peg.type}
               </Button>
-              <Button variant={typeFilter === "transmute-from-gold" ? "default" : "outline"} size="sm" onClick={() => setTypeFilter("transmute-from-gold")}>
-                To {tokenConfig.volatileAsset.symbol}
+              <Button variant={typeFilter === ACTION_TYPES.TRANSMUTE_FROM_PEG ? "default" : "outline"} size="sm" className={filterButtonHoverClass} onClick={() => setTypeFilter(ACTION_TYPES.TRANSMUTE_FROM_PEG)}>
+                From {tokenConfig.peg.type}
               </Button>
             </div>
           </div>

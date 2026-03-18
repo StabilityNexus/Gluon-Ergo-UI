@@ -3,6 +3,8 @@
  * Provides a robust local storage solution with querying and analytics support
  */
 
+import { ACTION_TYPES, type ActionType } from "@/lib/constants/token";
+
 // Database configuration
 const DB_NAME = "gluon-transactions";
 const DB_VERSION = 1;
@@ -13,7 +15,7 @@ export interface TransactionRecord {
   id: string; // txHash
   timestamp: number;
   blockHeight?: number;
-  actionType: "fission" | "fusion" | "transmute-to-gold" | "transmute-from-gold";
+  actionType: ActionType;
   status: "pending" | "confirmed" | "failed" | "timeout";
 
   // Balance changes
@@ -62,6 +64,22 @@ export interface TransactionStats {
   averageConfirmationTime: number;
   totalFees: string;
 }
+
+export const normalizeActionType = (actionType: string): ActionType | null => {
+  if (actionType === ACTION_TYPES.FISSION || actionType === ACTION_TYPES.FUSION) {
+    return actionType;
+  }
+
+  if (actionType === ACTION_TYPES.TRANSMUTE_TO_PEG || actionType === "transmute-to-gold" || actionType === "volatile-to-stable") {
+    return ACTION_TYPES.TRANSMUTE_TO_PEG;
+  }
+
+  if (actionType === ACTION_TYPES.TRANSMUTE_FROM_PEG || actionType === "transmute-from-gold" || actionType === "stable-to-volatile") {
+    return ACTION_TYPES.TRANSMUTE_FROM_PEG;
+  }
+
+  return null;
+};
 
 export class IndexedDBService {
   private db: IDBDatabase | null = null;
@@ -362,10 +380,10 @@ export class IndexedDBService {
       pending: 0,
       failed: 0,
       byType: {
-        fission: 0,
-        fusion: 0,
-        "transmute-to-gold": 0,
-        "transmute-from-gold": 0,
+        [ACTION_TYPES.FISSION]: 0,
+        [ACTION_TYPES.FUSION]: 0,
+        [ACTION_TYPES.TRANSMUTE_TO_PEG]: 0,
+        [ACTION_TYPES.TRANSMUTE_FROM_PEG]: 0,
       },
       averageConfirmationTime: 0,
       totalFees: "0",
@@ -387,7 +405,7 @@ export class IndexedDBService {
       }
 
       // Count by type
-      stats.byType[tx.actionType]++;
+      stats.byType[tx.actionType] = (stats.byType[tx.actionType] || 0) + 1;
 
       // Calculate confirmation time
       if (tx.status === "confirmed" && tx.confirmationTime) {
@@ -454,12 +472,18 @@ export class IndexedDBService {
 
       for (const [txHash, txData] of Object.entries(pendingTransactions)) {
         const oldTx = txData as any;
+        const normalizedActionType = normalizeActionType(oldTx.actionType);
+
+        if (!normalizedActionType) {
+          console.warn("Skipping transaction with unknown action type during migration:", oldTx.actionType);
+          continue;
+        }
 
         // Convert old format to new format
         const newTx: TransactionRecord = {
           id: txHash,
           timestamp: oldTx.timestamp,
-          actionType: oldTx.actionType,
+          actionType: normalizedActionType,
           status: oldTx.isConfirmed ? "confirmed" : oldTx.isWalletUpdated ? "confirmed" : "pending",
           preState: oldTx.preTransactionState,
           expectedChanges: oldTx.expectedChanges,

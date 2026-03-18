@@ -55,7 +55,7 @@ export function TopNavbar() {
           {/* Left - Logo */}
           <div className="flex items-center">
             <Link href="/" className="flex items-center">
-              <Image src={theme === "dark" ? "/logo/gluon.png" : "/logo/gluon-light.png"} alt="Gluon Logo" width={28} height={28} priority />
+              <Image src={tokenConfig.favicon} alt="Gluon Logo" width={28} height={28} priority />
               {isDesktop && <p className="ml-2 font-sans text-2xl font-medium">{tokenConfig.protocolName}</p>}
             </Link>
           </div>

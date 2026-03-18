@@ -137,8 +137,8 @@ export function VolumeChart({ isLoading: externalLoading = false, hasError: exte
                 <YAxis tickFormatter={(value) => value.toFixed(1)} tick={{ fontSize: 9.5 }} width={45} />
                 <Tooltip formatter={(value: number) => [`${value.toFixed(2)} ERG`]} labelFormatter={(label) => `Day ${label}`} />
                 <Legend wrapperStyle={{ fontSize: 9.5 }} />
-                <Bar dataKey="VolumeProtonsToNeutrons" name={`${tokenConfig.volatileAsset.displayName} → ${tokenConfig.stableAsset.displayName}`} fill="#facc15" />
-                <Bar dataKey="VolumeNeutronsToProtons" name={`${tokenConfig.stableAsset.displayName} → ${tokenConfig.volatileAsset.displayName}`} fill="#ef4444" />
+                <Bar dataKey="VolumeProtonsToNeutrons" name={`${tokenConfig.volatileAsset.displayName} → ${tokenConfig.stableAsset.displayName}`} fill={tokenConfig.theme.stableToken} />
+                <Bar dataKey="VolumeNeutronsToProtons" name={`${tokenConfig.stableAsset.displayName} → ${tokenConfig.volatileAsset.displayName}`} fill={tokenConfig.theme.volatileToken} />
               </BarChart>
             </ResponsiveContainer>
           </div>

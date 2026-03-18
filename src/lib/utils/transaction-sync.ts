@@ -3,7 +3,7 @@
  * This allows gradual migration while maintaining backward compatibility
  */
 
-import { getDBInstance, TransactionRecord } from "./indexed-db";
+import { getDBInstance, normalizeActionType, TransactionRecord } from "./indexed-db";
 import { TransactionState } from "./transaction-listener";
 
 const LOCALSTORAGE_KEY = "gluon_pending_transactions";
@@ -49,11 +49,16 @@ export const syncTransactionsToIndexedDB = async (): Promise<void> => {
         continue;
       }
 
+      const actionType = normalizeActionType(txState.actionType);
+      if (!actionType) {
+        continue;
+      }
+
       // Convert old format to new format
       const record: TransactionRecord = {
         id: txHash,
         timestamp: txState.timestamp,
-        actionType: txState.actionType as TransactionRecord["actionType"],
+        actionType,
         status: txState.isWalletUpdated
           ? "confirmed"
           : txState.isConfirmed

@@ -29,7 +29,8 @@ export function ReactorSidebar() {
             <motion.li key={link.href} initial={mounted ? { opacity: 0, x: -20 } : false} animate={mounted ? { opacity: 1, x: 0 } : false} transition={{ delay: index * 0.1 }}>
               <Link
                 href={link.href}
-                className={`flex items-center space-x-2 rounded-xl px-4 py-2 transition-colors ${router.pathname === link.href ? "bg-primary/10 text-primary" : "hover:bg-muted"}`}
+                className={`flex items-center space-x-2 rounded-xl px-4 py-2 transition-colors ${router.pathname === link.href ? "bg-primary/10 text-primary" : "hover:bg-primary/10 hover:text-primary"}`}
+                aria-current={router.pathname === link.href ? "page" : undefined}
               >
                 <link.icon size={18} />
                 <span>{link.label}</span>
@@ -59,7 +60,8 @@ export function ReactorSidebar() {
                   <motion.li key={link.href} whileTap={{ scale: 0.95 }}>
                     <Link
                       href={link.href}
-                      className={`flex items-center space-x-2 rounded px-4 py-2 transition-colors ${router.pathname === link.href ? "bg-primary/10 text-primary" : "hover:bg-muted"}`}
+                      className={`flex items-center space-x-2 rounded px-4 py-2 transition-colors ${router.pathname === link.href ? "bg-primary/10 text-primary" : "hover:bg-primary/10 hover:text-primary"}`}
+                      aria-current={router.pathname === link.href ? "page" : undefined}
                       onClick={toggleMenu}
                     >
                       <link.icon size={18} />
