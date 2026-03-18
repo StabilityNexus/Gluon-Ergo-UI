@@ -20,8 +20,6 @@ const getActionTypeLabel = (actionType: string): string => {
     [ACTION_TYPES.TRANSMUTE_TO_PEG]: `To ${tokenConfig.peg.type}`,
     [ACTION_TYPES.TRANSMUTE_FROM_PEG]: `From ${tokenConfig.peg.type}`,
     // Legacy support for old hardcoded keys
-    "fission": "Fission",
-    "fusion": "Fusion",
     "transmute-to-gold": `To ${tokenConfig.peg.type}`,
     "transmute-from-gold": `From ${tokenConfig.peg.type}`,
   };

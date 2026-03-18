@@ -19,3 +19,5 @@ export const ACTION_TYPES = {
   TRANSMUTE_TO_PEG: `transmute-to-${pegType}`,
   TRANSMUTE_FROM_PEG: `transmute-from-${pegType}`,
 } as const;
+
+export type ActionType = (typeof ACTION_TYPES)[keyof typeof ACTION_TYPES];

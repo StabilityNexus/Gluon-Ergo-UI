@@ -1,12 +1,12 @@
 import { NodeService } from "./node-service";
 import { toast } from "sonner";
-import { TOKEN_ADDRESS, ACTION_TYPES } from "@/lib/constants/token";
+import { TOKEN_ADDRESS, type ActionType } from "@/lib/constants/token";
 
 // Transaction state interface
 export interface TransactionState {
   txHash: string;
   timestamp: number;
-  actionType: string; // ACTION_TYPES.FISSION, ACTION_TYPES.FUSION, ACTION_TYPES.TRANSMUTE_TO_PEG, ACTION_TYPES.TRANSMUTE_FROM_PEG
+  actionType: ActionType;
   preTransactionState: WalletState;
   expectedChanges: ExpectedChanges;
   isConfirmed: boolean;
@@ -59,7 +59,7 @@ export class TransactionListener {
   /**
    * Save transaction data to localStorage after submission
    */
-  saveUpTransaction(txHash: string, actionType: string, preTransactionState: WalletState, expectedChanges: ExpectedChanges): void {
+  saveUpTransaction(txHash: string, actionType: ActionType, preTransactionState: WalletState, expectedChanges: ExpectedChanges): void {
     try {
       const transactionState: TransactionState = {
         txHash,

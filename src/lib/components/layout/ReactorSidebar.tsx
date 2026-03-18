@@ -30,6 +30,7 @@ export function ReactorSidebar() {
               <Link
                 href={link.href}
                 className={`flex items-center space-x-2 rounded-xl px-4 py-2 transition-colors ${router.pathname === link.href ? "bg-primary/10 text-primary" : "hover:bg-primary/10 hover:text-primary"}`}
+                aria-current={router.pathname === link.href ? "page" : undefined}
               >
                 <link.icon size={18} />
                 <span>{link.label}</span>
@@ -60,6 +61,7 @@ export function ReactorSidebar() {
                     <Link
                       href={link.href}
                       className={`flex items-center space-x-2 rounded px-4 py-2 transition-colors ${router.pathname === link.href ? "bg-primary/10 text-primary" : "hover:bg-primary/10 hover:text-primary"}`}
+                      aria-current={router.pathname === link.href ? "page" : undefined}
                       onClick={toggleMenu}
                     >
                       <link.icon size={18} />

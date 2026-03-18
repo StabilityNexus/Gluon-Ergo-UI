@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils/utils";
 import { useErgo } from "@/lib/providers/ErgoProvider";
 import { NumericFormat, type NumberFormatValues } from "react-number-format";
 import { NodeService } from "@/lib/utils/node-service";
-import { TOKEN_ADDRESS, ACTION_TYPES } from "@/lib/constants/token";
+import { TOKEN_ADDRESS, ACTION_TYPES, type ActionType } from "@/lib/constants/token";
 import { convertFromDecimals, formatMicroNumber, nanoErgsToErgs, convertToDecimals, ergsToNanoErgs } from "@/lib/utils/erg-converter";
 import { createTransactionListener, type WalletState, type ExpectedChanges } from "@/lib/utils/transaction-listener";
 import BigNumber from "bignumber.js";
@@ -205,7 +205,7 @@ export function ReactorSwap() {
     };
 
     switch (actionType) {
-      case "fission":
+      case ACTION_TYPES.FISSION:
         // ERG → GAU + GAUC
         changes.erg = (-parseFloat(inputAmount) * 1000000000).toString(); // Input ERG converted to nanoERGs and negative
         changes.gau = convertToDecimals(outputAmounts.gau || "0").toString();
@@ -778,7 +778,7 @@ export function ReactorSwap() {
       const preTransactionState = await captureWalletState();
 
       // Determine action type for transaction listener
-      let actionType = "";
+      let actionType: ActionType | null = null;
       let inputAmount = "";
       let outputAmounts = { gau: "", gauc: "", erg: "" };
 
@@ -787,21 +787,29 @@ export function ReactorSwap() {
       const volatileSymbol = tokenConfig.volatileAsset.symbol;
       
       if (fromToken.symbol === "ERG" && toToken.symbol === pairSymbol) {
-        actionType = "fission";
+        actionType = ACTION_TYPES.FISSION;
         inputAmount = fromAmount;
         outputAmounts = { gau: gauAmount, gauc: gaucAmount, erg: "0" };
       } else if (fromToken.symbol === pairSymbol && toToken.symbol === "ERG") {
-        actionType = "fusion";
+        actionType = ACTION_TYPES.FUSION;
         inputAmount = toAmount; // For fusion, we target ERG output
         outputAmounts = { gau: "0", gauc: "0", erg: toAmount };
       } else if (fromToken.symbol === volatileSymbol && toToken.symbol === stableSymbol) {
-        actionType = "volatile-to-stable";
+        actionType = ACTION_TYPES.TRANSMUTE_TO_PEG;
         inputAmount = fromAmount;
         outputAmounts = { gau: toAmount, gauc: "0", erg: "0" };
       } else if (fromToken.symbol === stableSymbol && toToken.symbol === volatileSymbol) {
-        actionType = "stable-to-volatile";
+        actionType = ACTION_TYPES.TRANSMUTE_FROM_PEG;
         inputAmount = fromAmount;
         outputAmounts = { gau: "0", gauc: toAmount, erg: "0" };
+      }
+
+      if (!actionType) {
+        console.error("Unable to determine action type for swap", {
+          from: fromToken.symbol,
+          to: toToken.symbol,
+        });
+        return;
       }
 
       // Calculate expected changes for transaction listener
