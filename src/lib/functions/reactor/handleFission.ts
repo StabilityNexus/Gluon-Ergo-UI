@@ -1,4 +1,4 @@
-import { SwapResult, SwapError, ReceiptDetails } from "./types";
+cdimport { SwapResult, SwapError, ReceiptDetails } from "./types";
 import { convertFromDecimals, nanoErgsToErgs, ergsToNanoErgs } from "@/lib/utils/erg-converter";
 import { formatMicroNumber } from "@/lib/utils/erg-converter";
 import { handleTransactionError, handleTransactionSuccess, handleCalculationError } from "@/lib/utils/error-handler";
@@ -27,6 +27,37 @@ export const calculateFissionAmounts = async ({ gluonInstance, gluonBox, value }
 
     // Get prediction of stable/volatile asset amounts
     const willGet = await gluonInstance.fissionWillGet(gluonBox, Number(ergToFission));
+
+    // If amount is zero, return early with zero fees to avoid SDK base fees
+    if (numValue === 0) {
+      const receiptDetails: ReceiptDetails = {
+        inputAmount: 0,
+        outputAmount: {
+          stableAsset: 0,
+          volatileAsset: 0,
+          erg: 0,
+          gau: 0,
+          gauc: 0,
+        },
+        fees: {
+          devFee: 0,
+          uiFee: 0,
+          oracleFee: 0,
+          minerFee: 0,
+          totalFee: 0,
+        },
+      };
+
+      return {
+        stableAssetAmount: "0",
+        volatileAssetAmount: "0",
+        toAmount: "0",
+        receiptDetails,
+        maxErgOutput: "0",
+        gauAmount: "0",
+        gaucAmount: "0",
+      };
+    }
     console.log("🔍 FISSION PREDICTION RAW:", willGet);
 
     if (!willGet) {
