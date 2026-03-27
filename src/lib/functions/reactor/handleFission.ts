@@ -1,4 +1,4 @@
-cdimport { SwapResult, SwapError, ReceiptDetails } from "./types";
+import { SwapResult, SwapError, ReceiptDetails } from "./types";
 import { convertFromDecimals, nanoErgsToErgs, ergsToNanoErgs } from "@/lib/utils/erg-converter";
 import { formatMicroNumber } from "@/lib/utils/erg-converter";
 import { handleTransactionError, handleTransactionSuccess, handleCalculationError } from "@/lib/utils/error-handler";
