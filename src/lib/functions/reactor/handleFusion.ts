@@ -81,38 +81,6 @@ export const calculateFusionAmounts = async ({ gluonInstance, gluonBox, value, s
     // Calculate required token amounts using SDK's function
     const { neutrons, protons } = await gluonInstance.fusionWillNeed(gluonBox, Number(desiredNanoErgs));
 
-    // If amount is zero, return early with zero fees to avoid SDK base fees
-    if (desiredNanoErgs === BigInt(0)) {
-      const receiptDetails: ReceiptDetails = {
-        inputAmount: 0,
-        outputAmount: {
-          stableAsset: 0,
-          volatileAsset: 0,
-          erg: 0,
-          gau: 0,
-          gauc: 0,
-        },
-        fees: {
-          devFee: 0,
-          uiFee: 0,
-          oracleFee: 0,
-          minerFee: 0,
-          totalFee: 0,
-        },
-        maxErgOutput: maxErgStr,
-      };
-
-      return {
-        stableAssetAmount: "0",
-        volatileAssetAmount: "0",
-        toAmount: "0",
-        maxErgOutput: maxErgStr,
-        receiptDetails,
-        gauAmount: "0",
-        gaucAmount: "0",
-      };
-    }
-
     // Convert to display values
     const requiredStable = convertFromDecimals(BigInt(neutrons)).toString();
     const requiredVolatile = convertFromDecimals(BigInt(protons)).toString();
