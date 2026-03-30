@@ -47,6 +47,10 @@ export function BottomNavbar() {
     }
 
     const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+    if (router.basePath && (normalizedPath === router.basePath || normalizedPath.startsWith(`${router.basePath}/`))) {
+      return normalizedPath;
+    }
+
     return `${router.basePath}${normalizedPath}`;
   };
 
