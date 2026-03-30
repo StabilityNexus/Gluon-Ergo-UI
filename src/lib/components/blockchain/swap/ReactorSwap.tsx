@@ -691,11 +691,7 @@ export function ReactorSwap() {
         usingForUI: maxAmount,
       });
       setToAmount(maxAmount);
-      console.log("🔄 Triggering calculation with precise value:", {
-        preciseValue: maxErgOutputPrecise,
-      });
-      await calculateAmounts(maxErgOutputPrecise, false);
-      return;
+      // Wait for state update is not needed here as we call calculateAmounts directly below
     }
     if (isFromCard) {
       const balanceNum = parseFloat(fromToken.balance);
@@ -743,7 +739,9 @@ export function ReactorSwap() {
       setFromAmount(maxAmount);
     }
     if (parseFloat(maxAmount) > 0) {
-      await calculateAmounts(maxAmount, isFromCard);
+      // For Fusion (not isFromCard), use the precise calculation value
+      const calculationValue = !isFromCard ? maxErgOutputPrecise : maxAmount;
+      await calculateAmounts(calculationValue, isFromCard);
     } else {
       setToAmount("");
       setGauAmount("0");
