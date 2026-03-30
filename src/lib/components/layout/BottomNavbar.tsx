@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils/utils";
 import { useMediaQuery } from "usehooks-ts";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/router";
 
 const socialLinks = [
   {
@@ -36,8 +37,18 @@ const socialLinks = [
 export function BottomNavbar() {
   const isMobile = useMediaQuery("(max-width: 768px)");
   const pathname = usePathname();
+  const router = useRouter();
   const { theme, systemTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+
+  const resolveAssetPath = (path: string): string => {
+    if (!path || path.startsWith("http://") || path.startsWith("https://")) {
+      return path;
+    }
+
+    const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+    return `${router.basePath}${normalizedPath}`;
+  };
 
   useEffect(() => setMounted(true), []);
 
@@ -47,7 +58,7 @@ export function BottomNavbar() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex justify-center space-x-6 py-4">
             {socialLinks.map(({ href, label, iconLight, iconDark }) => {
-              let iconSrc = "/logo/default.svg";
+              let iconSrc = iconLight;
 
               if (mounted) {
                 const currentTheme = theme === "system" ? systemTheme : theme;
@@ -63,7 +74,7 @@ export function BottomNavbar() {
                   className="flex h-8 w-8 items-center justify-center transition-colors hover:text-primary"
                   aria-label={label}
                 >
-                  <Image src={iconSrc} alt={label} width={24} height={24} className="h-6 w-6 object-contain" />
+                  <Image src={resolveAssetPath(iconSrc)} alt={label} width={24} height={24} className="h-6 w-6 object-contain" />
                 </Link>
               );
             })}

@@ -25,9 +25,17 @@ const navItems = [
 export function TopNavbar() {
   const isDesktop = useMediaQuery("(min-width: 768px)");
   const pathname = usePathname();
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const router = useRouter();
   const { theme } = useTheme();
+
+  const resolveAssetPath = (path: string): string => {
+    if (!path || path.startsWith("http://") || path.startsWith("https://")) {
+      return path;
+    }
+
+    const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+    return `${router.basePath}${normalizedPath}`;
+  };
 
   const NavLinks = () => (
     <div className={`flex ${isDesktop ? "gap-6" : "flex-col gap-4"}`}>
@@ -55,7 +63,7 @@ export function TopNavbar() {
           {/* Left - Logo */}
           <div className="flex items-center">
             <Link href="/" className="flex items-center">
-              <Image src={tokenConfig.favicon} alt="Gluon Logo" width={28} height={28} priority />
+              <Image src={resolveAssetPath(tokenConfig.favicon)} alt="Gluon Logo" width={28} height={28} priority />
               {isDesktop && <p className="ml-2 font-sans text-2xl font-medium">{tokenConfig.protocolName}</p>}
             </Link>
           </div>
