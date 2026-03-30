@@ -6,6 +6,7 @@ import { Button } from "@/lib/components/ui/button";
 import { useMediaQuery } from "usehooks-ts";
 import { ThemeToggle } from "../toggle/ThemeToggle";
 import { cn } from "@/lib/utils/utils";
+import { resolveAssetPath } from "@/lib/utils/asset-path";
 import { useRouter } from "next/router";
 import { WalletConnector } from "../blockchain/connector/WalletConnector";
 import { useTheme } from "next-themes";
@@ -27,19 +28,6 @@ export function TopNavbar() {
   const pathname = usePathname();
   const router = useRouter();
   const { theme } = useTheme();
-
-  const resolveAssetPath = (path: string): string => {
-    if (!path || path.startsWith("http://") || path.startsWith("https://")) {
-      return path;
-    }
-
-    const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-    if (router.basePath && (normalizedPath === router.basePath || normalizedPath.startsWith(`${router.basePath}/`))) {
-      return normalizedPath;
-    }
-
-    return `${router.basePath}${normalizedPath}`;
-  };
 
   const NavLinks = () => (
     <div className={`flex ${isDesktop ? "gap-6" : "flex-col gap-4"}`}>
@@ -67,7 +55,7 @@ export function TopNavbar() {
           {/* Left - Logo */}
           <div className="flex items-center">
             <Link href="/" className="flex items-center">
-              <Image src={resolveAssetPath(tokenConfig.favicon)} alt="Gluon Logo" width={28} height={28} priority />
+              <Image src={resolveAssetPath(tokenConfig.favicon, router.basePath)} alt="Gluon Logo" width={28} height={28} priority />
               {isDesktop && <p className="ml-2 font-sans text-2xl font-medium">{tokenConfig.protocolName}</p>}
             </Link>
           </div>

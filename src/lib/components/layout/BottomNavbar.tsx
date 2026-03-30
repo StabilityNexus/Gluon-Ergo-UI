@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils/utils";
+import { resolveAssetPath } from "@/lib/utils/asset-path";
 import { useMediaQuery } from "usehooks-ts";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
@@ -41,19 +42,6 @@ export function BottomNavbar() {
   const { theme, systemTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
-  const resolveAssetPath = (path: string): string => {
-    if (!path || path.startsWith("http://") || path.startsWith("https://")) {
-      return path;
-    }
-
-    const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-    if (router.basePath && (normalizedPath === router.basePath || normalizedPath.startsWith(`${router.basePath}/`))) {
-      return normalizedPath;
-    }
-
-    return `${router.basePath}${normalizedPath}`;
-  };
-
   useEffect(() => setMounted(true), []);
 
   if (!isMobile) {
@@ -78,7 +66,7 @@ export function BottomNavbar() {
                   className="flex h-8 w-8 items-center justify-center transition-colors hover:text-primary"
                   aria-label={label}
                 >
-                  <Image src={resolveAssetPath(iconSrc)} alt={label} width={24} height={24} className="h-6 w-6 object-contain" />
+                  <Image src={resolveAssetPath(iconSrc, router.basePath)} alt={label} width={24} height={24} className="h-6 w-6 object-contain" />
                 </Link>
               );
             })}
