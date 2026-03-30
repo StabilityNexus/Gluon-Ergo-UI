@@ -6,6 +6,7 @@ import { Button } from "@/lib/components/ui/button";
 import { useMediaQuery } from "usehooks-ts";
 import { ThemeToggle } from "../toggle/ThemeToggle";
 import { cn } from "@/lib/utils/utils";
+import { resolveAssetPath } from "@/lib/utils/asset-path";
 import { useRouter } from "next/router";
 import { WalletConnector } from "../blockchain/connector/WalletConnector";
 import { useTheme } from "next-themes";
@@ -25,7 +26,6 @@ const navItems = [
 export function TopNavbar() {
   const isDesktop = useMediaQuery("(min-width: 768px)");
   const pathname = usePathname();
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const router = useRouter();
   const { theme } = useTheme();
 
@@ -50,12 +50,12 @@ export function TopNavbar() {
 
   return (
     <div className="w-full shadow-sm backdrop-blur-xl dark:shadow-lg">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="w-full px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between py-4">
           {/* Left - Logo */}
           <div className="flex items-center">
             <Link href="/" className="flex items-center">
-              <Image src={tokenConfig.favicon} alt="Gluon Logo" width={28} height={28} priority />
+              <Image src={resolveAssetPath(tokenConfig.favicon, router.basePath)} alt="Gluon Logo" width={28} height={28} priority />
               {isDesktop && <p className="ml-2 font-sans text-2xl font-medium">{tokenConfig.protocolName}</p>}
             </Link>
           </div>
