@@ -39,47 +39,27 @@ export function VolumeChart({ isLoading: externalLoading = false, hasError: exte
 
         const gluonBox = await gluon.getGluonBox();
 
-        const days = Array.from({ length: 14 }, (_, i) => i + 1);
-        const cumulativeData: VolumeDataPoint[] = [];
+        // SDK Issue #5 fix: use the direct bucket-array methods (2 calls) instead of
+        // calling accumulateVolume*(day) for each day 1-14 and diffing consecutive
+        // cumulative sums (28 calls). The SDK register already stores each day's
+        // discrete volume bucket at index 0 (today) → index 13 (14 days ago).
+        const [volArrayPN, volArrayNP] = await Promise.all([
+          gluonBox.getVolumeProtonsToNeutronsArray(),
+          gluonBox.getVolumeNeutronsToProtonsArray(),
+        ]);
 
-        for (const day of days) {
-          const [ProtonsToNeutrons, NeutronsToProtons] = await Promise.all([gluonBox.accumulateVolumeProtonsToNeutrons(day), gluonBox.accumulateVolumeNeutronsToProtons(day)]);
-
-          cumulativeData.push({
-            day,
-            VolumeProtonsToNeutrons: nanoErgsToErgs(ProtonsToNeutrons).toNumber(),
-            VolumeNeutronsToProtons: nanoErgsToErgs(NeutronsToProtons).toNumber(),
-          });
-        }
-
-        const dailyData: VolumeDataPoint[] = [];
-
-        for (let i = 0; i < cumulativeData.length; i++) {
-          if (i === 0) {
-            dailyData.push({
-              day: cumulativeData[i].day,
-              VolumeProtonsToNeutrons: cumulativeData[i].VolumeProtonsToNeutrons,
-              VolumeNeutronsToProtons: cumulativeData[i].VolumeNeutronsToProtons,
-            });
-          } else {
-            const current = cumulativeData[i];
-            const previous = cumulativeData[i - 1];
-
-            dailyData.push({
-              day: current.day,
-              VolumeProtonsToNeutrons: Math.max(0, current.VolumeProtonsToNeutrons - previous.VolumeProtonsToNeutrons),
-              VolumeNeutronsToProtons: Math.max(0, current.VolumeNeutronsToProtons - previous.VolumeNeutronsToProtons),
-            });
-          }
-        }
-
-        const reversed = dailyData.reverse().map((entry, index) => ({
-          ...entry,
-          day: index + 1,
-        }));
+        // The array is newest-first; reverse so day 1 on the chart = oldest bucket
+        // and day 14 = today, giving chronological left-to-right order.
+        const chartPoints: VolumeDataPoint[] = [...volArrayPN]
+          .reverse()
+          .map((pn, index) => ({
+            day: index + 1,
+            VolumeProtonsToNeutrons: nanoErgsToErgs(pn).toNumber(),
+            VolumeNeutronsToProtons: nanoErgsToErgs(volArrayNP[volArrayNP.length - 1 - index]).toNumber(),
+          }));
 
         if (isMounted) {
-          setChartData(reversed);
+          setChartData(chartPoints);
         }
       } catch (error) {
         if (isMounted) {

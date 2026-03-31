@@ -90,8 +90,21 @@ export function GluonStats() {
           gluon.getTVL(gluonBox, oracleBox),
         ]);
 
-        // Fetch protocol metrics
-        const [volume1DayPN, volume1DayNP, volume7DayPN, volume7DayNP, volume14DayPN, volume14DayNP, circProtons, circNeutrons] = await Promise.all([
+        // Fetch protocol metrics — volume arrays come first (2 calls instead of many)
+        // getVolumeProtonsToNeutronsArray / getVolumeNeutronsToProtonsArray return a
+        // BUCKET_LEN-length array where index 0 = today, 1 = yesterday, etc.
+        const [
+          volume1DayPN,
+          volume1DayNP,
+          volume7DayPN,
+          volume7DayNP,
+          volume14DayPN,
+          volume14DayNP,
+          circProtons,
+          circNeutrons,
+          volArrayPN,
+          volArrayNP,
+        ] = await Promise.all([
           gluonBox.accumulateVolumeProtonsToNeutrons(1),
           gluonBox.accumulateVolumeNeutronsToProtons(1),
           gluonBox.accumulateVolumeProtonsToNeutrons(7),
@@ -100,10 +113,12 @@ export function GluonStats() {
           gluonBox.accumulateVolumeNeutronsToProtons(14),
           gluonBox.getProtonsCirculatingSupply(),
           gluonBox.getNeutronsCirculatingSupply(),
+          // SDK Issue #5 fix: use the direct array methods instead of empty placeholders
+          gluonBox.getVolumeProtonsToNeutronsArray(),
+          gluonBox.getVolumeNeutronsToProtonsArray(),
         ]);
 
-        // Volume arrays not available in current SDK version
-        const volumeArrays = { protonsToNeutrons: [], neutronsToProtons: [] };
+        const volumeArrays = { protonsToNeutrons: volArrayPN, neutronsToProtons: volArrayNP };
 
         // Convert values to proper format
         const goldPriceBN = nanoErgsToErgs(goldPrice).dividedBy(1000);
@@ -156,7 +171,7 @@ export function GluonStats() {
             gau: Number(circNeutrons),
             gauc: Number(circProtons),
           },
-          volumeArrays: volumeArrays,
+          volumeArrays: { protonsToNeutrons: volArrayPN, neutronsToProtons: volArrayNP },
           prices: {
             gold: goldPriceBN.toNumber(),
             gau: gauPriceBN.toNumber(),
