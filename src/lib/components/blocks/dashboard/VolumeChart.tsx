@@ -21,23 +21,33 @@ interface VolumeDataPoint {
   VolumeNeutronsToProtons: number;
 }
 
-export function VolumeChart({ isLoading: externalLoading = false, hasError: externalError = false, volArrayPN = [], volArrayNP = [] }: VolumeChartProps) {
+export function VolumeChart({ isLoading = false, hasError = false, volArrayPN = [], volArrayNP = [] }: VolumeChartProps) {
   const [chartData, setChartData] = useState<VolumeDataPoint[]>([]);
 
   useEffect(() => {
     if (!volArrayPN.length || !volArrayNP.length) return;
+    
+    if (volArrayPN.length !== volArrayNP.length) {
+      console.warn(`Volume array length mismatch: PN=${volArrayPN.length}, NP=${volArrayNP.length}`);
+    }
+
     const reversedPN = [...volArrayPN].reverse();
     const reversedNP = [...volArrayNP].reverse();
-    const chartPoints = reversedPN.map((pn, index) => ({
-      day: index + 1,
-      VolumeProtonsToNeutrons: nanoErgsToErgs(pn).toNumber(),
-      VolumeNeutronsToProtons: nanoErgsToErgs(reversedNP[index]).toNumber(),
-    }));
+    const len = Math.min(reversedPN.length, reversedNP.length);
+    
+    if (len === 0) return;
+
+    const chartPoints = [];
+    for (let i = 0; i < len; i++) {
+      chartPoints.push({
+        day: i + 1,
+        VolumeProtonsToNeutrons: nanoErgsToErgs(reversedPN[i]).toNumber(),
+        VolumeNeutronsToProtons: nanoErgsToErgs(reversedNP[i]).toNumber(),
+      });
+    }
+
     setChartData(chartPoints);
   }, [volArrayPN, volArrayNP]);
-
-  const isLoading = externalLoading;
-  const hasError = externalError;
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5, duration: 0.4 }}>
