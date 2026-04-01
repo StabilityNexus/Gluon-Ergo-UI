@@ -11,6 +11,8 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 interface VolumeChartProps {
   isLoading?: boolean;
   hasError?: boolean;
+  volArrayPN?: number[];
+  volArrayNP?: number[];
 }
 
 interface VolumeDataPoint {
@@ -19,68 +21,23 @@ interface VolumeDataPoint {
   VolumeNeutronsToProtons: number;
 }
 
-export function VolumeChart({ isLoading: externalLoading = false, hasError: externalError = false }: VolumeChartProps) {
+export function VolumeChart({ isLoading: externalLoading = false, hasError: externalError = false, volArrayPN = [], volArrayNP = [] }: VolumeChartProps) {
   const [chartData, setChartData] = useState<VolumeDataPoint[]>([]);
-  const [loadingChart, setLoadingChart] = useState(true);
-  const [chartError, setChartError] = useState(false);
-  const [debugMessage, setDebugMessage] = useState<string>("");
 
   useEffect(() => {
-    let isMounted = true;
+    if (!volArrayPN.length || !volArrayNP.length) return;
+    const reversedPN = [...volArrayPN].reverse();
+    const reversedNP = [...volArrayNP].reverse();
+    const chartPoints = reversedPN.map((pn, index) => ({
+      day: index + 1,
+      VolumeProtonsToNeutrons: nanoErgsToErgs(pn).toNumber(),
+      VolumeNeutronsToProtons: nanoErgsToErgs(reversedNP[index]).toNumber(),
+    }));
+    setChartData(chartPoints);
+  }, [volArrayPN, volArrayNP]);
 
-    async function fetchVolumeData() {
-      try {
-        setLoadingChart(true);
-        setChartError(false);
-
-        const sdk = await import("gluon-gold-sdk");
-        const gluon = new sdk.Gluon();
-        gluon.config.NETWORK = process.env.NEXT_PUBLIC_DEPLOYMENT || "testnet";
-
-        const gluonBox = await gluon.getGluonBox();
-
-        // SDK Issue #5 fix: use the direct bucket-array methods (2 calls) instead of
-        // calling accumulateVolume*(day) for each day 1-14 and diffing consecutive
-        // cumulative sums (28 calls). The SDK register already stores each day's
-        // discrete volume bucket at index 0 (today) → index 13 (14 days ago).
-        const [volArrayPN, volArrayNP] = await Promise.all([
-          gluonBox.getVolumeProtonsToNeutronsArray(),
-          gluonBox.getVolumeNeutronsToProtonsArray(),
-        ]);
-
-        // The array is newest-first; reverse so day 1 on the chart = oldest bucket
-        // and day 14 = today, giving chronological left-to-right order.
-        const chartPoints: VolumeDataPoint[] = [...volArrayPN]
-          .reverse()
-          .map((pn, index) => ({
-            day: index + 1,
-            VolumeProtonsToNeutrons: nanoErgsToErgs(pn).toNumber(),
-            VolumeNeutronsToProtons: nanoErgsToErgs(volArrayNP[volArrayNP.length - 1 - index]).toNumber(),
-          }));
-
-        if (isMounted) {
-          setChartData(chartPoints);
-        }
-      } catch (error) {
-        if (isMounted) {
-          setChartError(true);
-          setDebugMessage(`Error: ${error instanceof Error ? error.message : String(error)}`);
-        }
-      } finally {
-        if (isMounted) {
-          setLoadingChart(false);
-        }
-      }
-    }
-
-    fetchVolumeData();
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-  const isLoading = externalLoading || loadingChart;
-  const hasError = externalError || chartError;
+  const isLoading = externalLoading;
+  const hasError = externalError;
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5, duration: 0.4 }}>
@@ -96,17 +53,14 @@ export function VolumeChart({ isLoading: externalLoading = false, hasError: exte
           <div className="flex h-[300px] flex-col items-center justify-center">
             <Loader2 className="mb-4 h-8 w-8 animate-spin text-muted-foreground" />
             <span className="text-sm text-muted-foreground">Loading volume data...</span>
-            <span className="mt-2 text-xs text-muted-foreground">{debugMessage}</span>
           </div>
         ) : hasError ? (
           <div className="flex h-[300px] flex-col items-center justify-center">
             <span className="text-sm text-red-500">Error loading volume data</span>
-            <span className="mt-2 text-xs text-red-400">{debugMessage}</span>
           </div>
         ) : chartData.length === 0 ? (
           <div className="flex h-[300px] flex-col items-center justify-center">
             <span className="text-sm text-muted-foreground">No volume data available</span>
-            <span className="mt-2 text-xs text-muted-foreground">{debugMessage}</span>
           </div>
         ) : (
           <div className="mx-auto w-full" style={{ height: "360px" }}>
