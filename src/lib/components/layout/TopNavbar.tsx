@@ -49,11 +49,11 @@ export function TopNavbar() {
   );
 
   return (
-    <div className="w-full shadow-sm backdrop-blur-xl dark:shadow-lg">
+    <div className="sticky top-0 z-50 w-full shadow-sm backdrop-blur-xl dark:shadow-lg">
       <div className="w-full px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between py-4">
           {/* Left - Logo */}
-          <div className="flex items-center">
+          <div className="flex flex-1 items-center">
             <Link href="/" className="flex items-center">
               <Image src={resolveAssetPath(tokenConfig.favicon, router.basePath)} alt="Gluon Logo" width={28} height={28} priority />
               {isDesktop && <p className="ml-2 font-sans text-2xl font-medium">{tokenConfig.protocolName}</p>}
@@ -68,7 +68,7 @@ export function TopNavbar() {
               </div>
 
               {/* Right - Actions */}
-              <div className="flex items-center gap-2">
+              <div className="flex flex-1 items-center justify-end gap-2">
                 <ThemeToggle />
                 {pathname?.startsWith("/reactor") || pathname?.startsWith("/test") || pathname?.startsWith("/swap") || pathname?.startsWith("/history") ? <WalletConnector /> : null}
               </div>
