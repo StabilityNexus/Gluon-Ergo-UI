@@ -24,7 +24,7 @@
         "ergo-lib-wasm-browser": "^0.28.0",
         "ergo-lib-wasm-nodejs": "^0.28.0",
         "framer-motion": "^11.17.0",
-        "gluon-ergo-sdk": "^1.0.1",
+        "gluon-ergo-sdk": "^1.0.2",
         "json-bigint": "^1.0.0",
         "lodash": "^4.17.21",
         "lucide-react": "^0.471.0",
@@ -913,7 +913,7 @@
 
     "globalthis": ["globalthis@1.0.4", "", { "dependencies": { "define-properties": "^1.2.1", "gopd": "^1.0.1" } }, "sha512-DpLKbNU4WylpxJykQujfCcwYWiV/Jhm50Goo0wrVILAv5jOr9d+H+UR3PhSCD2rCCEIg0uc+G+muBTwD54JhDQ=="],
 
-    "gluon-ergo-sdk": ["gluon-ergo-sdk@1.0.1", "", { "dependencies": { "axios": "^1.7.3", "ergo-lib-wasm-browser": "^0.23.0", "ergo-lib-wasm-nodejs": "^0.23.0", "json-bigint": "^1.0.0" } }, "sha512-FMsb8mGHFEq+mV/qJNFHBqsd6OvCcgN5zXR/P+ZwIqT/54PsCGhMEj+QlG2LvoCLAAAI0HoTGByoAsaDcTA6Ng=="],
+    "gluon-ergo-sdk": ["gluon-ergo-sdk@1.0.2", "", { "dependencies": { "axios": "^1.7.3", "ergo-lib-wasm-browser": "^0.23.0", "ergo-lib-wasm-nodejs": "^0.23.0", "json-bigint": "^1.0.0" } }, "sha512-JE0tdXzgSbiBoOwvzVk+aUqp8GbMOOLD/bn768ScKRx7qgthwUX5YuN+MIqpT9PmE7S6Rv0bakJHBqfgtU4P4Q=="],
 
     "gopd": ["gopd@1.2.0", "", {}, "sha512-ZUKRh6/kUFoAiTAtTYPZJ3hw9wNxx+BIBOijnlG9PnrJsCcSjs1wyyD6vJpaYtgnzDrKYRSqf3OO6Rfa93xsRg=="],
 
