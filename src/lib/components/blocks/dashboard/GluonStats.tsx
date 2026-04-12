@@ -75,13 +75,13 @@ export function GluonStats() {
     async function fetchStats() {
       try {
         setHasError(false);
-        const [ergPriceRes, sdk] = await Promise.all([fetch("/api/getErgPrice"), import("gluon-gold-sdk")]);
+        const [ergPriceRes, sdk] = await Promise.all([fetch("/api/getErgPrice"), import("gluon-ergo-sdk")]);
 
         const { price: ergPrice } = await ergPriceRes.json();
         const gluon = new sdk.Gluon();
         gluon.config.NETWORK = process.env.NEXT_PUBLIC_DEPLOYMENT || "testnet";
         const gluonBox = await gluon.getGluonBox();
-        const oracleBox = await gluon.getGoldOracleBox();
+        const oracleBox = await gluon.getOracleBox();
 
         // Fetch basic stats
         const [gaucPrice, goldPrice, normalizedReserveRatio, tvl] = await Promise.all([

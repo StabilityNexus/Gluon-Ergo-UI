@@ -439,12 +439,12 @@ export function ReactorSwap() {
       setBoxesReady(false);
       setInitError(null);
       try {
-        const sdk = await import("gluon-gold-sdk");
+        const sdk = await import("gluon-ergo-sdk");
         const gluon = new sdk.Gluon();
         gluon.config.NETWORK = process.env.NEXT_PUBLIC_DEPLOYMENT || "testnet";
         setGluonInstance(gluon);
         const gBox = await gluon.getGluonBox();
-        const oBox = await gluon.getGoldOracleBox();
+        const oBox = await gluon.getOracleBox();
         if (!gBox || !oBox) {
           throw new Error("Failed to initialize Gluon boxes");
         }

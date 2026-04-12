@@ -173,7 +173,7 @@ export const handleFusionSwap = async (
       throw new Error("Failed to get network height");
     }
 
-    const oracleBoxJs = await gluonInstance.getGoldOracleBox();
+    const oracleBoxJs = await gluonInstance.getOracleBox();
     const gluonBoxJs = await gluonInstance.getGluonBox();
 
     if (!oracleBoxJs || !gluonBoxJs) {
