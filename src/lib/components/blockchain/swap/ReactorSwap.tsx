@@ -443,8 +443,10 @@ export function ReactorSwap() {
         const gluon = new sdk.Gluon();
         gluon.config.NETWORK = process.env.NEXT_PUBLIC_DEPLOYMENT || "testnet";
         setGluonInstance(gluon);
-        const gBox = await gluon.getGluonBox();
-        const oBox = await gluon.getOracleBox();
+        const [gBox, oBox] = await Promise.all([
+          gluon.getGluonBox(),
+          gluon.getOracleBox(),
+        ]);
         if (!gBox || !oBox) {
           throw new Error("Failed to initialize Gluon boxes");
         }

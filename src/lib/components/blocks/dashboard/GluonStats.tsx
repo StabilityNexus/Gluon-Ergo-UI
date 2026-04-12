@@ -80,8 +80,10 @@ export function GluonStats() {
         const { price: ergPrice } = await ergPriceRes.json();
         const gluon = new sdk.Gluon();
         gluon.config.NETWORK = process.env.NEXT_PUBLIC_DEPLOYMENT || "testnet";
-        const gluonBox = await gluon.getGluonBox();
-        const oracleBox = await gluon.getOracleBox();
+        const [gluonBox, oracleBox] = await Promise.all([
+          gluon.getGluonBox(),
+          gluon.getOracleBox(),
+        ]);
 
         // Fetch basic stats
         const [gaucPrice, goldPrice, normalizedReserveRatio, tvl] = await Promise.all([

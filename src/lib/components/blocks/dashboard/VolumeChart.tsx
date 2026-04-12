@@ -25,7 +25,10 @@ export function VolumeChart({ isLoading = false, hasError = false, volArrayPN = 
   const [chartData, setChartData] = useState<VolumeDataPoint[]>([]);
 
   useEffect(() => {
-    if (!volArrayPN.length || !volArrayNP.length) return;
+    if (!volArrayPN.length || !volArrayNP.length) {
+      setChartData([]);
+      return;
+    }
     
     if (volArrayPN.length !== volArrayNP.length) {
       console.warn(`Volume array length mismatch: PN=${volArrayPN.length}, NP=${volArrayNP.length}`);
@@ -35,7 +38,10 @@ export function VolumeChart({ isLoading = false, hasError = false, volArrayPN = 
     const reversedNP = [...volArrayNP].reverse();
     const len = Math.min(reversedPN.length, reversedNP.length);
     
-    if (len === 0) return;
+    if (len === 0) {
+      setChartData([]);
+      return;
+    }
 
     const chartPoints = [];
     for (let i = 0; i < len; i++) {
