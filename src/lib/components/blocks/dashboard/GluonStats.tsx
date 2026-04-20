@@ -13,6 +13,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import NeutronIcon from "@/lib/components/icons/NeutronIcon";
 import ProtonIcon from "@/lib/components/icons/ProtonIcon";
 import { tokenConfig } from "@/config/tokenConfig";
+import { VolumeChart } from "@/lib/components/blocks/dashboard/VolumeChart";
 
 interface GluonStats {
   ergPrice: number | null;
@@ -74,13 +75,15 @@ export function GluonStats() {
     async function fetchStats() {
       try {
         setHasError(false);
-        const [ergPriceRes, sdk] = await Promise.all([fetch("/api/getErgPrice"), import("gluon-gold-sdk")]);
+        const [ergPriceRes, sdk] = await Promise.all([fetch("/api/getErgPrice"), import("gluon-ergo-sdk")]);
 
         const { price: ergPrice } = await ergPriceRes.json();
         const gluon = new sdk.Gluon();
         gluon.config.NETWORK = process.env.NEXT_PUBLIC_DEPLOYMENT || "testnet";
-        const gluonBox = await gluon.getGluonBox();
-        const oracleBox = await gluon.getGoldOracleBox();
+        const [gluonBox, oracleBox] = await Promise.all([
+          gluon.getGluonBox(),
+          gluon.getOracleBox(),
+        ]);
 
         // Fetch basic stats
         const [gaucPrice, goldPrice, normalizedReserveRatio, tvl] = await Promise.all([
@@ -90,8 +93,18 @@ export function GluonStats() {
           gluon.getTVL(gluonBox, oracleBox),
         ]);
 
-        // Fetch protocol metrics
-        const [volume1DayPN, volume1DayNP, volume7DayPN, volume7DayNP, volume14DayPN, volume14DayNP, circProtons, circNeutrons] = await Promise.all([
+        const [
+          volume1DayPN,
+          volume1DayNP,
+          volume7DayPN,
+          volume7DayNP,
+          volume14DayPN,
+          volume14DayNP,
+          circProtons,
+          circNeutrons,
+          volArrayPN,
+          volArrayNP,
+        ] = await Promise.all([
           gluonBox.accumulateVolumeProtonsToNeutrons(1),
           gluonBox.accumulateVolumeNeutronsToProtons(1),
           gluonBox.accumulateVolumeProtonsToNeutrons(7),
@@ -100,10 +113,11 @@ export function GluonStats() {
           gluonBox.accumulateVolumeNeutronsToProtons(14),
           gluonBox.getProtonsCirculatingSupply(),
           gluonBox.getNeutronsCirculatingSupply(),
+          gluonBox.getVolumeProtonsToNeutronsArray(),
+          gluonBox.getVolumeNeutronsToProtonsArray(),
         ]);
 
-        // Volume arrays not available in current SDK version
-        const volumeArrays = { protonsToNeutrons: [], neutronsToProtons: [] };
+        const volumeArrays = { protonsToNeutrons: volArrayPN, neutronsToProtons: volArrayNP };
 
         // Convert values to proper format
         const goldPriceBN = nanoErgsToErgs(goldPrice).dividedBy(1000);
@@ -112,8 +126,8 @@ export function GluonStats() {
         const gauPriceBN = tvlBN.minus(convertFromDecimals(circProtons).multipliedBy(gaucPriceBN)).dividedBy(convertFromDecimals(circNeutrons));
         const fusionRatioBN = BigNumber(Math.round(10000 / normalizedReserveRatio));
         const reserveRatioBN = BigNumber(+BigNumber(tvl) * 1e14 / (+BigNumber(circNeutrons) * goldPrice));
-        const priceCrashCushionBN = BigNumber(Math.max(0, 100 * (+reserveRatioBN - 100/0.66)/ +reserveRatioBN));
-        const gaucLeverageBN = BigNumber(Math.round(- (100 / (100 - normalizedReserveRatio)) * 100)/100); 
+        const priceCrashCushionBN = BigNumber(Math.max(0, 100 * (+reserveRatioBN - 100 / 0.66) / +reserveRatioBN));
+        const gaucLeverageBN = BigNumber(Math.round(- (100 / (100 - normalizedReserveRatio)) * 100) / 100);
 
         setStats({
           ergPrice,
@@ -156,7 +170,7 @@ export function GluonStats() {
             gau: Number(circNeutrons),
             gauc: Number(circProtons),
           },
-          volumeArrays: volumeArrays,
+          volumeArrays: { protonsToNeutrons: volArrayPN, neutronsToProtons: volArrayNP },
           prices: {
             gold: goldPriceBN.toNumber(),
             gau: gauPriceBN.toNumber(),
@@ -257,8 +271,9 @@ export function GluonStats() {
   );
 
   return (
-    <motion.div className="flex w-full flex-col gap-6 xl:flex-row" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
-      {/* Left Section */}
+    <div className="flex flex-col gap-6 w-full">
+      <motion.div className="flex w-full flex-col gap-6 xl:flex-row" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
+        {/* Left Section */}
       <div className="flex flex-1 flex-col">
         {/* Header */}
         <motion.div
@@ -341,7 +356,7 @@ export function GluonStats() {
               </div>
               <div className="space-y-2">
                 <div className="text-2xl font-bold text-foreground">
-                  {isLoading ? <Skeleton className="mx-auto h-8 w-16" /> : hasError ? "—" : stats.reserveRatio ? Math.round(+stats.reserveRatio) : "—" }%
+                  {isLoading ? <Skeleton className="mx-auto h-8 w-16" /> : hasError ? "—" : stats.reserveRatio ? Math.round(+stats.reserveRatio) : "—"}%
                 </div>
                 <div className="text-sm text-muted-foreground">{renderTooltip("Reserve Ratio", `Total Reserve divided by the ${tokenConfig.stableAsset.displayName} Supply times the ${tokenConfig.peg.type} Oracle Price.`)}</div>
               </div>
@@ -415,7 +430,7 @@ export function GluonStats() {
                 )}
               </AnimatePresence>
             </motion.div>
-            
+
             <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.5, duration: 0.3 }} className="text-center">
               <div className="mb-4 flex items-center justify-center">
                 <TrendingDown className="mr-2 h-6 w-6" style={{ color: tokenConfig.theme.primary }} />
@@ -435,7 +450,7 @@ export function GluonStats() {
                     transition={{ duration: 0.3 }}
                     className="text-center"
                   >
-                    <div className="mb-1 text-4xl font-bold text-foreground">{hasError ? "—" : stats.priceCrashCushion ? Math.round(+stats.priceCrashCushion) : "—" }%</div>
+                    <div className="mb-1 text-4xl font-bold text-foreground">{hasError ? "—" : stats.priceCrashCushion ? Math.round(+stats.priceCrashCushion) : "—"}%</div>
                     <div className="text-sm font-medium text-muted-foreground">{renderTooltip("Price Crash Cushion", `Maximum drop in the price of ERG w.r.t. ${tokenConfig.peg.type} that can be tolerated for ${tokenConfig.stableAsset.displayName} to remain pegged to ${tokenConfig.peg.type}. When 0%, ${tokenConfig.stableAsset.displayName} depegs to prevent bank runs and maintain non-zero ${tokenConfig.volatileAsset.displayName} price.`)}</div>
                   </motion.div>
                 )}
@@ -480,6 +495,14 @@ export function GluonStats() {
 
         </Card>
       </motion.div>
-    </motion.div>
+      </motion.div>
+
+      <VolumeChart
+        isLoading={isLoading}
+        hasError={hasError}
+        volArrayPN={protocolMetrics.volumeArrays.protonsToNeutrons}
+        volArrayNP={protocolMetrics.volumeArrays.neutronsToProtons}
+      />
+    </div>
   );
 }

@@ -49,4 +49,4 @@ yarn-error.log*
 next-env.d.ts
 
 # ignore sdk modules
-lib/gluon-gold-sdk/node_modules
+lib/gluon-gold-sdk/node_modulesbun.lock

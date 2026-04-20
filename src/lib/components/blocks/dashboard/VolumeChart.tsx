@@ -11,6 +11,8 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 interface VolumeChartProps {
   isLoading?: boolean;
   hasError?: boolean;
+  volArrayPN?: number[];
+  volArrayNP?: number[];
 }
 
 interface VolumeDataPoint {
@@ -19,88 +21,39 @@ interface VolumeDataPoint {
   VolumeNeutronsToProtons: number;
 }
 
-export function VolumeChart({ isLoading: externalLoading = false, hasError: externalError = false }: VolumeChartProps) {
+export function VolumeChart({ isLoading = false, hasError = false, volArrayPN = [], volArrayNP = [] }: VolumeChartProps) {
   const [chartData, setChartData] = useState<VolumeDataPoint[]>([]);
-  const [loadingChart, setLoadingChart] = useState(true);
-  const [chartError, setChartError] = useState(false);
-  const [debugMessage, setDebugMessage] = useState<string>("");
 
   useEffect(() => {
-    let isMounted = true;
-
-    async function fetchVolumeData() {
-      try {
-        setLoadingChart(true);
-        setChartError(false);
-
-        const sdk = await import("gluon-gold-sdk");
-        const gluon = new sdk.Gluon();
-        gluon.config.NETWORK = process.env.NEXT_PUBLIC_DEPLOYMENT || "testnet";
-
-        const gluonBox = await gluon.getGluonBox();
-
-        const days = Array.from({ length: 14 }, (_, i) => i + 1);
-        const cumulativeData: VolumeDataPoint[] = [];
-
-        for (const day of days) {
-          const [ProtonsToNeutrons, NeutronsToProtons] = await Promise.all([gluonBox.accumulateVolumeProtonsToNeutrons(day), gluonBox.accumulateVolumeNeutronsToProtons(day)]);
-
-          cumulativeData.push({
-            day,
-            VolumeProtonsToNeutrons: nanoErgsToErgs(ProtonsToNeutrons).toNumber(),
-            VolumeNeutronsToProtons: nanoErgsToErgs(NeutronsToProtons).toNumber(),
-          });
-        }
-
-        const dailyData: VolumeDataPoint[] = [];
-
-        for (let i = 0; i < cumulativeData.length; i++) {
-          if (i === 0) {
-            dailyData.push({
-              day: cumulativeData[i].day,
-              VolumeProtonsToNeutrons: cumulativeData[i].VolumeProtonsToNeutrons,
-              VolumeNeutronsToProtons: cumulativeData[i].VolumeNeutronsToProtons,
-            });
-          } else {
-            const current = cumulativeData[i];
-            const previous = cumulativeData[i - 1];
-
-            dailyData.push({
-              day: current.day,
-              VolumeProtonsToNeutrons: Math.max(0, current.VolumeProtonsToNeutrons - previous.VolumeProtonsToNeutrons),
-              VolumeNeutronsToProtons: Math.max(0, current.VolumeNeutronsToProtons - previous.VolumeNeutronsToProtons),
-            });
-          }
-        }
-
-        const reversed = dailyData.reverse().map((entry, index) => ({
-          ...entry,
-          day: index + 1,
-        }));
-
-        if (isMounted) {
-          setChartData(reversed);
-        }
-      } catch (error) {
-        if (isMounted) {
-          setChartError(true);
-          setDebugMessage(`Error: ${error instanceof Error ? error.message : String(error)}`);
-        }
-      } finally {
-        if (isMounted) {
-          setLoadingChart(false);
-        }
-      }
+    if (!volArrayPN.length || !volArrayNP.length) {
+      setChartData([]);
+      return;
+    }
+    
+    if (volArrayPN.length !== volArrayNP.length) {
+      console.warn(`Volume array length mismatch: PN=${volArrayPN.length}, NP=${volArrayNP.length}`);
     }
 
-    fetchVolumeData();
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+    const reversedPN = [...volArrayPN].reverse();
+    const reversedNP = [...volArrayNP].reverse();
+    const len = Math.min(reversedPN.length, reversedNP.length);
+    
+    if (len === 0) {
+      setChartData([]);
+      return;
+    }
 
-  const isLoading = externalLoading || loadingChart;
-  const hasError = externalError || chartError;
+    const chartPoints = [];
+    for (let i = 0; i < len; i++) {
+      chartPoints.push({
+        day: i + 1,
+        VolumeProtonsToNeutrons: nanoErgsToErgs(reversedPN[i]).toNumber(),
+        VolumeNeutronsToProtons: nanoErgsToErgs(reversedNP[i]).toNumber(),
+      });
+    }
+
+    setChartData(chartPoints);
+  }, [volArrayPN, volArrayNP]);
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5, duration: 0.4 }}>
@@ -116,17 +69,14 @@ export function VolumeChart({ isLoading: externalLoading = false, hasError: exte
           <div className="flex h-[300px] flex-col items-center justify-center">
             <Loader2 className="mb-4 h-8 w-8 animate-spin text-muted-foreground" />
             <span className="text-sm text-muted-foreground">Loading volume data...</span>
-            <span className="mt-2 text-xs text-muted-foreground">{debugMessage}</span>
           </div>
         ) : hasError ? (
           <div className="flex h-[300px] flex-col items-center justify-center">
             <span className="text-sm text-red-500">Error loading volume data</span>
-            <span className="mt-2 text-xs text-red-400">{debugMessage}</span>
           </div>
         ) : chartData.length === 0 ? (
           <div className="flex h-[300px] flex-col items-center justify-center">
             <span className="text-sm text-muted-foreground">No volume data available</span>
-            <span className="mt-2 text-xs text-muted-foreground">{debugMessage}</span>
           </div>
         ) : (
           <div className="mx-auto w-full" style={{ height: "360px" }}>
