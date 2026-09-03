@@ -1,59 +1,57 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
 import { Card } from "@/lib/components/ui/card";
 import { Loader2, BarChart2 } from "lucide-react";
-import { nanoErgsToErgs } from "@/lib/utils/erg-converter";
 import { tokenConfig } from "@/config/tokenConfig";
 import { motion } from "framer-motion";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import { useGluonTransactionHistory } from "@/lib/hooks/useGluonTransactionHistory";
+import { format as dateFnsFormat } from "date-fns";
+import { useTheme } from "next-themes";
 
-interface VolumeChartProps {
-  isLoading?: boolean;
-  hasError?: boolean;
-  volArrayPN?: number[];
-  volArrayNP?: number[];
-}
+export function VolumeChart() {
+  const { snapshots, loading, error } = useGluonTransactionHistory();
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
+  const SPARSE_THRESHOLD = 10;
+  const isSparse = snapshots.length < SPARSE_THRESHOLD;
 
-interface VolumeDataPoint {
-  day: number;
-  VolumeProtonsToNeutrons: number;
-  VolumeNeutronsToProtons: number;
-}
+  const chartData = useMemo(() => {
+    if (snapshots.length < 2) return [];
 
-export function VolumeChart({ isLoading = false, hasError = false, volArrayPN = [], volArrayNP = [] }: VolumeChartProps) {
-  const [chartData, setChartData] = useState<VolumeDataPoint[]>([]);
+    const grouped: Record<string, { VolumeProtonsToNeutrons: number; VolumeNeutronsToProtons: number }> = {};
 
-  useEffect(() => {
-    if (!volArrayPN.length || !volArrayNP.length) {
-      setChartData([]);
-      return;
-    }
-    
-    if (volArrayPN.length !== volArrayNP.length) {
-      console.warn(`Volume array length mismatch: PN=${volArrayPN.length}, NP=${volArrayNP.length}`);
-    }
+    for (let i = 1; i < snapshots.length; i++) {
+      const prev = snapshots[i - 1];
+      const curr = snapshots[i];
+      
+      const nDiff = curr.neutronAmount - prev.neutronAmount;
+      const ergVol = Math.abs(curr.ergValue - prev.ergValue);
+      
+      if (ergVol < 0.000001) continue; // skip insignificant changes
 
-    const reversedPN = [...volArrayPN].reverse();
-    const reversedNP = [...volArrayNP].reverse();
-    const len = Math.min(reversedPN.length, reversedNP.length);
-    
-    if (len === 0) {
-      setChartData([]);
-      return;
-    }
+      const dateStr = dateFnsFormat(new Date(curr.timestamp), "MMM d");
 
-    const chartPoints = [];
-    for (let i = 0; i < len; i++) {
-      chartPoints.push({
-        day: i + 1,
-        VolumeProtonsToNeutrons: nanoErgsToErgs(reversedPN[i]).toNumber(),
-        VolumeNeutronsToProtons: nanoErgsToErgs(reversedNP[i]).toNumber(),
-      });
+      if (!grouped[dateStr]) {
+        grouped[dateStr] = { VolumeProtonsToNeutrons: 0, VolumeNeutronsToProtons: 0 };
+      }
+
+      if (nDiff > 0) {
+        // Neutrons entered box -> User deposited neutrons -> GAU to GAUC (VolumeNeutronsToProtons)
+        grouped[dateStr].VolumeNeutronsToProtons += ergVol;
+      } else if (nDiff < 0) {
+        // Neutrons left box -> User received neutrons -> GAUC to GAU (VolumeProtonsToNeutrons)
+        grouped[dateStr].VolumeProtonsToNeutrons += ergVol;
+      }
     }
 
-    setChartData(chartPoints);
-  }, [volArrayPN, volArrayNP]);
+    return Object.entries(grouped).map(([day, vols]) => ({
+      day,
+      VolumeProtonsToNeutrons: vols.VolumeProtonsToNeutrons,
+      VolumeNeutronsToProtons: vols.VolumeNeutronsToProtons
+    }));
+  }, [snapshots]);
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5, duration: 0.4 }}>
@@ -61,18 +59,23 @@ export function VolumeChart({ isLoading = false, hasError = false, volArrayPN = 
         <div className="mb-4 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <BarChart2 className="h-5 w-5 text-primary" />
-            <span className="text-lg font-semibold">14-Day Volume History</span>
+            <span className="text-lg font-semibold">Volume History</span>
           </div>
+          {isSparse && (
+            <span className="text-xs font-medium text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded">
+              Showing all available volume
+            </span>
+          )}
         </div>
 
-        {isLoading ? (
+        {loading ? (
           <div className="flex h-[300px] flex-col items-center justify-center">
             <Loader2 className="mb-4 h-8 w-8 animate-spin text-muted-foreground" />
             <span className="text-sm text-muted-foreground">Loading volume data...</span>
           </div>
-        ) : hasError ? (
+        ) : error && chartData.length === 0 ? (
           <div className="flex h-[300px] flex-col items-center justify-center">
-            <span className="text-sm text-red-500">Error loading volume data</span>
+            <span className="text-sm text-red-500">{error}</span>
           </div>
         ) : chartData.length === 0 ? (
           <div className="flex h-[300px] flex-col items-center justify-center">
@@ -81,14 +84,18 @@ export function VolumeChart({ isLoading = false, hasError = false, volArrayPN = 
         ) : (
           <div className="mx-auto w-full" style={{ height: "360px" }}>
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData} margin={{ top: 10, right: 0, left: -10, bottom: 10 }} barCategoryGap={8} barSize={20}>
-                <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                <XAxis dataKey="day" tick={{ fontSize: 9.5 }} tickMargin={10} height={30} padding={{ left: 0, right: 0 }} />
-                <YAxis tickFormatter={(value) => value.toFixed(1)} tick={{ fontSize: 9.5 }} width={45} />
-                <Tooltip formatter={(value: number) => [`${value.toFixed(2)} ERG`]} labelFormatter={(label) => `Day ${label}`} />
-                <Legend wrapperStyle={{ fontSize: 9.5 }} />
-                <Bar dataKey="VolumeProtonsToNeutrons" name={`${tokenConfig.volatileAsset.displayName} → ${tokenConfig.stableAsset.displayName}`} fill={tokenConfig.theme.stableToken} />
-                <Bar dataKey="VolumeNeutronsToProtons" name={`${tokenConfig.stableAsset.displayName} → ${tokenConfig.volatileAsset.displayName}`} fill={tokenConfig.theme.volatileToken} />
+              <BarChart data={chartData} margin={{ top: 10, right: 0, left: -10, bottom: 10 }} barCategoryGap={isSparse ? 40 : 8} barSize={20}>
+                <CartesianGrid strokeDasharray="3 3" opacity={isDark ? 0.2 : 0.06} vertical={false} />
+                <XAxis dataKey="day" tick={{ fill: isDark ? "rgba(255,255,255,0.3)" : "#9ca3af", fontSize: 11 }} tickMargin={10} height={30} axisLine={false} tickLine={false} />
+                <YAxis tickFormatter={(value) => value.toFixed(1)} tick={{ fill: isDark ? "rgba(255,255,255,0.3)" : "#9ca3af", fontSize: 11 }} width={45} axisLine={false} tickLine={false} />
+                <Tooltip 
+                  formatter={(value: number) => [`${value.toFixed(2)} ERG`]} 
+                  labelStyle={{ color: '#666' }}
+                  contentStyle={{ borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', background: isDark ? '#1e1e1e' : '#ffffff' }}
+                />
+                <Legend wrapperStyle={{ fontSize: 11 }} />
+                <Bar dataKey="VolumeProtonsToNeutrons" name={`${tokenConfig.volatileAsset.displayName} → ${tokenConfig.stableAsset.displayName}`} fill={tokenConfig.theme.stableToken} isAnimationActive={true} />
+                <Bar dataKey="VolumeNeutronsToProtons" name={`${tokenConfig.stableAsset.displayName} → ${tokenConfig.volatileAsset.displayName}`} fill={tokenConfig.theme.volatileToken} isAnimationActive={true} />
               </BarChart>
             </ResponsiveContainer>
           </div>

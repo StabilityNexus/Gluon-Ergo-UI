@@ -2,8 +2,8 @@
 
 import { useState, useMemo } from "react";
 import {
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, ReferenceLine,
-  Tooltip as RechartsTooltip, ResponsiveContainer, Legend
+  LineChart, Line, XAxis, YAxis, CartesianGrid, ReferenceLine,
+  Tooltip as RechartsTooltip, ResponsiveContainer
 } from "recharts";
 import type { TooltipProps } from "recharts";
 import { format as dateFnsFormat } from "date-fns";
@@ -15,50 +15,36 @@ import { useTheme } from "next-themes";
 type TimeRange = "ALL" | "90D" | "30D";
 const SPARSE_THRESHOLD = 10;
 
-interface ReserveRatioChartProps {
-  /**
-   * Current live gold price in nanoERG/kg from the oracle — used only as a
-   * fallback for data points where the per-snapshot oracle price is unavailable
-   * (i.e. when oracleHistory fetch failed). Historical calculation uses
-   * s.goldPriceNanoErg from each snapshot for accuracy.
-   */
+interface GaucLeverageChartProps {
   goldPriceNanoErg: number;
   totalNeutronSupply: number;
+  currentLeverage?: number;
   oracleLoading?: boolean;
   oracleError?: string | null;
 }
 
 const CustomTooltip = ({ active, payload, label }: TooltipProps<number, string>) => {
   if (!active || !payload?.length) return null;
-  const data = payload[0]?.payload;
-  const rr = data?.rawReserveRatio ?? payload.find(p => p.dataKey === "reserveRatio")?.value;
-  const nrr = data?.rawNormalizedReserveRatio ?? payload.find(p => p.dataKey === "normalizedReserveRatio")?.value;
-  const isClipped = data?.isClipped;
+  const lev = payload[0]?.value;
   const dateStr = dateFnsFormat(new Date(label as number), "MMM d, yyyy HH:mm");
 
   return (
-    <div className="rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-[#1e1e1e] px-3 py-2 text-xs shadow-md dark:shadow-none min-w-[160px]">
+    <div className="rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-[#1e1e1e] px-3 py-2 text-xs shadow-md dark:shadow-none">
       <p className="mb-1 text-gray-500 dark:text-white/40">{dateStr}</p>
-      {typeof rr === "number" && (
-        <p className="text-sm font-semibold text-rose-500">
-          Reserve: {rr.toFixed(1)}%{isClipped ? " (>200% on chart)" : ""}
-        </p>
-      )}
-      {typeof nrr === "number" && (
-        <p className="text-sm font-semibold text-violet-400">
-          Normalized: {nrr.toFixed(1)}%
-        </p>
-      )}
+      <p className="text-sm font-semibold text-amber-400">
+        {typeof lev === "number" ? `${lev.toFixed(2)}x` : "—"} Leverage
+      </p>
     </div>
   );
 };
 
-export function ReserveRatioChart({
+export function GaucLeverageChart({
+  currentLeverage,
   goldPriceNanoErg,
   totalNeutronSupply,
   oracleLoading,
   oracleError,
-}: ReserveRatioChartProps) {
+}: GaucLeverageChartProps) {
   const [range, setRange] = useState<TimeRange>("ALL");
   const { snapshots, loading, error, migrationHeights } = useGluonTransactionHistory();
   const { resolvedTheme } = useTheme();
@@ -115,46 +101,35 @@ export function ReserveRatioChart({
 
     const finalData = filteredSnapshots.map(s => {
       const circNeutronsRaw = totalNeutronSupply - s.neutronAmount;
-      let reserveRatio = 0;
-      let normalizedReserveRatio = 0;
-
-      // Use per-snapshot historical oracle price. Fall back to live prop only
-      // when the oracle history fetch failed (goldPriceNanoErg = 0 on snapshot).
       const effectiveGoldPrice = s.goldPriceNanoErg > 0 ? s.goldPriceNanoErg : goldPriceNanoErg;
+      if (circNeutronsRaw <= 0 || effectiveGoldPrice <= 0) return null;
 
-      if (circNeutronsRaw > 0 && effectiveGoldPrice > 0) {
-        // Use fissioned TVL (minus 1,000,000 nanoERG) as per SDK's getTVL() and getErgFissioned()
-        const tvlNano = s.ergValue * 1e9;
-        const tvlFissioned = Math.max(1, tvlNano - 1000000); 
+      // Use fissioned TVL (minus 1,000,000 nanoERG) matching SDK's getTVL() and getErgFissioned()
+      const tvlNano = s.ergValue * 1e9;
+      const tvlFissioned = tvlNano - 1000000;
+      if (Math.floor(tvlFissioned) <= 0) return null;
+      
+      // Step 2: Exact normalized reserve ratio logic from Gluon SDK (gluon.getReserveRatio)
+      const qstar = BigInt(660000000);
+      const pricePerGram = effectiveGoldPrice / 1000;
+      if (Math.floor(pricePerGram) <= 0) return null;
 
-        // Formula matching GluonStats.tsx line 128 exactly:
-        // reserveRatioBN = BigNumber(+BigNumber(tvl) * 1e14 / (+BigNumber(circNeutrons) * goldPrice))
-        // tvl is in nanoERG (tvlFissioned), goldPrice is nanoERG/Kg (effectiveGoldPrice)
-        const rawRatio = (tvlFissioned * 1e14) / (circNeutronsRaw * effectiveGoldPrice);
-        reserveRatio = Math.min(1000, rawRatio); // Clamp to 1000% max for visual sanity
+      const rightHandMinVal = (BigInt(Math.floor(circNeutronsRaw)) * BigInt(Math.floor(pricePerGram))) / BigInt(Math.floor(tvlFissioned));
+      const fusionRatio = rightHandMinVal < qstar ? rightHandMinVal : qstar;
+      if (fusionRatio <= BigInt(0)) return null;
+      const normalizedReserveRatio = (100 * 1e9) / Number(fusionRatio);
 
-        // Exact normalized reserve ratio logic from Gluon SDK (gluon.getReserveRatio)
-        const qstar = BigInt(660000000);
-        const pricePerGram = effectiveGoldPrice / 1000;
-        
-        const rightHandMinVal = (BigInt(Math.floor(circNeutronsRaw)) * BigInt(Math.floor(pricePerGram))) / BigInt(Math.floor(tvlFissioned));
-        const fusionRatio = rightHandMinVal < qstar ? rightHandMinVal : qstar;
-        if (fusionRatio > 0) {
-          const rawNormalized = (100 * 1e9) / Number(fusionRatio);
-          normalizedReserveRatio = Math.min(1000, rawNormalized); // Clamp to 1000% max
-        }
-      }
+      // Step 3: gaucLeverage — exactly GluonStats.tsx line 130:
+      //   gaucLeverageBN = BigNumber(Math.round(-(100 / (100 - normalizedReserveRatio)) * 100) / 100)
+      if (normalizedReserveRatio === 100) return null; // strictly prevent division by zero
 
-      return {
-        timestamp: s.timestamp,
-        reserveRatio: Math.min(200, +reserveRatio.toFixed(1)),
-        normalizedReserveRatio: Math.min(200, +normalizedReserveRatio.toFixed(1)),
-        rawReserveRatio: +reserveRatio.toFixed(1),
-        rawNormalizedReserveRatio: +normalizedReserveRatio.toFixed(1),
-        isClipped: reserveRatio > 200,
-      };
-    }).filter(d => d.rawReserveRatio > 0 && d.rawReserveRatio <= 1000);
+      const leverage = Math.round(-(100 / (100 - normalizedReserveRatio)) * 100) / 100;
 
+      if (!Number.isFinite(leverage) || Math.abs(leverage) > 100) return null;
+
+      return { timestamp: s.timestamp, leverage };
+    }).filter((p): p is { timestamp: number; leverage: number } => p !== null);
+    
     let domain: [number | string, number | string] = ["dataMin", "dataMax"];
     let ticks: number[] = [];
     let formatter = (v: number) => dateFnsFormat(new Date(v), "MMM");
@@ -186,7 +161,7 @@ export function ReserveRatioChart({
     };
   }, [snapshots, range, isSparse, goldPriceNanoErg, totalNeutronSupply]);
 
-  // Find migration timestamps for a subtle vertical divider (no label, neutral color)
+  // Subtle vertical divider at contract address change — neutral, no label
   const migrationTimestamps = useMemo(() => {
     if (migrationHeights.length === 0 || snapshots.length === 0) return [];
     return migrationHeights.map(mh => {
@@ -201,8 +176,11 @@ export function ReserveRatioChart({
     <div className="mt-6 rounded-xl border border-gray-200 dark:border-white/[0.07] bg-white dark:bg-[#141414] p-5">
       <div className="mb-4 flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-baseline gap-2 flex-wrap">
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Reserve Ratio</h3>
-          <span className="text-xs font-normal text-gray-400 dark:text-white/40">from on-chain box history</span>
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-white">GAUC Leverage</h3>
+          {currentLeverage !== undefined && Number.isFinite(currentLeverage) && (
+            <span className="text-xs font-semibold text-amber-400">Live: {currentLeverage.toFixed(2)}x</span>
+          )}
+          <span className="text-xs font-normal text-gray-400 dark:text-white/40">from on-chain history</span>
           {!hasOracleData && !loading && snapshots.length > 0 && (
             <span className="text-xs font-medium text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded">
               Oracle history unavailable — using live gold price for all points
@@ -242,25 +220,15 @@ export function ReserveRatioChart({
           </div>
         ) : (error || oracleError) && chartData.length === 0 ? (
           <div className="flex h-full items-center justify-center">
-            <p className="text-xs text-red-400 text-center max-w-xs">{error || oracleError}</p>
+            <p className="text-xs text-red-400 text-center">{error || oracleError}</p>
           </div>
         ) : chartData.length === 0 ? (
           <div className="flex h-full items-center justify-center">
-            <p className="text-xs text-gray-400 dark:text-white/40 text-center">No reserve data available</p>
+            <p className="text-xs text-gray-400 dark:text-white/40 text-center">No leverage data available</p>
           </div>
         ) : (
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={chartData} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
-              <defs>
-                <linearGradient id="colorReserve" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#e11d48" stopOpacity={0.3}/>
-                  <stop offset="95%" stopColor="#e11d48" stopOpacity={0}/>
-                </linearGradient>
-                <linearGradient id="colorNormalized" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3}/>
-                  <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
-                </linearGradient>
-              </defs>
+            <LineChart data={chartData} margin={{ top: 4, right: 4, left: -16, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke={isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.06)"} vertical={false} />
               <XAxis
                 dataKey="timestamp"
@@ -273,26 +241,22 @@ export function ReserveRatioChart({
                 axisLine={false} tickLine={false}
               />
               <YAxis
-                width={42}
-                domain={[0, 200]}
-                ticks={[0, 50, 100, 150, 200]}
-                allowDataOverflow={true}
-                tickFormatter={(v) => `${v}%`}
+                tickFormatter={(v) => `${v}x`}
                 tick={{ fill: isDark ? "rgba(255,255,255,0.3)" : "#6b7280", fontSize: 11 }}
                 axisLine={false} tickLine={false}
               />
               <RechartsTooltip content={<CustomTooltip />} />
-              <Legend wrapperStyle={{ fontSize: 11 }} />
 
-              {/*
-                Protocol health reference lines — documented Gluon Gold protocol parameters:
-                  170% → Caution zone (depeg risk increases)
-                  160% → Risk zone (GAU backing compromised)
-              */}
-              <ReferenceLine y={170} stroke="#f59e0b" strokeDasharray="4 4" label={{ value: "Caution", fill: "#f59e0b", fontSize: 10, position: "insideTopRight", dy: -4 }} />
-              <ReferenceLine y={160} stroke="#ef4444" strokeDasharray="4 4" label={{ value: "Risk", fill: "#ef4444", fontSize: 10, position: "insideBottomRight", dy: 8 }} />
+              {currentLeverage !== undefined && Number.isFinite(currentLeverage) && (
+                <ReferenceLine
+                  y={currentLeverage}
+                  stroke="#f59e0b"
+                  strokeDasharray="4 4"
+                  label={{ value: `Live`, fill: "#f59e0b", fontSize: 10, position: "insideTopRight" }}
+                />
+              )}
 
-              {/* Subtle vertical divider at contract address change — no label, no color */}
+              {/* Subtle vertical divider at contract address change — no label, neutral */}
               {migrationTimestamps.map((ts, idx) => (
                 <ReferenceLine
                   key={`migration-${idx}`}
@@ -303,17 +267,19 @@ export function ReserveRatioChart({
                 />
               ))}
 
-              <Area type="monotone" dataKey="normalizedReserveRatio" name="Normalized Reserve Ratio" stroke="#8b5cf6" fillOpacity={1} fill="url(#colorNormalized)" strokeWidth={2} isAnimationActive={true} />
-              <Area type="monotone" dataKey="reserveRatio" name="Reserve Ratio" stroke="#e11d48" fillOpacity={1} fill="url(#colorReserve)" strokeWidth={2} isAnimationActive={true} />
-            </AreaChart>
+              <Line
+                type="monotone"
+                dataKey="leverage"
+                stroke="#f59e0b"
+                strokeWidth={2}
+                dot={false}
+                isAnimationActive={true}
+                activeDot={{ r: 4, fill: "#f59e0b", stroke: "#141414", strokeWidth: 2 }}
+              />
+            </LineChart>
           </ResponsiveContainer>
         )}
       </div>
-
-      {/* Timestamp approximation footnote */}
-      <p className="mt-2 text-[10px] text-gray-400 dark:text-white/25 text-right">
-        Dates are block-height estimates (±2 min/block)
-      </p>
     </div>
   );
 }

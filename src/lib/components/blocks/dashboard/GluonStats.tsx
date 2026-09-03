@@ -80,6 +80,7 @@ export function GluonStats() {
         const { price: ergPrice } = await ergPriceRes.json();
         const gluon = new sdk.Gluon();
         gluon.config.NETWORK = process.env.NEXT_PUBLIC_DEPLOYMENT || "testnet";
+        gluon.config.NODE_URL = process.env.NEXT_PUBLIC_NODE_URL || "https://node.ergopool.io/";
         const [gluonBox, oracleBox] = await Promise.all([
           gluon.getGluonBox(),
           gluon.getOracleBox(),
@@ -497,12 +498,7 @@ export function GluonStats() {
       </motion.div>
       </motion.div>
 
-      <VolumeChart
-        isLoading={isLoading}
-        hasError={hasError}
-        volArrayPN={protocolMetrics.volumeArrays.protonsToNeutrons}
-        volArrayNP={protocolMetrics.volumeArrays.neutronsToProtons}
-      />
+      <VolumeChart />
     </div>
   );
 }

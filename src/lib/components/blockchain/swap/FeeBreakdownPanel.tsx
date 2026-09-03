@@ -79,6 +79,7 @@ export function FeeBreakdownPanel({
         const sdk = await import("gluon-ergo-sdk");
         const gluon = new sdk.Gluon();
         gluon.config.NETWORK = process.env.NEXT_PUBLIC_DEPLOYMENT || "testnet";
+        gluon.config.NODE_URL = process.env.NEXT_PUBLIC_NODE_URL || "https://node.ergopool.io/";
 
         const gluonBox = await gluon.getGluonBox();
         const amountNano = Math.round(amountERG * 1e9);

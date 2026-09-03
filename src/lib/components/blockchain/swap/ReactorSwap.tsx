@@ -438,6 +438,7 @@ export function ReactorSwap() {
         const sdk = await import("gluon-ergo-sdk");
         const gluon = new sdk.Gluon();
         gluon.config.NETWORK = process.env.NEXT_PUBLIC_DEPLOYMENT || "testnet";
+        gluon.config.NODE_URL = process.env.NEXT_PUBLIC_NODE_URL || "https://node.ergopool.io/";
         setGluonInstance(gluon);
         const [gBox, oBox] = await Promise.all([
           gluon.getGluonBox(),
