@@ -7,7 +7,7 @@ import { tokenConfig, formatPegAsset } from "@/config/tokenConfig";
 export default function Hero() {
   const router = useRouter();
   return (
-    <motion.div className="relative overflow-hidden" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.8 }}>
+    <motion.div className="relative" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.8 }}>
       <div className="relative z-10">
         <div className="container pt-2">
           <div className="mx-auto max-w-4xl text-center">
