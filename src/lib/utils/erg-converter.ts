@@ -1,4 +1,3 @@
-import { TOKEN_ADDRESS } from "@/lib/constants/token";
 import BigNumber from "bignumber.js";
 
 // Configure BigNumber globally for crypto-safe operations
@@ -25,9 +24,9 @@ interface FormattedNumber {
 /**
  * Converts a value from decimal representation (e.g., from blockchain)
  * @param value - Raw number from blockchain
- * @param decimals - Number of decimals (defaults to TOKEN_ADDRESS.decimals)
+ * @param decimals - Number of decimals (defaults to 9)
  */
-export const convertFromDecimals = (value: number | bigint | string, decimals: number = TOKEN_ADDRESS.decimals): BigNumber => {
+export const convertFromDecimals = (value: number | bigint | string, decimals: number = 9): BigNumber => {
   const bn = new BigNumber(value.toString());
   return bn.dividedBy(new BigNumber(10).pow(decimals));
 };
@@ -35,9 +34,9 @@ export const convertFromDecimals = (value: number | bigint | string, decimals: n
 /**
  * Converts a value to decimal representation (e.g., for blockchain)
  * @param value - Human readable number
- * @param decimals - Number of decimals (defaults to TOKEN_ADDRESS.decimals)
+ * @param decimals - Number of decimals (defaults to 9)
  */
-export const convertToDecimals = (value: number | string, decimals: number = TOKEN_ADDRESS.decimals): bigint => {
+export const convertToDecimals = (value: number | string, decimals: number = 9): bigint => {
   // Ensure value is a valid number, default to '0' if not
   const valueStr = (typeof value === "string" && value.trim() === "") || value === null || value === undefined || Number.isNaN(Number(value)) ? "0" : value.toString();
 
@@ -115,11 +114,11 @@ export const formatMicroNumber = (value: number | string | BigNumber): Formatted
 
 export const formatApprox = (value: number | string | BigNumber): string => {
   return formatMacroNumber(value).display;
-}
+};
 
 export const format = (value: number | string | BigNumber): string => {
   return formatMicroNumber(value).display;
-}
+};
 
 /**
  * Main formatting function that decides between macro and micro formatting

@@ -1,77 +1,39 @@
 /**
- * Centralized token configuration
- * This file defines all token names, symbols, and peg-related text
- * to make the frontend generic and configurable.
- *
- * Configuration can be overridden via environment variables:
- * - NEXT_PUBLIC_PROTOCOL_NAME: Protocol name (default: GLUON GOLD)
- * - NEXT_PUBLIC_NEUTRON_TICKER: Stable token symbol (default: GAU)
- * - NEXT_PUBLIC_PROTON_TICKER: Volatile token symbol (default: GAUC)
- * - NEXT_PUBLIC_PEG_ASSET: Peg asset name (default: Gold)
- * - NEXT_PUBLIC_PEG_UNIT: Peg unit (default: 1g)
- * - NEXT_PUBLIC_PEG_DESCRIPTION: Peg description (default: "Pegged to 1 gram of gold.")
- * - NEXT_PUBLIC_THEME_PRIMARY: Primary UI color (default: #ffd007)
- * - NEXT_PUBLIC_THEME_GLOW: Glow and highlight color (default: #ffd007)
- * - NEXT_PUBLIC_THEME_STABLE_TOKEN: Stable token color (default: #ffd007)
- * - NEXT_PUBLIC_THEME_VOLATILE_TOKEN: Volatile token color (default: #ff3b3b)
- * - NEXT_PUBLIC_THEME_ACCENT_LIGHT: Light-mode accent token channels (default: 48 16.129% 93.9216%)
- * - NEXT_PUBLIC_THEME_ACCENT_FOREGROUND_LIGHT: Light-mode accent foreground channels (default: 55 100% 40%)
- * - NEXT_PUBLIC_THEME_ACCENT_DARK: Dark-mode accent token channels (default: 30 5.2632% 14.902%)
- * - NEXT_PUBLIC_THEME_ACCENT_FOREGROUND_DARK: Dark-mode accent foreground channels (default: 48 100% 45.098%)
- * - NEXT_PUBLIC_THEME_SIDEBAR_ACCENT_LIGHT: Light-mode sidebar accent channels (default: 48 100% 96.0784%)
- * - NEXT_PUBLIC_THEME_SIDEBAR_ACCENT_FOREGROUND_LIGHT: Light-mode sidebar accent foreground channels (default: 22.7273 82.5% 31.3725%)
- * - NEXT_PUBLIC_THEME_SIDEBAR_ACCENT_DARK: Dark-mode sidebar accent channels (default: 22.7273 82.5% 31.3725%)
- * - NEXT_PUBLIC_THEME_SIDEBAR_ACCENT_FOREGROUND_DARK: Dark-mode sidebar accent foreground channels (default: 48 96.6387% 76.6667%)
- * - NEXT_PUBLIC_THEME_CHART_3: Chart color 3 HSL channels (default: 25.9649 90.4762% 37.0588%)
- * - NEXT_PUBLIC_THEME_CHART_4: Chart color 4 HSL channels (default: 22.7273 82.5% 31.3725%)
- * - NEXT_PUBLIC_THEME_CHART_5: Chart color 5 HSL channels (default: 21.7143 77.7778% 26.4706%)
- * - NEXT_PUBLIC_THEME_BUTTON_HOVER_FOREGROUND_LIGHT: Light-mode button hover text channels (default: 48 100% 51%)
- * - NEXT_PUBLIC_THEME_BUTTON_HOVER_FOREGROUND_DARK: Dark-mode button hover text channels (default: 48 100% 51%)
+ * @file tokenConfig.ts
+ * @description Centralized token and protocol presentation configuration rebuilt from deployment.
+ * @module config
  */
+import { env } from "./env";
+import { PRESENTATION, type Presentation } from "./presentation";
 
 export interface TokenConfig {
-  // Protocol name
   protocolName: string;
-
-  // Protocol favicon path
   favicon: string;
-  
-  // Base asset (e.g., ERG)
   baseAsset: {
     name: string;
     symbol: string;
   };
-  
-  // Stable asset (internally referred to as neutron)
   stableAsset: {
     name: string;
     symbol: string;
-    displayName: string; // Full display name
-    description: string; // Description text
+    displayName: string;
+    description: string;
   };
-  
-  // Volatile asset (internally referred to as proton)
   volatileAsset: {
     name: string;
     symbol: string;
-    displayName: string; // Full display name
-    description: string; // Description text
+    displayName: string;
+    description: string;
   };
-  
-  // Peg configuration
   peg: {
-    type: string; // e.g., "Gold", "USD"
-    unit: string; // e.g., "1g", "1 USD"
-    description: string; // Description of the peg
+    type: string;
+    unit: string;
+    description: string;
   };
-  
-  // Pair token (combined stable + volatile)
   pairToken: {
     name: string;
     symbol: string;
   };
-
-  // Theme colors for protocol-specific UI variants
   theme: {
     primary: string;
     glow: string;
@@ -93,30 +55,35 @@ export interface TokenConfig {
   };
 }
 
-// Read configuration from environment variables with defaults
-const protocolName = process.env.NEXT_PUBLIC_PROTOCOL_NAME || "GLUON GOLD";
-const neutronTicker = process.env.NEXT_PUBLIC_NEUTRON_TICKER || "GAU";
-const protonTicker = process.env.NEXT_PUBLIC_PROTON_TICKER || "GAUC";
-const pegAsset = process.env.NEXT_PUBLIC_PEG_ASSET || "Gold";
-const pegUnit = process.env.NEXT_PUBLIC_PEG_UNIT || "1g";
-const favicon = process.env.NEXT_PUBLIC_FAVICON || "/logo/gluon.png";
-const themePrimary = process.env.NEXT_PUBLIC_THEME_PRIMARY || "#ffd007";
-const themeGlow = process.env.NEXT_PUBLIC_THEME_GLOW || "#ffd007";
-const themeStableToken = process.env.NEXT_PUBLIC_THEME_STABLE_TOKEN || "#ffd007";
-const themeVolatileToken = process.env.NEXT_PUBLIC_THEME_VOLATILE_TOKEN || "#ff3b3b";
-const themeAccentLight = process.env.NEXT_PUBLIC_THEME_ACCENT_LIGHT || "48 16.129% 93.9216%";
-const themeAccentForegroundLight = process.env.NEXT_PUBLIC_THEME_ACCENT_FOREGROUND_LIGHT || "55 100% 40%";
-const themeAccentDark = process.env.NEXT_PUBLIC_THEME_ACCENT_DARK || "30 5.2632% 14.902%";
-const themeAccentForegroundDark = process.env.NEXT_PUBLIC_THEME_ACCENT_FOREGROUND_DARK || "48 100% 45.098%";
-const themeSidebarAccentLight = process.env.NEXT_PUBLIC_THEME_SIDEBAR_ACCENT_LIGHT || "48 100% 96.0784%";
-const themeSidebarAccentForegroundLight = process.env.NEXT_PUBLIC_THEME_SIDEBAR_ACCENT_FOREGROUND_LIGHT || "22.7273 82.5% 31.3725%";
-const themeSidebarAccentDark = process.env.NEXT_PUBLIC_THEME_SIDEBAR_ACCENT_DARK || "22.7273 82.5% 31.3725%";
-const themeSidebarAccentForegroundDark = process.env.NEXT_PUBLIC_THEME_SIDEBAR_ACCENT_FOREGROUND_DARK || "48 96.6387% 76.6667%";
-const themeChart3 = process.env.NEXT_PUBLIC_THEME_CHART_3 || "25.9649 90.4762% 37.0588%";
-const themeChart4 = process.env.NEXT_PUBLIC_THEME_CHART_4 || "22.7273 82.5% 31.3725%";
-const themeChart5 = process.env.NEXT_PUBLIC_THEME_CHART_5 || "21.7143 77.7778% 26.4706%";
-const themeButtonHoverForegroundLight = process.env.NEXT_PUBLIC_THEME_BUTTON_HOVER_FOREGROUND_LIGHT || "48 100% 51%";
-const themeButtonHoverForegroundDark = process.env.NEXT_PUBLIC_THEME_BUTTON_HOVER_FOREGROUND_DARK || "48 100% 51%";
+const defaultPresentation: Presentation = PRESENTATION["gluon-gold-v3"] || {
+  protocolName: "GLUON GOLD",
+  pegAsset: "Gold",
+  pegUnit: "1g",
+  favicon: "/logo/gluon.png",
+  theme: {
+    primary: "#ffd007",
+    glow: "#ffd007",
+    stableToken: "#ffd007",
+    volatileToken: "#e3201f",
+    accentLight: "48 16.129% 93.9216%",
+    accentForegroundLight: "55 100% 40%",
+    accentDark: "30 5.2632% 14.902%",
+    accentForegroundDark: "48 100% 45.098%",
+    sidebarAccentLight: "48 100% 96.0784%",
+    sidebarAccentForegroundLight: "22.7273 82.5% 31.3725%",
+    sidebarAccentDark: "22.7273 82.5% 31.3725%",
+    sidebarAccentForegroundDark: "48 96.6387% 76.6667%",
+    chart3: "25.9649 90.4762% 37.0588%",
+    chart4: "22.7273 82.5% 31.3725%",
+    chart5: "21.7143 77.7778% 26.4706%",
+    buttonHoverForegroundLight: "48 88% 42%",
+    buttonHoverForegroundDark: "48 90% 58%",
+  },
+};
+
+const presentation: Presentation = PRESENTATION[env.deploymentName] || defaultPresentation;
+const neutronTicker = env.deployment.tokens.neutron.name;
+const protonTicker = env.deployment.tokens.proton.name;
 
 const hexToHslChannels = (hexColor: string): string => {
   const normalized = hexColor.replace("#", "");
@@ -128,7 +95,7 @@ const hexToHslChannels = (hexColor: string): string => {
           .join("")
       : normalized;
 
-  if (!/^[0-9a-fA-F]{6}$/.test(expanded)) {
+  if (expanded.length !== 6) {
     return "48 100% 51%";
   }
 
@@ -139,150 +106,95 @@ const hexToHslChannels = (hexColor: string): string => {
   const max = Math.max(r, g, b);
   const min = Math.min(r, g, b);
   const delta = max - min;
-  const l = (max + min) / 2;
 
   let h = 0;
   if (delta !== 0) {
-    switch (max) {
-      case r:
-        h = ((g - b) / delta + (g < b ? 6 : 0)) / 6;
-        break;
-      case g:
-        h = ((b - r) / delta + 2) / 6;
-        break;
-      case b:
-        h = ((r - g) / delta + 4) / 6;
-        break;
-      default:
-        h = 0;
+    if (max === r) {
+      h = ((g - b) / delta) % 6;
+    } else if (max === g) {
+      h = (b - r) / delta + 2;
+    } else {
+      h = (r - g) / delta + 4;
     }
+    h = Math.round(h * 60);
+    if (h < 0) h += 360;
   }
 
+  const l = (max + min) / 2;
   const s = delta === 0 ? 0 : delta / (1 - Math.abs(2 * l - 1));
 
-  return `${(h * 360).toFixed(4)} ${(s * 100).toFixed(4)}% ${(l * 100).toFixed(4)}%`;
+  return `${h} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
 };
 
-/**
- * Format peg asset for use in sentences.
- * Preserves uppercase for currency codes (USD, EUR, BTC, ETH, etc.), uses lowercase for commodities (gold, silver).
- * Pass an explicit asset string during module initialisation (before tokenConfig is built);
- * call with no argument everywhere else to read from tokenConfig.peg.type.
- */
-export const formatPegAsset = (asset: string = tokenConfig.peg.type): string => {
-  const currencyCodes = ["USD", "EUR", "GBP", "JPY", "CHF", "AUD", "CAD", "CNY", "INR", "BTC", "ETH"];
+const primaryHsl = hexToHslChannels(presentation.theme.primary);
 
-  if (currencyCodes.includes(asset.toUpperCase())) {
-    return asset.toUpperCase();
-  }
-
-  // If it's 2-4 chars and all uppercase, assume it's a currency code
-  if (asset.length >= 2 && asset.length <= 4 && asset === asset.toUpperCase()) {
-    return asset;
-  }
-
-  // Otherwise, it's a commodity name - lowercase it
-  return asset.toLowerCase();
-};
-
-// Smart description generation:
-// If pegUnit already contains the asset (like "1 USD"), don't add "of {asset}"
-// If pegUnit is just a quantity (like "1g"), add "of {asset}"
-const generateStableDescription = () => {
-  const unitLower = pegUnit.toLowerCase();
-  const assetLower = pegAsset.toLowerCase();
-  
-  // Check if pegUnit already contains the asset name
-  if (unitLower.includes(assetLower)) {
-    return `The stablecoin pegged to ${pegUnit}.`;
-  }
-  
-  // For quantities like "1g", "1oz", add "of {asset}"
-  const formattedAsset = formatPegAsset(pegAsset);
-  return `The stablecoin pegged to ${pegUnit} of ${formattedAsset}.`;
-};
-
-const pegDescription =
-  process.env.NEXT_PUBLIC_PEG_DESCRIPTION ||
-  (pegUnit.toLowerCase().includes(pegAsset.toLowerCase()) ? `Pegged to ${pegUnit}.` : `Pegged to ${pegUnit} of ${formatPegAsset(pegAsset)}.`);
-
-// Protocol configuration - configurable via environment variables
 export const tokenConfig: TokenConfig = {
-  protocolName,
-  favicon,
+  protocolName: presentation.protocolName,
+  favicon: presentation.favicon,
   baseAsset: {
     name: "Ergo",
     symbol: "ERG",
   },
   stableAsset: {
-    name: neutronTicker,
+    name: `${presentation.pegAsset} Stable Token`,
     symbol: neutronTicker,
-    displayName: neutronTicker,
-    description: generateStableDescription(),
+    displayName: `${presentation.pegAsset} Stablecoin`,
+    description: `A stable asset backed by ERG reserves and pegged to ${presentation.pegUnit}.`,
   },
   volatileAsset: {
-    name: protonTicker,
+    name: `${presentation.pegAsset} Volatile Token`,
     symbol: protonTicker,
-    displayName: protonTicker,
-    description: "Tokenizes the reserve surplus and provides leveraged volatility and yield.",
+    displayName: `${presentation.pegAsset} Yield Token`,
+    description: `A volatile, leveraged token designed to absorb collateral fluctuations and earn yield.`,
   },
   peg: {
-    type: pegAsset,
-    unit: pegUnit,
-    description: pegDescription,
+    type: presentation.pegAsset,
+    unit: presentation.pegUnit,
+    description: `Targeting ${presentation.pegUnit}.`,
   },
   pairToken: {
     name: `${neutronTicker}-${protonTicker} Pair`,
-    symbol: `${neutronTicker}-${protonTicker}`,
+    symbol: `${neutronTicker}/${protonTicker}`,
   },
-  theme: {
-    primary: themePrimary,
-    glow: themeGlow,
-    stableToken: themeStableToken,
-    volatileToken: themeVolatileToken,
-    accentLight: themeAccentLight,
-    accentForegroundLight: themeAccentForegroundLight,
-    accentDark: themeAccentDark,
-    accentForegroundDark: themeAccentForegroundDark,
-    sidebarAccentLight: themeSidebarAccentLight,
-    sidebarAccentForegroundLight: themeSidebarAccentForegroundLight,
-    sidebarAccentDark: themeSidebarAccentDark,
-    sidebarAccentForegroundDark: themeSidebarAccentForegroundDark,
-    chart3: themeChart3,
-    chart4: themeChart4,
-    chart5: themeChart5,
-    buttonHoverForegroundLight: themeButtonHoverForegroundLight,
-    buttonHoverForegroundDark: themeButtonHoverForegroundDark,
-  },
+  theme: presentation.theme,
 };
 
 export const tokenThemeCssVariables = {
-  "--primary": hexToHslChannels(tokenConfig.theme.primary),
-  "--ring": hexToHslChannels(tokenConfig.theme.glow),
-  "--chart-1": hexToHslChannels(tokenConfig.theme.stableToken),
-  "--chart-2": hexToHslChannels(tokenConfig.theme.volatileToken),
-  "--sidebar-primary": hexToHslChannels(tokenConfig.theme.primary),
-  "--sidebar-ring": hexToHslChannels(tokenConfig.theme.glow),
-  "--theme-accent-light": tokenConfig.theme.accentLight,
-  "--theme-accent-foreground-light": tokenConfig.theme.accentForegroundLight,
-  "--theme-accent-dark": tokenConfig.theme.accentDark,
-  "--theme-accent-foreground-dark": tokenConfig.theme.accentForegroundDark,
-  "--theme-sidebar-accent-light": tokenConfig.theme.sidebarAccentLight,
-  "--theme-sidebar-accent-foreground-light": tokenConfig.theme.sidebarAccentForegroundLight,
-  "--theme-sidebar-accent-dark": tokenConfig.theme.sidebarAccentDark,
-  "--theme-sidebar-accent-foreground-dark": tokenConfig.theme.sidebarAccentForegroundDark,
-  "--theme-chart-3": tokenConfig.theme.chart3,
-  "--theme-chart-4": tokenConfig.theme.chart4,
-  "--theme-chart-5": tokenConfig.theme.chart5,
-  "--theme-button-hover-foreground-light": tokenConfig.theme.buttonHoverForegroundLight,
-  "--theme-button-hover-foreground-dark": tokenConfig.theme.buttonHoverForegroundDark,
-} as const;
+  "--primary": primaryHsl,
+  "--ring": primaryHsl,
+  "--glow": presentation.theme.glow,
+  "--stable-token": presentation.theme.stableToken,
+  "--volatile-token": presentation.theme.volatileToken,
+  "--accent-light": presentation.theme.accentLight,
+  "--accent-foreground-light": presentation.theme.accentForegroundLight,
+  "--accent-dark": presentation.theme.accentDark,
+  "--accent-foreground-dark": presentation.theme.accentForegroundDark,
+  "--sidebar-accent-light": presentation.theme.sidebarAccentLight,
+  "--sidebar-accent-foreground-light": presentation.theme.sidebarAccentForegroundLight,
+  "--sidebar-accent-dark": presentation.theme.sidebarAccentDark,
+  "--sidebar-accent-foreground-dark": presentation.theme.sidebarAccentForegroundDark,
+  "--chart-3": presentation.theme.chart3,
+  "--chart-4": presentation.theme.chart4,
+  "--chart-5": presentation.theme.chart5,
+  "--button-hover-foreground-light": presentation.theme.buttonHoverForegroundLight,
+  "--button-hover-foreground-dark": presentation.theme.buttonHoverForegroundDark,
+};
 
-// Helper functions to get token symbols (for backward compatibility during migration)
-export const getStableAssetSymbol = (): string => tokenConfig.stableAsset.symbol;
-export const getVolatileAssetSymbol = (): string => tokenConfig.volatileAsset.symbol;
-export const getPairTokenSymbol = (): string => tokenConfig.pairToken.symbol;
-export const getBaseAssetSymbol = (): string => tokenConfig.baseAsset.symbol;
+export const formatPegAsset = (format: "lowercase" | "uppercase" | "title" = "title"): string => {
+  const asset = tokenConfig.peg.type;
+  switch (format) {
+    case "lowercase":
+      return asset.toLowerCase();
+    case "uppercase":
+      return asset.toUpperCase();
+    case "title":
+    default:
+      return asset.charAt(0).toUpperCase() + asset.slice(1).toLowerCase();
+  }
+};
 
-// Helper to get peg description
+export const formatPegUnit = (): string => tokenConfig.peg.unit;
 export const getPegDescription = (): string => tokenConfig.peg.description;
+export const isPeggedTo = (assetType: string): boolean => tokenConfig.peg.type.toLowerCase() === assetType.toLowerCase();
+export const hasDualPeg = (): boolean => false;
+export const getEffectivePegType = (): string => tokenConfig.peg.type;

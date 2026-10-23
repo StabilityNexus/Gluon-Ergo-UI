@@ -1,12 +1,35 @@
-import { toast } from "sonner";
-
 /**
- * Example of wallet error object handling:
- * Input: {code: 2, info: 'User rejected.'}
- * Output: ErrorType.WALLET_SIGNING with message "Transaction was cancelled by user or signing failed. Please try again."
+ * @file error-handler.ts
+ * @description Standardized error handler for transactions, wallet actions, and GluonError codes.
+ * @module lib/utils
  */
+import { toast } from "sonner";
+import { GluonError, type GluonErrorCode } from "@stability-nexus/gluon-ergo-sdk";
 
-// Error types enum for better categorization
+export const GLUON_ERROR_MESSAGES: Record<GluonErrorCode, string> = {
+  REACTOR_UNHEALTHY: "The reactor is outside its healthy range. Trading resumes after the peg is adjusted.",
+  WOULD_LEAVE_HEALTHY_RANGE: "This amount would push the reactor out of its healthy range.",
+  REACTOR_HEALTHY: "The reactor is healthy; no peg adjustment is needed.",
+  ORACLE_STALE: "The oracle price is too old. Waiting for the next oracle update (usually a few minutes).",
+  BOX_AMBIGUOUS: "The reactor or the oracle is being updated right now. Please retry in a minute.",
+  BOX_NOT_FOUND: "Could not find the reactor or oracle on the network. Check the node.",
+  BUYBACK_UNAVAILABLE: "Transmutations are paused: the oracle's buyback box is unavailable.",
+  AMOUNT_TOO_SMALL: "The amount is too small to produce any tokens.",
+  AMOUNT_TOO_LARGE: "The reactor cannot pay out or release that amount.",
+  INSUFFICIENT_FUNDS: "Not enough ERG or tokens in your wallet for this transaction and its fees.",
+  INVALID_ADDRESS: "Your wallet is not connected to Ergo mainnet.",
+  NODE_ERROR: "Could not reach the Ergo node. Retrying.",
+  UNKNOWN_DEPLOYMENT: "Configuration error: Unknown deployment specified.",
+  INVALID_DEPLOYMENT: "Configuration error: Invalid deployment data.",
+};
+
+export function getGluonErrorMessage(error: unknown): string | null {
+  if (error instanceof GluonError) {
+    return GLUON_ERROR_MESSAGES[error.code] || error.message;
+  }
+  return null;
+}
+
 export enum ErrorType {
   NETWORK = "NETWORK",
   INSUFFICIENT_BALANCE = "INSUFFICIENT_BALANCE",
@@ -23,7 +46,6 @@ export enum ErrorType {
   UNKNOWN = "UNKNOWN",
 }
 
-// Error details interface
 export interface ErrorDetails {
   type: ErrorType;
   message: string;
@@ -32,15 +54,9 @@ export interface ErrorDetails {
   actionType?: string;
 }
 
-// Error patterns for classification
 const ERROR_PATTERNS = {
-  // Network related errors
   network: [/network/i, /connection/i, /timeout/i, /fetch.*failed/i, /failed to get network height/i, /node.*not.*responding/i, /rpc.*error/i],
-
-  // Balance related errors
   insufficientBalance: [/insufficient/i, /not enough/i, /balance.*too.*low/i, /cannot.*afford/i, /exceeds.*balance/i, /maximum possible output/i, /cannot get.*erg/i],
-
-  // Transaction creation errors
   transactionCreation: [
     /failed to create.*transaction/i,
     /transaction.*creation.*failed/i,
@@ -48,16 +64,11 @@ const ERROR_PATTERNS = {
     /cannot.*build.*transaction/i,
     /unsigned.*transaction.*failed/i,
   ],
-
-  // Wallet errors
   walletConnection: [/wallet.*not.*connected/i, /no.*wallet/i, /wallet.*unavailable/i, /ergo.*wallet.*not.*found/i],
-
-  // Wallet signing errors
   walletSigning: [
     /sign.*failed/i,
     /signing.*error/i,
     /user.*rejected/i,
-    /user rejected/i,
     /signature.*failed/i,
     /wallet.*sign/i,
     /cancelled.*by.*user/i,
@@ -65,28 +76,15 @@ const ERROR_PATTERNS = {
     /user.*cancelled/i,
     /denied.*by.*user/i,
   ],
-
-  // Transaction submission errors
   transactionSubmission: [/submit.*failed/i, /submission.*error/i, /broadcast.*failed/i, /mempool.*rejected/i, /transaction.*rejected/i],
-
-  // UTXO validation errors
   utxoValidation: [/malformed transaction.*every input.*should be in utxo/i, /missing inputs/i, /input.*not.*in.*utxo/i],
-
-  // Box initialization errors
   boxInitialization: [/failed to.*get.*box/i, /box.*not.*found/i, /oracle.*box.*error/i, /gluon.*box.*error/i, /failed to initialize/i],
-
-  // Oracle related errors
   oracle: [/oracle/i, /price.*feed/i, /oracle.*buyback/i, /height.*error/i],
-
-  // Amount validation errors
   invalidAmount: [/amount.*invalid/i, /invalid.*value/i, /must be greater than zero/i, /amount.*too.*small/i, /amount.*too.*large/i],
-
-  // SDK specific errors
-  sdk: [/fusion.*will.*need/i, /fission.*will.*get/i, /transmute.*will.*get/i, /gluon.*sdk/i, /calculation.*failed/i],
+  sdk: [/gluon.*sdk/i, /calculation.*failed/i],
 };
 
-// User-friendly error messages
-const USER_MESSAGES = {
+const USER_MESSAGES: Record<ErrorType, string> = {
   [ErrorType.NETWORK]: "Network connection error. Please check your internet connection and try again.",
   [ErrorType.INSUFFICIENT_BALANCE]: "Insufficient balance for this transaction.",
   [ErrorType.TRANSACTION_CREATION]: "Failed to create transaction. Please try again.",
@@ -102,38 +100,41 @@ const USER_MESSAGES = {
   [ErrorType.UNKNOWN]: "An unexpected error occurred. Please try again.",
 };
 
-/**
- * Handle wallet-specific error codes
- */
 function classifyWalletErrorCode(code: number): ErrorType {
   switch (code) {
-    case 2: // User rejected
+    case 2:
       return ErrorType.WALLET_SIGNING;
-    case 1: // Wallet connection error
+    case 1:
       return ErrorType.WALLET_CONNECTION;
-    case 3: // Insufficient funds
+    case 3:
       return ErrorType.INSUFFICIENT_BALANCE;
-    case 4: // Transaction creation error
+    case 4:
       return ErrorType.TRANSACTION_CREATION;
-    case 5: // Network error
+    case 5:
       return ErrorType.NETWORK;
     default:
       return ErrorType.UNKNOWN;
   }
 }
 
-/**
- * Classify error based on error message patterns or wallet error codes
- */
-function classifyError(error: Error | string | any): ErrorType {
-  // Handle wallet error objects with codes
+function classifyError(error: unknown): ErrorType {
+  if (error instanceof GluonError) {
+    return ErrorType.SDK_ERROR;
+  }
+
   if (error && typeof error === "object" && !Array.isArray(error) && !(error instanceof Error)) {
-    if (typeof error.code === "number") {
-      return classifyWalletErrorCode(error.code);
+    const errObj = error as { code?: number };
+    if (typeof errObj.code === "number") {
+      return classifyWalletErrorCode(errObj.code);
     }
   }
 
-  const errorMessage = typeof error === "string" ? error : error instanceof Error ? error.message : error?.info || error?.message || String(error);
+  const errorMessage =
+    typeof error === "string"
+      ? error
+      : error instanceof Error
+        ? error.message
+        : (error as { info?: string; message?: string })?.info || (error as { message?: string })?.message || String(error);
 
   for (const [type, patterns] of Object.entries(ERROR_PATTERNS)) {
     if (patterns.some((pattern) => pattern.test(errorMessage))) {
@@ -169,18 +170,16 @@ function classifyError(error: Error | string | any): ErrorType {
   return ErrorType.UNKNOWN;
 }
 
-/**
- * Process and handle errors with appropriate user feedback
- */
-export function handleTransactionError(error: Error | string | unknown, actionType: string = "transaction", showToast: boolean = true): ErrorDetails {
+export function handleTransactionError(error: unknown, actionType: string = "transaction", showToast: boolean = true): ErrorDetails {
   console.error(`${actionType} error:`, error);
+
+  const gluonMessage = getGluonErrorMessage(error);
 
   let errorMessage: string;
   let technicalMessage: string;
 
-  // Handle wallet-specific error objects (e.g., {code: 2, info: 'User rejected.'})
   if (error && typeof error === "object" && !Array.isArray(error) && !(error instanceof Error)) {
-    const walletError = error as any;
+    const walletError = error as { info?: string; message?: string; code?: number };
     if (walletError.info) {
       errorMessage = walletError.info;
       technicalMessage = `Wallet error - Code: ${walletError.code}, Info: ${walletError.info}`;
@@ -203,24 +202,7 @@ export function handleTransactionError(error: Error | string | unknown, actionTy
   }
 
   const errorType = classifyError(error);
-  let userMessage = USER_MESSAGES[errorType];
-
-  // Customize user message based on action type
-  if (errorType === ErrorType.INSUFFICIENT_BALANCE) {
-    switch (actionType.toLowerCase()) {
-      case "fission":
-        userMessage = "Insufficient ERG balance for fission. Please ensure you have enough ERG plus fees.";
-        break;
-      case "fusion":
-        userMessage = "Insufficient token balance for fusion. Please check your token balances.";
-        break;
-      case "transmute to neutron":
-      case "transmute to proton":
-      case "transmutation":
-        userMessage = "Insufficient token balance for transmutation.";
-        break;
-    }
-  }
+  const userMessage = gluonMessage || USER_MESSAGES[errorType];
 
   const errorDetails: ErrorDetails = {
     type: errorType,
@@ -230,7 +212,6 @@ export function handleTransactionError(error: Error | string | unknown, actionTy
     actionType,
   };
 
-  // Show toast notification
   if (showToast) {
     toast.error(userMessage, {
       description: errorType === ErrorType.UNKNOWN ? errorMessage : undefined,
@@ -241,19 +222,12 @@ export function handleTransactionError(error: Error | string | unknown, actionTy
   return errorDetails;
 }
 
-/**
- * Handle successful transactions
- */
-export function handleTransactionSuccess(
-  txHash: string,
-  actionType: string,
-  showToast: boolean = true
-): void {
+export function handleTransactionSuccess(txHash: string, actionType: string, showToast: boolean = true): void {
   const capitalizedAction = actionType.charAt(0).toUpperCase() + actionType.slice(1);
   const successMessage = `${capitalizedAction} transaction submitted successfully!`;
 
-  const explorerService = process.env.NEXT_PUBLIC_EXPLORER || "https://sigmaspace.io";
-  const explorerUrl = `${explorerService}/en/transaction/${txHash}`;
+  const explorerService = process.env.NEXT_PUBLIC_EXPLORER_URL || "https://explorer.ergoplatform.com";
+  const explorerUrl = `${explorerService}/en/transactions/${txHash}`;
 
   console.log(`${actionType} success:`, { txHash });
 
@@ -269,70 +243,4 @@ export function handleTransactionSuccess(
       },
     });
   }
-}
-
-/**
- * Handle calculation errors specifically
- */
-export function handleCalculationError(
-  error: Error | string | unknown,
-  calculationType: string = "calculation",
-  showToast: boolean = false // Usually don't show toast for calculation errors as they're handled in UI
-): ErrorDetails {
-  console.error(`${calculationType} calculation error:`, error);
-
-  let errorMessage: string;
-
-  // Handle wallet-specific error objects
-  if (error && typeof error === "object" && !Array.isArray(error) && !(error instanceof Error)) {
-    const walletError = error as any;
-    if (walletError.info) {
-      errorMessage = walletError.info;
-    } else if (walletError.message) {
-      errorMessage = walletError.message;
-    } else {
-      errorMessage = "Wallet error occurred";
-    }
-  } else if (error instanceof Error) {
-    errorMessage = error.message;
-  } else if (typeof error === "string") {
-    errorMessage = error;
-  } else {
-    errorMessage = "Calculation failed";
-  }
-
-  const errorType = classifyError(error);
-
-  const errorDetails: ErrorDetails = {
-    type: errorType === ErrorType.UNKNOWN ? ErrorType.CALCULATION_ERROR : errorType,
-    message: errorMessage,
-    userMessage: `Failed to calculate ${calculationType} amounts. Please try again.`,
-    actionType: calculationType,
-  };
-
-  if (showToast) {
-    toast.error(errorDetails.userMessage, {
-      duration: 3000,
-    });
-  }
-
-  return errorDetails;
-}
-
-/**
- * Handle network/initialization errors
- */
-export function handleInitializationError(error: Error | string | unknown, component: string = "system", showToast: boolean = true): ErrorDetails {
-  console.error(`${component} initialization error:`, error);
-
-  const errorDetails = handleTransactionError(error, `${component} initialization`, false);
-
-  if (showToast) {
-    toast.error(`Failed to initialize ${component}`, {
-      description: errorDetails.userMessage || "Please refresh the page and try again.",
-      duration: 7000,
-    });
-  }
-
-  return errorDetails;
 }

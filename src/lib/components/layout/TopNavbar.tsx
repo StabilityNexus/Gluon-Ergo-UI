@@ -9,12 +9,10 @@ import { cn } from "@/lib/utils/utils";
 import { resolveAssetPath } from "@/lib/utils/asset-path";
 import { useRouter } from "next/router";
 import { WalletConnector } from "../blockchain/connector/WalletConnector";
-import { useTheme } from "next-themes";
 import { tokenConfig } from "@/config/tokenConfig";
 
+// Hidden during B1 foundation; ported back in B2 (swap) and B4 (reactor)
 const navItems = [
-  { href: "/reactor", label: "Reactor" },
-  { href: "/swap", label: "Swap" },
   { href: "/history", label: "History" },
   {
     href: "https://docs.stability.nexus/gluon-protocols/gluon-overview",
@@ -27,7 +25,6 @@ export function TopNavbar() {
   const isDesktop = useMediaQuery("(min-width: 768px)");
   const pathname = usePathname();
   const router = useRouter();
-  const { theme } = useTheme();
 
   const NavLinks = () => (
     <div className={`flex ${isDesktop ? "gap-6" : "flex-col gap-4"}`}>
@@ -70,7 +67,9 @@ export function TopNavbar() {
               {/* Right - Actions */}
               <div className="flex flex-1 items-center justify-end gap-2">
                 <ThemeToggle />
-                {pathname?.startsWith("/reactor") || pathname?.startsWith("/test") || pathname?.startsWith("/swap") || pathname?.startsWith("/history") ? <WalletConnector /> : null}
+                {pathname?.startsWith("/reactor") || pathname?.startsWith("/test") || pathname?.startsWith("/swap") || pathname?.startsWith("/history") ? (
+                  <WalletConnector />
+                ) : null}
               </div>
             </>
           ) : (
@@ -78,7 +77,9 @@ export function TopNavbar() {
               {/* Mobile view */}
               <div className="flex items-center gap-2">
                 <ThemeToggle />
-                {pathname?.startsWith("/reactor") || pathname?.startsWith("/test") || pathname?.startsWith("/swap") || pathname?.startsWith("/history") ? <WalletConnector /> : null}
+                {pathname?.startsWith("/reactor") || pathname?.startsWith("/test") || pathname?.startsWith("/swap") || pathname?.startsWith("/history") ? (
+                  <WalletConnector />
+                ) : null}
               </div>
             </>
           )}

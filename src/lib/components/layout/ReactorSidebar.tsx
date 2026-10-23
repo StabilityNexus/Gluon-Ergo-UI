@@ -1,13 +1,16 @@
+/**
+ * @file ReactorSidebar.tsx
+ * @description Sidebar navigation for reactor dashboard and actions.
+ * @module lib/components/layout
+ */
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, Grip, ArrowDownUp } from "lucide-react";
+import { Menu, X } from "lucide-react";
 
-const ispoLinks = [
-  { href: "/reactor", label: "Dashboard", icon: Grip },
-  { href: "/reactor/swap", label: "Swap", icon: ArrowDownUp },
-];
+// Hidden during B1 foundation; ported back in B4 (reactor dashboard)
+const ispoLinks: Array<{ href: string; label: string; icon: any }> = [];
 
 export function ReactorSidebar() {
   const router = useRouter();
