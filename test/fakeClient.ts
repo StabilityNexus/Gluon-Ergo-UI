@@ -7,6 +7,10 @@ import type { ChainState, ProtocolSnapshot, ActionQuote, AdjustPegQuote, Reactor
 
 export type SnapshotMode = "healthy" | "below-range" | "above-range";
 
+export interface FakeUnsignedTx {
+  toBytes(): Uint8Array;
+}
+
 export function createFakeReactorState(overrides: Partial<ReactorState> = {}): ReactorState {
   return {
     value: 1000000000000n,
@@ -211,32 +215,32 @@ export class FakeGluonClient {
     };
   }
 
-  async buildFission(...args: unknown[]): Promise<any> {
+  async buildFission(...args: unknown[]): Promise<FakeUnsignedTx> {
     this.calls.push({ method: "buildFission", args });
     return { toBytes: () => new Uint8Array([1, 2, 3]) };
   }
 
-  async buildFusion(...args: unknown[]): Promise<any> {
+  async buildFusion(...args: unknown[]): Promise<FakeUnsignedTx> {
     this.calls.push({ method: "buildFusion", args });
     return { toBytes: () => new Uint8Array([1, 2, 3]) };
   }
 
-  async buildBetaDecayPlus(...args: unknown[]): Promise<any> {
+  async buildBetaDecayPlus(...args: unknown[]): Promise<FakeUnsignedTx> {
     this.calls.push({ method: "buildBetaDecayPlus", args });
     return { toBytes: () => new Uint8Array([1, 2, 3]) };
   }
 
-  async buildBetaDecayMinus(...args: unknown[]): Promise<any> {
+  async buildBetaDecayMinus(...args: unknown[]): Promise<FakeUnsignedTx> {
     this.calls.push({ method: "buildBetaDecayMinus", args });
     return { toBytes: () => new Uint8Array([1, 2, 3]) };
   }
 
-  async buildAdjustPeg(...args: unknown[]): Promise<any> {
+  async buildAdjustPeg(...args: unknown[]): Promise<FakeUnsignedTx> {
     this.calls.push({ method: "buildAdjustPeg", args });
     return { toBytes: () => new Uint8Array([1, 2, 3]) };
   }
 
-  async buildUpdateTreasury(...args: unknown[]): Promise<any> {
+  async buildUpdateTreasury(...args: unknown[]): Promise<FakeUnsignedTx> {
     this.calls.push({ method: "buildUpdateTreasury", args });
     return { toBytes: () => new Uint8Array([1, 2, 3]) };
   }
@@ -251,7 +255,7 @@ export class FakeGluonClient {
     return 10000000000n;
   }
 
-  async findMaxQuote(...args: unknown[]): Promise<any> {
+  async findMaxQuote(...args: unknown[]): Promise<ActionQuote> {
     this.calls.push({ method: "findMaxQuote", args });
     return createFakeQuote();
   }

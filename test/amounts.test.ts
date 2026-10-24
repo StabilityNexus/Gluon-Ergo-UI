@@ -68,5 +68,13 @@ describe("amounts.ts", () => {
       expect(() => toBaseUnits("abc", 9)).toThrow();
       expect(() => toBaseUnits("1.2.3", 9)).toThrow();
     });
+
+    it("handles negative values", () => {
+      const input = "-1.5";
+      const base = toBaseUnits(input, 9);
+      expect(base).toBe(-1500000000n);
+      expect(formatUnits(base, 9)).toBe(input);
+      expect(formatUnits(-1n, 9)).toBe("-0.000000001");
+    });
   });
 });

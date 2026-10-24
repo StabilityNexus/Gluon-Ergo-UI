@@ -26,8 +26,12 @@ export default function Document() {
 
         {/* CSP — replaces the headers() in next.config.ts (not available in
             static exports). 'unsafe-inline' is retained for Next.js inline
-            scripts. A meta CSP cannot set frame-ancestors. */}
-        <meta httpEquiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'self'" />
+            scripts. 'unsafe-eval' is allowed in development for Next.js HMR.
+            A meta CSP cannot set frame-ancestors. */}
+        <meta
+          httpEquiv="Content-Security-Policy"
+          content={`script-src 'self' 'unsafe-inline'${process.env.NODE_ENV !== "production" ? " 'unsafe-eval'" : ""}; object-src 'none'; base-uri 'self'`}
+        />
 
         {/* Manifest and Apple Touch Icon — paths go through resolveAssetPath
             so they work under any NEXT_PUBLIC_BASE_PATH. */}

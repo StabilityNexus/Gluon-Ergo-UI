@@ -2,13 +2,12 @@
  * @file eslint.config.mjs
  * @description Flat ESLint configuration supporting Next.js, TypeScript, and Prettier.
  */
-import nextPlugin from "@next/eslint-plugin-next";
-import tseslint from "typescript-eslint";
-import eslintPluginPrettier from "eslint-plugin-prettier";
+import nextVitals from "eslint-config-next/core-web-vitals";
+import nextTs from "eslint-config-next/typescript";
 
 const eslintConfig = [
-  nextPlugin.configs["core-web-vitals"],
-  ...tseslint.configs.recommended,
+  ...nextVitals,
+  ...nextTs,
   {
     ignores: ["lib/**", ".next/**", "out/**", "node_modules/**", "*.config.js", "*.config.mjs", "*.config.ts"],
   },
@@ -22,11 +21,14 @@ const eslintConfig = [
           "ts-nocheck": false,
         },
       ],
-    },
-  },
-  {
-    rules: {
       "prettier/prettier": "off",
+      // Restored rules that produce errors in untouched legacy files downgraded to "warn"
+      "react-hooks/set-state-in-effect": "warn",
+      "react-hooks/refs": "warn",
+      "react-hooks/static-components": "warn",
+      "react-hooks/purity": "warn",
+      "react-hooks/immutability": "warn",
+      "react-hooks/preserve-manual-memoization": "warn",
     },
   },
 ];
