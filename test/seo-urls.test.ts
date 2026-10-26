@@ -4,74 +4,113 @@
  * @module test
  */
 import { describe, it, expect } from "bun:test";
-import { resolveSeoPageUrl, resolveSeoImageUrl } from "@/lib/utils/seo-urls";
+import {
+  resolveSeoPageUrl,
+  resolveSeoImageUrl,
+  buildSeoUrls,
+} from "@/lib/utils/seo-urls";
 
 describe("resolveSeoPageUrl", () => {
-  it("returns undefined when siteUrl is unset or empty", () => {
+  it("returns undefined when siteUrl is unset, empty, or whitespace", () => {
     expect(resolveSeoPageUrl("/")).toBeUndefined();
     expect(resolveSeoPageUrl("/", "")).toBeUndefined();
     expect(resolveSeoPageUrl("/history", "   ")).toBeUndefined();
   });
 
-  it("handles siteUrl with or without trailing slash identically", () => {
-    const withSlash = "https://gold.ergo.gluon.stability.nexus/";
-    const withoutSlash = "https://gold.ergo.gluon.stability.nexus";
+  it("normalizes siteUrl with or without trailing slash identically", () => {
+    const withSlash = "https://example.org/";
+    const withoutSlash = "https://example.org";
 
-    expect(resolveSeoPageUrl("/", withSlash)).toBe("https://gold.ergo.gluon.stability.nexus/");
-    expect(resolveSeoPageUrl("/", withoutSlash)).toBe("https://gold.ergo.gluon.stability.nexus/");
+    expect(resolveSeoPageUrl("/", withSlash)).toBe("https://example.org/");
+    expect(resolveSeoPageUrl("/", withoutSlash)).toBe("https://example.org/");
 
-    expect(resolveSeoPageUrl("/history", withSlash)).toBe("https://gold.ergo.gluon.stability.nexus/history/");
-    expect(resolveSeoPageUrl("/history", withoutSlash)).toBe("https://gold.ergo.gluon.stability.nexus/history/");
+    expect(resolveSeoPageUrl("/history", withSlash)).toBe("https://example.org/history/");
+    expect(resolveSeoPageUrl("/history", withoutSlash)).toBe("https://example.org/history/");
   });
 
-  it("handles basePath correctly without double slashes", () => {
-    const siteUrl = "https://gold.ergo.gluon.stability.nexus/";
-    const basePath = "/repo";
+  it("regression test: does not double-apply base path when siteUrl includes subpath", () => {
+    const siteUrl = "https://example.org/preview/";
 
-    expect(resolveSeoPageUrl("/", siteUrl, basePath)).toBe("https://gold.ergo.gluon.stability.nexus/repo/");
-    expect(resolveSeoPageUrl("/history", siteUrl, basePath)).toBe("https://gold.ergo.gluon.stability.nexus/repo/history/");
+    expect(resolveSeoPageUrl("/", siteUrl)).toBe("https://example.org/preview/");
+    expect(resolveSeoPageUrl("/history", siteUrl)).toBe("https://example.org/preview/history/");
+    expect(resolveSeoPageUrl("/history/?x=1#y", siteUrl)).toBe("https://example.org/preview/history/");
+    expect(resolveSeoImageUrl("/logo/gluon.png", siteUrl)).toBe("https://example.org/preview/logo/gluon.png");
   });
 
-  it("normalizes nested routes and strips query and hash parameters", () => {
-    const siteUrl = "https://gold.ergo.gluon.stability.nexus";
+  it("normalizes nested routes, routes without leading slash, and strips query and hash", () => {
+    const siteUrl = "https://example.org";
 
-    expect(resolveSeoPageUrl("/reactor/history?filter=all#top", siteUrl)).toBe(
-      "https://gold.ergo.gluon.stability.nexus/reactor/history/"
-    );
-    expect(resolveSeoPageUrl("/a/b/c/", siteUrl)).toBe(
-      "https://gold.ergo.gluon.stability.nexus/a/b/c/"
-    );
+    expect(resolveSeoPageUrl("history", siteUrl)).toBe("https://example.org/history/");
+    expect(resolveSeoPageUrl("/a/b", siteUrl)).toBe("https://example.org/a/b/");
+    expect(resolveSeoPageUrl("/a/b/?x=1&y=2#top", siteUrl)).toBe("https://example.org/a/b/");
   });
 
   it("normalizes already-absolute page URLs", () => {
-    expect(resolveSeoPageUrl("https://example.com/custom?x=1", "https://other.com")).toBe(
-      "https://example.com/custom/"
+    expect(resolveSeoPageUrl("https://example.org/custom?x=1", "https://other.example.org/")).toBe(
+      "https://example.org/custom/"
     );
   });
 });
 
 describe("resolveSeoImageUrl", () => {
-  it("returns undefined when siteUrl is unset and image is a relative path", () => {
+  it("returns undefined when siteUrl is unset, empty, or whitespace, or image is empty", () => {
     expect(resolveSeoImageUrl("/logo/gluon.png", "")).toBeUndefined();
     expect(resolveSeoImageUrl("/logo/gluon.png", undefined)).toBeUndefined();
-    expect(resolveSeoImageUrl(undefined, "https://gold.ergo.gluon.stability.nexus/")).toBeUndefined();
+    expect(resolveSeoImageUrl("/logo/gluon.png", "   ")).toBeUndefined();
+    expect(resolveSeoImageUrl(undefined, "https://example.org/")).toBeUndefined();
+    expect(resolveSeoImageUrl("", "https://example.org/")).toBeUndefined();
+    expect(resolveSeoImageUrl("   ", "https://example.org/")).toBeUndefined();
   });
 
   it("preserves already-absolute image URLs regardless of siteUrl", () => {
-    const absoluteImage = "https://cdn.example.com/images/banner.png";
+    const absoluteImage = "https://cdn.example.org/images/banner.png";
     expect(resolveSeoImageUrl(absoluteImage, "")).toBe(absoluteImage);
-    expect(resolveSeoImageUrl(absoluteImage, "https://gold.ergo.gluon.stability.nexus/")).toBe(absoluteImage);
+    expect(resolveSeoImageUrl(absoluteImage, undefined)).toBe(absoluteImage);
+    expect(resolveSeoImageUrl(absoluteImage, "https://example.org/")).toBe(absoluteImage);
   });
 
-  it("builds absolute image URLs combining siteUrl, basePath, and asset path", () => {
-    const siteUrl = "https://gold.ergo.gluon.stability.nexus/";
+  it("builds absolute image URLs combining siteUrl and asset path", () => {
+    const siteUrl = "https://example.org/";
     expect(resolveSeoImageUrl("/logo/gluon.png", siteUrl)).toBe(
-      "https://gold.ergo.gluon.stability.nexus/logo/gluon.png"
+      "https://example.org/logo/gluon.png"
     );
+    expect(resolveSeoImageUrl("logo/gluon.png", siteUrl)).toBe(
+      "https://example.org/logo/gluon.png"
+    );
+  });
+});
 
-    const basePath = "/repo";
-    expect(resolveSeoImageUrl("/logo/gluon.png", siteUrl, basePath)).toBe(
-      "https://gold.ergo.gluon.stability.nexus/repo/logo/gluon.png"
-    );
+describe("buildSeoUrls", () => {
+  it("returns both pageUrl and imageUrl when includePageUrl is true", () => {
+    const res = buildSeoUrls({
+      path: "/history",
+      image: "/logo/gluon.png",
+      siteUrl: "https://example.org/preview/",
+      includePageUrl: true,
+    });
+    expect(res.pageUrl).toBe("https://example.org/preview/history/");
+    expect(res.imageUrl).toBe("https://example.org/preview/logo/gluon.png");
+  });
+
+  it("returns undefined pageUrl but defined imageUrl when includePageUrl is false", () => {
+    const res = buildSeoUrls({
+      path: "/404",
+      image: "/logo/gluon.png",
+      siteUrl: "https://example.org/preview/",
+      includePageUrl: false,
+    });
+    expect(res.pageUrl).toBeUndefined();
+    expect(res.imageUrl).toBe("https://example.org/preview/logo/gluon.png");
+  });
+
+  it("returns undefined for both fields when siteUrl is unset", () => {
+    const res = buildSeoUrls({
+      path: "/history",
+      image: "/logo/gluon.png",
+      siteUrl: undefined,
+      includePageUrl: true,
+    });
+    expect(res.pageUrl).toBeUndefined();
+    expect(res.imageUrl).toBeUndefined();
   });
 });

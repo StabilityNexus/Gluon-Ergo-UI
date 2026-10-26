@@ -5,8 +5,10 @@
  */
 import Head from "next/head";
 import { useRouter } from "next/router";
+import { env } from "@/config/env";
 import { tokenConfig, formatPegAsset } from "@/config/tokenConfig";
-import { resolveSeoPageUrl, resolveSeoImageUrl } from "@/lib/utils/seo-urls";
+import { resolveAssetPath } from "@/lib/utils/asset-path";
+import { buildSeoUrls } from "@/lib/utils/seo-urls";
 
 interface SEOProps {
   title?: string;
@@ -17,8 +19,8 @@ interface SEOProps {
   path?: string;
   url?: string;
   type?: string;
-  siteUrl?: string;
-  basePath?: string;
+  /** When true, omits canonical, og:url, and twitter:url tags (e.g. for 404 page) */
+  noPageUrl?: boolean;
 }
 
 export function SEO({
@@ -29,8 +31,7 @@ export function SEO({
   path,
   url,
   type = "website",
-  siteUrl = process.env.NEXT_PUBLIC_SITE_URL,
-  basePath = process.env.NEXT_PUBLIC_BASE_PATH,
+  noPageUrl = false,
 }: SEOProps) {
   const siteTitle = title.includes("Gluon") ? title : `${title} | Gluon`;
   let currentPath = path || url;
@@ -44,8 +45,12 @@ export function SEO({
   }
   currentPath = currentPath || "/";
 
-  const canonicalUrl = resolveSeoPageUrl(currentPath, siteUrl, basePath);
-  const socialImageUrl = resolveSeoImageUrl(image, siteUrl, basePath);
+  const { pageUrl, imageUrl } = buildSeoUrls({
+    path: currentPath,
+    image,
+    siteUrl: env.siteUrl,
+    includePageUrl: !noPageUrl,
+  });
 
   return (
     <Head>
@@ -54,24 +59,24 @@ export function SEO({
       <meta name="title" content={siteTitle} />
       <meta name="description" content={description} />
       <meta name="keywords" content={keywords} />
-      {canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
+      {pageUrl && <link rel="canonical" href={pageUrl} />}
 
       {/* Open Graph / Facebook */}
       <meta property="og:type" content={type} />
-      {canonicalUrl && <meta property="og:url" content={canonicalUrl} />}
+      {pageUrl && <meta property="og:url" content={pageUrl} />}
       <meta property="og:title" content={siteTitle} />
       <meta property="og:description" content={description} />
-      {socialImageUrl && <meta property="og:image" content={socialImageUrl} />}
+      {imageUrl && <meta property="og:image" content={imageUrl} />}
 
       {/* Twitter */}
       <meta property="twitter:card" content="summary_large_image" />
-      {canonicalUrl && <meta property="twitter:url" content={canonicalUrl} />}
+      {pageUrl && <meta property="twitter:url" content={pageUrl} />}
       <meta property="twitter:title" content={siteTitle} />
       <meta property="twitter:description" content={description} />
-      {socialImageUrl && <meta property="twitter:image" content={socialImageUrl} />}
+      {imageUrl && <meta property="twitter:image" content={imageUrl} />}
 
       {/* Favicon */}
-      <link rel="icon" href={tokenConfig.favicon} />
+      <link rel="icon" href={resolveAssetPath(tokenConfig.favicon, process.env.NEXT_PUBLIC_BASE_PATH)} />
     </Head>
   );
 }

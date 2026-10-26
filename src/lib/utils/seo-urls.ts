@@ -3,23 +3,20 @@
  * @description Helper functions to construct canonical and social URLs for SEO meta tags.
  * @module lib/utils
  */
-import { resolveAssetPath } from "./asset-path";
 
 /**
  * Resolves the canonical/page URL for SEO meta tags (canonical, og:url, twitter:url).
- * Normalizes slashes, strips queries and hash fragments, prepends basePath,
+ * Normalizes slashes, strips queries and hash fragments,
  * and ensures a trailing slash (consistent with trailingSlash: true in next.config.ts).
  * Returns undefined if siteUrl is unset or empty.
  *
- * @param path - Current route path (e.g. "/" or "/history" or "/swap?token=gold#top")
- * @param siteUrl - Configured site URL (e.g. "https://gold.ergo.gluon.stability.nexus/")
- * @param basePath - Optional subpath/basePath (e.g. "/repo")
+ * @param path - Current route path (e.g. "/" or "/history" or "/history/?x=1#y")
+ * @param siteUrl - Configured site URL (e.g. "https://example.org/" or "https://example.org/preview/")
  * @returns Fully qualified canonical URL or undefined if siteUrl is unset
  */
 export function resolveSeoPageUrl(
   path: string,
-  siteUrl?: string,
-  basePath?: string
+  siteUrl?: string
 ): string | undefined {
   if (!siteUrl || !siteUrl.trim()) {
     return undefined;
@@ -32,16 +29,14 @@ export function resolveSeoPageUrl(
   }
 
   const base = siteUrl.trim().replace(/\/+$/, "");
-  const cleanBase = basePath ? basePath.replace(/^\/+|\/+$/g, "") : "";
   const pathWithoutQuery = path.split(/[?#]/)[0];
   const cleanPath = pathWithoutQuery.replace(/^\/+|\/+$/g, "");
 
-  const segments = [cleanBase, cleanPath].filter(Boolean);
-  if (segments.length === 0) {
+  if (!cleanPath) {
     return `${base}/`;
   }
 
-  return `${base}/${segments.join("/")}/`;
+  return `${base}/${cleanPath}/`;
 }
 
 /**
@@ -49,15 +44,13 @@ export function resolveSeoPageUrl(
  * Returns undefined if siteUrl is unset or image is empty (social crawlers require absolute URLs).
  * If the image path is already absolute (http:// or https://), returns it unchanged.
  *
- * @param image - Image path or URL (e.g. "/logo/gluon.png" or "https://...")
- * @param siteUrl - Configured site URL (e.g. "https://gold.ergo.gluon.stability.nexus/")
- * @param basePath - Optional subpath/basePath (e.g. "/repo")
+ * @param image - Image path or URL (e.g. "/logo/gluon.png" or "https://example.org/image.png")
+ * @param siteUrl - Configured site URL (e.g. "https://example.org/")
  * @returns Fully qualified image URL or undefined
  */
 export function resolveSeoImageUrl(
   image?: string,
-  siteUrl?: string,
-  basePath?: string
+  siteUrl?: string
 ): string | undefined {
   if (!image || !image.trim()) {
     return undefined;
@@ -73,8 +66,39 @@ export function resolveSeoImageUrl(
   }
 
   const base = siteUrl.trim().replace(/\/+$/, "");
-  const assetPath = resolveAssetPath(image, basePath);
-  const normalizedAssetPath = assetPath.startsWith("/") ? assetPath : `/${assetPath}`;
+  const normalizedImage = image.startsWith("/") ? image : `/${image}`;
 
-  return `${base}${normalizedAssetPath}`;
+  return `${base}${normalizedImage}`;
+}
+
+export interface BuildSeoUrlsParams {
+  path: string;
+  image?: string;
+  siteUrl?: string;
+  includePageUrl?: boolean;
+}
+
+export interface SeoUrlsResult {
+  pageUrl: string | undefined;
+  imageUrl: string | undefined;
+}
+
+/**
+ * Pure function building canonical page and image URLs for SEO tags.
+ * Returns { pageUrl, imageUrl }.
+ * When siteUrl is unset or empty, both fields are undefined.
+ * When includePageUrl is false, pageUrl is undefined while imageUrl is still computed.
+ */
+export function buildSeoUrls({
+  path,
+  image,
+  siteUrl,
+  includePageUrl = true,
+}: BuildSeoUrlsParams): SeoUrlsResult {
+  const imageUrl = resolveSeoImageUrl(image, siteUrl);
+  if (!includePageUrl) {
+    return { pageUrl: undefined, imageUrl };
+  }
+  const pageUrl = resolveSeoPageUrl(path, siteUrl);
+  return { pageUrl, imageUrl };
 }

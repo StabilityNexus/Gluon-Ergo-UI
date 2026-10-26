@@ -9,7 +9,7 @@ import { registerTestDeployment } from "@/config/env";
 
 // 1. Initialize DOM globals for Bun test runner
 const dom = new JSDOM("<!DOCTYPE html><html><body></body></html>", {
-  url: "https://gold.gluon.stability.nexus/",
+  url: "https://example.org/",
   pretendToBeVisual: true,
 });
 
@@ -26,7 +26,7 @@ globalThis.CustomEvent = dom.window.CustomEvent as unknown as typeof CustomEvent
 // 2. Set test environment variables
 process.env.NEXT_PUBLIC_GLUON_DEPLOYMENT = "gluon-gold-v3";
 process.env.NEXT_PUBLIC_NODE_URL = "https://node.sigmaspace.io";
-process.env.NEXT_PUBLIC_SITE_URL = "https://gold.gluon.stability.nexus/";
+process.env.NEXT_PUBLIC_SITE_URL = "https://example.org/";
 
 // 3. Register synthetic deployment for testing (R9 hex "590280897a" decodes to pair [1n, 1000000n])
 export const syntheticGoldDeployment = deploymentFromRecord({

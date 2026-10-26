@@ -57,8 +57,25 @@ export function validateEnv(): EnvConfig {
   }
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "";
-  if (siteUrl !== "" && !siteUrl.endsWith("/")) {
-    throw new Error(`Gluon UI configuration error: NEXT_PUBLIC_SITE_URL "${siteUrl}" must end with a trailing slash "/".`);
+  if (siteUrl !== "") {
+    let parsed: URL;
+    try {
+      parsed = new URL(siteUrl);
+    } catch {
+      throw new Error(`Gluon UI configuration error: NEXT_PUBLIC_SITE_URL "${siteUrl}" must be a valid absolute URL.`);
+    }
+
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+      throw new Error(`Gluon UI configuration error: NEXT_PUBLIC_SITE_URL "${siteUrl}" must use http: or https:.`);
+    }
+
+    if (parsed.search || parsed.hash) {
+      throw new Error(`Gluon UI configuration error: NEXT_PUBLIC_SITE_URL "${siteUrl}" must not contain query parameters or hash fragments.`);
+    }
+
+    if (!siteUrl.endsWith("/")) {
+      throw new Error(`Gluon UI configuration error: NEXT_PUBLIC_SITE_URL "${siteUrl}" must end with a trailing slash "/".`);
+    }
   }
 
   const explorerUrl = process.env.NEXT_PUBLIC_EXPLORER_URL || "https://explorer.ergoplatform.com";

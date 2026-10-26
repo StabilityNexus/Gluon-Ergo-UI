@@ -15,7 +15,7 @@ describe("env.ts validation", () => {
     registerTestDeployment(syntheticGoldDeployment);
     process.env.NEXT_PUBLIC_GLUON_DEPLOYMENT = "gluon-gold-v3";
     process.env.NEXT_PUBLIC_NODE_URL = "https://node.sigmaspace.io";
-    process.env.NEXT_PUBLIC_SITE_URL = "https://gold.gluon.stability.nexus/";
+    process.env.NEXT_PUBLIC_SITE_URL = "https://example.org/";
     delete process.env.NEXT_PUBLIC_BASE_PATH;
   });
 
@@ -27,7 +27,7 @@ describe("env.ts validation", () => {
     const config = validateEnv();
     expect(config.deploymentName).toBe("gluon-gold-v3");
     expect(config.nodeUrl).toBe("https://node.sigmaspace.io");
-    expect(config.siteUrl).toBe("https://gold.gluon.stability.nexus/");
+    expect(config.siteUrl).toBe("https://example.org/");
   });
 
   it("throws when NEXT_PUBLIC_GLUON_DEPLOYMENT is missing", () => {
@@ -72,8 +72,50 @@ describe("env.ts validation", () => {
     expect(config.basePath).toBe("/Gluon-Ergo-UI-Gold");
   });
 
+  it("throws when NEXT_PUBLIC_SITE_URL is not a valid URL", () => {
+    process.env.NEXT_PUBLIC_SITE_URL = "gold.example";
+    expect(() => validateEnv()).toThrow("NEXT_PUBLIC_SITE_URL");
+    expect(() => validateEnv()).toThrow('must be a valid absolute URL');
+  });
+
+  it("throws when NEXT_PUBLIC_SITE_URL protocol is not http or https", () => {
+    process.env.NEXT_PUBLIC_SITE_URL = "ftp://x/";
+    expect(() => validateEnv()).toThrow("NEXT_PUBLIC_SITE_URL");
+    expect(() => validateEnv()).toThrow('must use http: or https:');
+  });
+
+  it("throws when NEXT_PUBLIC_SITE_URL has query parameters", () => {
+    process.env.NEXT_PUBLIC_SITE_URL = "https://example.org/?a=1";
+    expect(() => validateEnv()).toThrow("NEXT_PUBLIC_SITE_URL");
+    expect(() => validateEnv()).toThrow('must not contain query parameters or hash fragments');
+  });
+
+  it("throws when NEXT_PUBLIC_SITE_URL has a hash fragment", () => {
+    process.env.NEXT_PUBLIC_SITE_URL = "https://example.org/#x";
+    expect(() => validateEnv()).toThrow("NEXT_PUBLIC_SITE_URL");
+    expect(() => validateEnv()).toThrow('must not contain query parameters or hash fragments');
+  });
+
   it("throws when NEXT_PUBLIC_SITE_URL does not end with /", () => {
-    process.env.NEXT_PUBLIC_SITE_URL = "https://gold.gluon.stability.nexus";
+    process.env.NEXT_PUBLIC_SITE_URL = "https://example.org/preview";
     expect(() => validateEnv()).toThrow('must end with a trailing slash "/"');
+  });
+
+  it("accepts valid NEXT_PUBLIC_SITE_URL with subpath and trailing slash", () => {
+    process.env.NEXT_PUBLIC_SITE_URL = "https://example.org/preview/";
+    const config = validateEnv();
+    expect(config.siteUrl).toBe("https://example.org/preview/");
+  });
+
+  it("accepts empty string NEXT_PUBLIC_SITE_URL", () => {
+    process.env.NEXT_PUBLIC_SITE_URL = "";
+    const config = validateEnv();
+    expect(config.siteUrl).toBe("");
+  });
+
+  it("accepts unset NEXT_PUBLIC_SITE_URL", () => {
+    delete process.env.NEXT_PUBLIC_SITE_URL;
+    const config = validateEnv();
+    expect(config.siteUrl).toBe("");
   });
 });
