@@ -3,7 +3,6 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils/utils";
 import { resolveAssetPath } from "@/lib/utils/asset-path";
-import { useMediaQuery } from "usehooks-ts";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
@@ -36,7 +35,6 @@ const socialLinks = [
 ];
 
 export function BottomNavbar() {
-  const isMobile = useMediaQuery("(max-width: 768px)");
   const pathname = usePathname();
   const router = useRouter();
   const { theme, systemTheme } = useTheme();
@@ -44,9 +42,10 @@ export function BottomNavbar() {
 
   useEffect(() => setMounted(true), []);
 
-  if (!isMobile) {
-    return (
-      <div className="w-full shadow-sm backdrop-blur-xl dark:shadow-lg">
+  return (
+    <>
+      {/* Desktop footer: social links, hidden on mobile */}
+      <div className="hidden w-full shadow-sm backdrop-blur-xl dark:shadow-lg md:block">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex justify-center space-x-6 py-4">
             {socialLinks.map(({ href, label, iconLight, iconDark }) => {
@@ -73,37 +72,36 @@ export function BottomNavbar() {
           </div>
         </div>
       </div>
-    );
-  }
 
-  return (
-    <div className="fixed bottom-0 left-0 right-0 z-[9999] w-full bg-background shadow-sm dark:shadow-lg">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-around py-4">
-          {[
-            // Hidden during B1 foundation; ported back in B2 and B4
-            { href: "/history", label: "History" },
-            {
-              href: "https://docs.stability.nexus/gluon-protocols/gluon-overview",
-              label: "Docs",
-              external: true,
-            },
-          ].map((item) => {
-            const isActive = item.external ? false : pathname?.startsWith(item.href);
+      {/* Mobile nav: fixed bottom bar, hidden on desktop */}
+      <div className="fixed bottom-0 left-0 right-0 z-[9999] w-full bg-background shadow-sm dark:shadow-lg md:hidden">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-around py-4">
+            {[
+              // Hidden during B1 foundation; ported back in B2 and B4
+              { href: "/history", label: "History" },
+              {
+                href: "https://docs.stability.nexus/gluon-protocols/gluon-overview",
+                label: "Docs",
+                external: true,
+              },
+            ].map((item) => {
+              const isActive = item.external ? false : pathname?.startsWith(item.href);
 
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                target={item.external ? "_blank" : undefined}
-                className={cn("text-sm font-medium transition-colors hover:text-primary", isActive ? "font-semibold text-primary" : "text-muted-foreground")}
-              >
-                {item.label}
-              </Link>
-            );
-          })}
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  target={item.external ? "_blank" : undefined}
+                  className={cn("text-sm font-medium transition-colors hover:text-primary", isActive ? "font-semibold text-primary" : "text-muted-foreground")}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }

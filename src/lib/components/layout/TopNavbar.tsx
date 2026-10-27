@@ -3,7 +3,6 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { Button } from "@/lib/components/ui/button";
-import { useMediaQuery } from "usehooks-ts";
 import { ThemeToggle } from "../toggle/ThemeToggle";
 import { cn } from "@/lib/utils/utils";
 import { resolveAssetPath } from "@/lib/utils/asset-path";
@@ -22,12 +21,11 @@ const navItems = [
 ];
 
 export function TopNavbar() {
-  const isDesktop = useMediaQuery("(min-width: 768px)");
   const pathname = usePathname();
   const router = useRouter();
 
   const NavLinks = () => (
-    <div className={`flex ${isDesktop ? "gap-6" : "flex-col gap-4"}`}>
+    <div className="flex gap-6">
       {navItems.map((item) => {
         const isActive = item.external ? false : pathname?.startsWith(item.href);
 
@@ -53,36 +51,22 @@ export function TopNavbar() {
           <div className="flex flex-1 items-center">
             <Link href="/" className="flex items-center">
               <Image src={resolveAssetPath(tokenConfig.favicon, router.basePath)} alt="Gluon Logo" width={28} height={28} priority />
-              {isDesktop && <p className="ml-2 font-sans text-2xl font-medium">{tokenConfig.protocolName}</p>}
+              <p className="ml-2 hidden font-sans text-2xl font-medium md:block">{tokenConfig.protocolName}</p>
             </Link>
           </div>
 
-          {isDesktop ? (
-            <>
-              {/* Center - Navigation */}
-              <div className="flex items-center justify-center">
-                <NavLinks />
-              </div>
+          {/* Center - Navigation (desktop only) */}
+          <div className="hidden items-center justify-center md:flex">
+            <NavLinks />
+          </div>
 
-              {/* Right - Actions */}
-              <div className="flex flex-1 items-center justify-end gap-2">
-                <ThemeToggle />
-                {pathname?.startsWith("/reactor") || pathname?.startsWith("/test") || pathname?.startsWith("/swap") || pathname?.startsWith("/history") ? (
-                  <WalletConnector />
-                ) : null}
-              </div>
-            </>
-          ) : (
-            <>
-              {/* Mobile view */}
-              <div className="flex items-center gap-2">
-                <ThemeToggle />
-                {pathname?.startsWith("/reactor") || pathname?.startsWith("/test") || pathname?.startsWith("/swap") || pathname?.startsWith("/history") ? (
-                  <WalletConnector />
-                ) : null}
-              </div>
-            </>
-          )}
+          {/* Right - Actions */}
+          <div className="flex flex-1 items-center justify-end gap-2">
+            <ThemeToggle />
+            {pathname?.startsWith("/reactor") || pathname?.startsWith("/test") || pathname?.startsWith("/swap") || pathname?.startsWith("/history") ? (
+              <WalletConnector />
+            ) : null}
+          </div>
         </div>
       </div>
     </div>
