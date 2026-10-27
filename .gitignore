@@ -39,8 +39,6 @@ yarn-error.log*
 .env.local
 .env*
 !.env.example
-!.env.gold
-!.env.dollar
 
 # vercel
 .vercel

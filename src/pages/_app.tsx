@@ -1,3 +1,9 @@
+/**
+ * @file _app.tsx
+ * @description Next.js custom App component initializing environment validation and global providers.
+ * @module pages
+ */
+import "@/config/env";
 import "@/styles/globals.css";
 import type { AppProps } from "next/app";
 import { TopNavbar } from "@/lib/components/layout/TopNavbar";

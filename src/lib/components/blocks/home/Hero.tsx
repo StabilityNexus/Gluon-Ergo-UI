@@ -2,7 +2,7 @@ import { Button } from "@/lib/components/ui/button";
 import { useRouter } from "next/navigation";
 import { HeroText } from "../../ui/hero-text";
 import { motion } from "framer-motion";
-import { tokenConfig, formatPegAsset } from "@/config/tokenConfig";
+import { formatPegAsset } from "@/config/tokenConfig";
 
 export default function Hero() {
   const router = useRouter();
@@ -29,7 +29,7 @@ export default function Hero() {
 
             <motion.div className="mt-8 flex justify-center gap-3" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6, duration: 0.6 }}>
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Button size={"lg"} onClick={() => router.push("/swap")}>
+                <Button size={"lg"} disabled>
                   Start Trading
                 </Button>
               </motion.div>

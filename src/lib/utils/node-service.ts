@@ -1,13 +1,11 @@
+/**
+ * @file node-service.ts
+ * @description HTTP client for Ergo node REST endpoints without WebAssembly dependencies.
+ * @module lib/utils
+ */
 import axios, { AxiosInstance } from "axios";
 import JSONbig from "json-bigint";
 export const JSONBI = JSONbig({ useNativeBigInt: true });
-let ergolib: any;
-
-if (typeof window !== "undefined") {
-  ergolib = import("ergo-lib-wasm-browser");
-} else {
-  ergolib = import("ergo-lib-wasm-nodejs");
-}
 
 export class NodeService {
   private backend: AxiosInstance;
@@ -213,12 +211,5 @@ export class NodeService {
   async getBlockInfo(blockHeight: number): Promise<any> {
     const blockId = (await this.get(`/blocks/at/${blockHeight}`))[0];
     return await this.get(`/blocks/${blockId}`);
-  }
-
-  async getCtx() {
-    const height = await this.getNetworkHeight();
-    const blockHeaders = (await ergolib).BlockHeaders.from_json(await this.chainSliceInfo(height));
-    const pre_header = (await ergolib).PreHeader.from_block_header(blockHeaders.get(blockHeaders.len() - 1));
-    return new (await ergolib).ErgoStateContext(pre_header, blockHeaders);
   }
 }

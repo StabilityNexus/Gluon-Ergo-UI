@@ -1,52 +1,19 @@
-import { NextConfig } from "next";
+/**
+ * @file next.config.ts
+ * @description Next.js configuration for static export (GitHub Pages).
+ * Server features (headers, rewrites, image optimisation) are not available
+ * in static exports and are intentionally omitted.
+ */
+import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  output: "export", // `next build` writes the static site to out/
+  trailingSlash: true, // /swap/ → out/swap/index.html (served by GitHub Pages)
+  images: { unoptimized: true }, // image optimisation requires a server
+  // Set via NEXT_PUBLIC_BASE_PATH when the site is served from
+  // https://<owner>.github.io/<repo>/ instead of a custom domain.
+  basePath: process.env.NEXT_PUBLIC_BASE_PATH || "",
   reactStrictMode: true,
-  transpilePackages: ["gluon-ergo-sdk"],
-  async headers() {
-    const isDev = process.env.NODE_ENV !== "production";
-
-    // Production CSP notes:
-    // - 'unsafe-eval' is removed in production (only needed by Next.js dev HMR).
-    // - 'unsafe-inline' is retained because the Next.js Pages Router injects
-    //   inline scripts during SSR that cannot be nonce-tagged without wiring
-    //   a custom middleware + _document propagation. A full nonce-based CSP
-    //   is architecturally feasible but is a separate, broader change.
-    // - 'wasm-unsafe-eval' is required by ergo-lib-wasm-browser.
-    const scriptSrc = isDev
-      ? "script-src 'self' 'unsafe-eval' 'unsafe-inline' 'wasm-unsafe-eval';"
-      : "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval';";
-
-    return [
-      {
-        source: "/:path*",
-        headers: [
-          {
-            key: "Content-Security-Policy",
-            value: `${scriptSrc} object-src 'none'; base-uri 'self';`,
-          },
-        ],
-      },
-    ];
-  },
-  webpack: (config, { isServer }) => {
-    // asyncWebAssembly is required for ergo-lib-wasm-browser dynamic imports.
-    config.experiments = {
-      ...config.experiments,
-      asyncWebAssembly: true,
-    };
-
-    // The ['web', 'es2020'] client target is deliberately kept here.
-    // ergo-lib-wasm-browser emits async/await in its WASM glue code; without
-    // an ES2020 target webpack cannot confirm the runtime supports async/await
-    // and emits a warning that degrades to a real runtime failure in some
-    // environments. The server bundle target is left to Next.js defaults.
-    if (!isServer) {
-      config.target = ["web", "es2020"];
-    }
-
-    return config;
-  },
 };
 
 export default nextConfig;

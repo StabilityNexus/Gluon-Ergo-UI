@@ -1,19 +1,30 @@
 "use client";
 
 import * as React from "react";
+import { useSyncExternalStore } from "react";
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { motion } from "framer-motion";
 import { tokenConfig } from "@/config/tokenConfig";
 import { Toggle } from "@/lib/components/ui/toggle";
 
+function subscribeNoop() {
+  return () => {};
+}
+
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme();
+  const mounted = useSyncExternalStore(
+    subscribeNoop,
+    () => true,
+    () => false
+  );
+  const isDark = mounted && theme === "dark";
 
   return (
     <Toggle
       aria-label="Toggle theme"
-      pressed={theme === "dark"}
+      pressed={isDark}
       onPressedChange={(pressed) => setTheme(pressed ? "dark" : "light")}
       className="border shadow-sm transition-colors data-[state=on]:bg-white/15"
     >
@@ -21,8 +32,8 @@ export function ThemeToggle() {
         <motion.div
           initial={{ scale: 1 }}
           animate={{
-            scale: theme === "dark" ? 0 : 1,
-            rotate: theme === "dark" ? -45 : 0,
+            scale: isDark ? 0 : 1,
+            rotate: isDark ? -45 : 0,
           }}
           transition={{
             duration: 0.2,
@@ -38,8 +49,8 @@ export function ThemeToggle() {
           className="absolute"
           initial={{ scale: 0 }}
           animate={{
-            scale: theme === "dark" ? 1 : 0,
-            rotate: theme === "dark" ? 0 : 45,
+            scale: isDark ? 1 : 0,
+            rotate: isDark ? 0 : 45,
           }}
           transition={{
             duration: 0.2,

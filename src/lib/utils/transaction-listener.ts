@@ -1,6 +1,7 @@
 import { NodeService } from "./node-service";
 import { toast } from "sonner";
-import { TOKEN_ADDRESS, type ActionType } from "@/lib/constants/token";
+import { type ActionType } from "@/lib/constants/token";
+import { env } from "@/config/env";
 
 // Transaction state interface
 export interface TransactionState {
@@ -423,8 +424,8 @@ export class TransactionListener {
       const balances = await getBalance();
 
       const ergBalance = balances.find((b) => b.tokenId === "ERG" || !b.tokenId)?.balance || "0";
-      const gauBalance = balances.find((b) => b.tokenId === TOKEN_ADDRESS.gau)?.balance || "0";
-      const gaucBalance = balances.find((b) => b.tokenId === TOKEN_ADDRESS.gauc)?.balance || "0";
+      const gauBalance = balances.find((b) => b.tokenId === env.deployment.tokens.neutron.id)?.balance || "0";
+      const gaucBalance = balances.find((b) => b.tokenId === env.deployment.tokens.proton.id)?.balance || "0";
 
       return {
         erg: ergBalance,
