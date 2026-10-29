@@ -5,7 +5,7 @@
  */
 import { JSDOM } from "jsdom";
 import { deploymentFromRecord } from "@stability-nexus/gluon-ergo-sdk";
-import { registerTestDeployment } from "@/config/env";
+import { registerTestDeployment, getEnv, env } from "@/config/env";
 
 // 1. Initialize DOM globals for Bun test runner
 const dom = new JSDOM("<!DOCTYPE html><html><body></body></html>", {
@@ -23,12 +23,7 @@ globalThis.MutationObserver = dom.window.MutationObserver;
 globalThis.Event = dom.window.Event as unknown as typeof Event;
 globalThis.CustomEvent = dom.window.CustomEvent as unknown as typeof CustomEvent;
 
-// 2. Set test environment variables
-process.env.NEXT_PUBLIC_GLUON_DEPLOYMENT = "gluon-gold-v3";
-process.env.NEXT_PUBLIC_NODE_URL = "https://node.sigmaspace.io";
-process.env.NEXT_PUBLIC_SITE_URL = "https://example.org/";
-
-// 3. Register synthetic deployment for testing (R9 hex "590280897a" decodes to pair [1n, 1000000n])
+// 2. Register synthetic deployment for testing (R9 hex "590280897a" decodes to pair [1n, 1000000n])
 export const syntheticGoldDeployment = deploymentFromRecord({
   name: "gluon-gold-v3",
   status: "live",
@@ -54,3 +49,12 @@ export const syntheticGoldDeployment = deploymentFromRecord({
 });
 
 registerTestDeployment(syntheticGoldDeployment);
+
+// 3. Set test environment variables
+process.env.NEXT_PUBLIC_GLUON_DEPLOYMENT = "gluon-gold-v3";
+process.env.NEXT_PUBLIC_NODE_URL = "https://node.sigmaspace.io";
+process.env.NEXT_PUBLIC_SITE_URL = "https://example.org/";
+
+// 4. Populate imported env object in place
+// env is a const object created at import; tests need it filled after registration
+Object.assign(env, getEnv());

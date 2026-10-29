@@ -113,4 +113,176 @@ describe("GluonProvider", () => {
       expect(fakeClient.calls.length).toBeGreaterThan(countWhenHidden);
     });
   });
+
+  it("refresh() resolves with the fresh ChainState", async () => {
+    const fakeClient = new FakeGluonClient("healthy");
+    let refreshFn: (() => Promise<unknown>) | undefined;
+
+    function RefreshCaptureComponent() {
+      const { refresh } = useGluon();
+      React.useEffect(() => {
+        refreshFn = refresh;
+      }, [refresh]);
+      return null;
+    }
+
+    render(
+      <GluonProvider client={fakeClient as unknown as GluonClient} pollIntervalMs={10000}>
+        <RefreshCaptureComponent />
+      </GluonProvider>
+    );
+
+    await waitFor(() => {
+      expect(refreshFn).toBeDefined();
+    });
+
+    let freshChain: unknown;
+    await act(async () => {
+      freshChain = await refreshFn!();
+    });
+    expect(freshChain).toBeDefined();
+    expect((freshChain as { height: number }).height).toBe(1250000);
+  });
+
+  it("two concurrent refresh() calls cause exactly one fetchChainState call and resolve to the same ChainState", async () => {
+    const fakeClient = new FakeGluonClient("healthy");
+    let refreshFn: (() => Promise<unknown>) | undefined;
+
+    function Capture() {
+      const { refresh } = useGluon();
+      React.useEffect(() => {
+        refreshFn = refresh;
+      }, [refresh]);
+      return null;
+    }
+
+    render(
+      <GluonProvider client={fakeClient as unknown as GluonClient} pollIntervalMs={10000}>
+        <Capture />
+      </GluonProvider>
+    );
+
+    await waitFor(() => {
+      expect(refreshFn).toBeDefined();
+    });
+
+    // Reset calls
+    fakeClient.calls = [];
+
+    let res1: unknown;
+    let res2: unknown;
+    await act(async () => {
+      [res1, res2] = await Promise.all([refreshFn!(), refreshFn!()]);
+    });
+
+    // Exactly one fetchChainState call
+    const fetchCalls = fakeClient.calls.filter((c) => c.method === "fetchChainState");
+    expect(fetchCalls.length).toBe(1);
+    expect(res1).toBe(res2);
+
+    // Later calls start a new fetch
+    await act(async () => {
+      await refreshFn!();
+    });
+    const subsequentCalls = fakeClient.calls.filter((c) => c.method === "fetchChainState");
+    expect(subsequentCalls.length).toBe(2);
+  });
+
+  it("concurrent refresh() failure rejects both callers", async () => {
+    const fakeClient = new FakeGluonClient("healthy");
+    fakeClient.fetchChainState = async () => {
+      throw new Error("Network failure during fetch");
+    };
+
+    let refreshFn: (() => Promise<unknown>) | undefined;
+
+    function Capture() {
+      const { refresh } = useGluon();
+      React.useEffect(() => {
+        refreshFn = refresh;
+      }, [refresh]);
+      return null;
+    }
+
+    render(
+      <GluonProvider client={fakeClient as unknown as GluonClient} pollIntervalMs={10000}>
+        <Capture />
+      </GluonProvider>
+    );
+
+    await waitFor(() => {
+      expect(refreshFn).toBeDefined();
+    });
+
+    let err1: unknown;
+    let err2: unknown;
+    await act(async () => {
+      try {
+        await Promise.all([
+          refreshFn!().catch((e) => { err1 = e; throw e; }),
+          refreshFn!().catch((e) => { err2 = e; throw e; }),
+        ]);
+      } catch {
+        // expected rejection
+      }
+    });
+
+    expect(err1).toBeDefined();
+    expect(err2).toBeDefined();
+    expect((err1 as Error).message).toBe("Network failure during fetch");
+    expect((err2 as Error).message).toBe("Network failure during fetch");
+  });
+
+  it("exposes deployment (the synthetic one) and presentation in context", async () => {
+    const fakeClient = new FakeGluonClient("healthy");
+    let ctxDeployment: unknown;
+    let ctxPresentation: unknown;
+
+    function MetadataCaptureComponent() {
+      const { deployment, presentation } = useGluon();
+      React.useEffect(() => {
+        ctxDeployment = deployment;
+        ctxPresentation = presentation;
+      }, [deployment, presentation]);
+      return null;
+    }
+
+    render(
+      <GluonProvider client={fakeClient as unknown as GluonClient} pollIntervalMs={10000}>
+        <MetadataCaptureComponent />
+      </GluonProvider>
+    );
+
+    await waitFor(() => {
+      expect(ctxDeployment).toBeDefined();
+      expect(ctxPresentation).toBeDefined();
+    });
+
+    expect((ctxDeployment as { name: string }).name).toBe("gluon-gold-v3");
+    expect((ctxPresentation as { protocolName: string }).protocolName).toBe("GLUON GOLD");
+  });
+
+  it("does not poll when pollIntervalMs is 0", async () => {
+    const fakeClient = new FakeGluonClient("healthy");
+
+    render(
+      <GluonProvider client={fakeClient as unknown as GluonClient} pollIntervalMs={0}>
+        <ConsumerComponent />
+      </GluonProvider>
+    );
+
+    await waitFor(() => {
+      expect(fakeClient.calls.some((c) => c.method === "fetchChainState")).toBe(true);
+    });
+
+    const initialFetchCount = fakeClient.calls.filter((c) => c.method === "fetchChainState").length;
+    expect(initialFetchCount).toBe(1);
+
+    // Wait 100ms
+    await new Promise((r) => setTimeout(r, 100));
+
+    // No timer polling should have triggered
+    const laterFetchCount = fakeClient.calls.filter((c) => c.method === "fetchChainState").length;
+    expect(laterFetchCount).toBe(1);
+  });
 });

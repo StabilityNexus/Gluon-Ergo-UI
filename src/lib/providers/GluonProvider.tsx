@@ -16,7 +16,7 @@ export interface GluonContextValue {
   snapshot?: ProtocolSnapshot;
   status: "loading" | "ready" | "error";
   error?: GluonError | Error;
-  refresh: () => Promise<void>;
+  refresh: () => Promise<ChainState>;
 }
 
 export const GluonContext = createContext<GluonContextValue | null>(null);
@@ -45,35 +45,45 @@ export function GluonProvider({ children, client: customClient, pollIntervalMs =
   const [error, setError] = useState<GluonError | Error | undefined>(undefined);
 
   const isMountedRef = useRef(true);
-  const isRefreshingRef = useRef(false);
+  const refreshPromiseRef = useRef<Promise<ChainState> | null>(null);
 
-  const refresh = useCallback(async () => {
-    if (isRefreshingRef.current) return;
-    isRefreshingRef.current = true;
-
-    try {
-      const newChain = await client.fetchChainState();
-      const newSnapshot = await client.snapshot(newChain);
-
-      if (!isMountedRef.current) return;
-      setChain(newChain);
-      setSnapshot(newSnapshot);
-      setStatus("ready");
-      setError(undefined);
-    } catch (err: unknown) {
-      if (!isMountedRef.current) return;
-      console.error("GluonProvider refresh error:", err);
-      // Keep last good state on error, set status to error
-      setError(err instanceof Error ? err : new Error(String(err)));
-      setStatus("error");
-    } finally {
-      isRefreshingRef.current = false;
+  const refresh = useCallback((): Promise<ChainState> => {
+    if (refreshPromiseRef.current) {
+      return refreshPromiseRef.current;
     }
+
+    const promise = (async () => {
+      try {
+        const newChain = await client.fetchChainState();
+        const newSnapshot = client.snapshot(newChain);
+
+        if (isMountedRef.current) {
+          setChain(newChain);
+          setSnapshot(newSnapshot);
+          setStatus("ready");
+          setError(undefined);
+        }
+        return newChain;
+      } catch (err: unknown) {
+        if (isMountedRef.current) {
+          console.error("GluonProvider refresh error:", err);
+          // Keep last good state on error, set status to error
+          setError(err instanceof Error ? err : new Error(String(err)));
+          setStatus("error");
+        }
+        throw err;
+      } finally {
+        refreshPromiseRef.current = null;
+      }
+    })();
+
+    refreshPromiseRef.current = promise;
+    return promise;
   }, [client]);
 
   useEffect(() => {
     isMountedRef.current = true;
-    refresh();
+    refresh().catch(() => {});
 
     let timer: ReturnType<typeof setInterval> | null = null;
 
@@ -83,7 +93,7 @@ export function GluonProvider({ children, client: customClient, pollIntervalMs =
           if (typeof document !== "undefined" && document.visibilityState === "hidden") {
             return; // Pause polling while tab is hidden
           }
-          refresh();
+          refresh().catch(() => {});
         }, pollIntervalMs);
       }
     };
@@ -97,7 +107,7 @@ export function GluonProvider({ children, client: customClient, pollIntervalMs =
 
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
-        refresh();
+        refresh().catch(() => {});
         startTimer();
       } else {
         stopTimer();

@@ -1,15 +1,20 @@
 /**
  * @file fakeClient.ts
- * @description Fake GluonClient implementation recording calls and supplying controllable snapshots.
+ * @description Fake GluonClient implementation recording calls, supplying controllable snapshots, and realistic quote math.
  * @module test
  */
-import type { ChainState, ProtocolSnapshot, ActionQuote, AdjustPegQuote, ReactorState } from "@stability-nexus/gluon-ergo-sdk";
+import { GluonError, type ChainState, type ProtocolSnapshot, type ActionQuote, type AdjustPegQuote, type ReactorState } from "@stability-nexus/gluon-ergo-sdk";
 
-export type SnapshotMode = "healthy" | "below-range" | "above-range";
+export type SnapshotMode = "healthy" | "below-range" | "above-range" | "stale-oracle" | "no-buyback";
+export type FakeClientMode = SnapshotMode;
 
-export interface FakeUnsignedTx {
+export interface FakeEip12UnsignedTx {
+  inputs: unknown[];
+  dataInputs: unknown[];
+  outputs: unknown[];
   toBytes(): Uint8Array;
 }
+export type FakeUnsignedTx = FakeEip12UnsignedTx;
 
 export function createFakeReactorState(overrides: Partial<ReactorState> = {}): ReactorState {
   return {
@@ -137,10 +142,24 @@ export function createFakeSnapshot(mode: SnapshotMode = "healthy"): ProtocolSnap
     };
   }
 
+  if (mode === "stale-oracle") {
+    return {
+      ...base,
+      oracleAge: 40,
+    };
+  }
+
+  if (mode === "no-buyback") {
+    return {
+      ...base,
+      betaDecaysAvailable: false,
+    };
+  }
+
   return base;
 }
 
-export function createFakeQuote(): ActionQuote {
+export function createFakeQuote(overrides: Partial<ActionQuote> = {}): ActionQuote {
   return {
     ergIn: 1000000000n,
     ergOut: 0n,
@@ -159,12 +178,13 @@ export function createFakeQuote(): ActionQuote {
     },
     next: createFakeReactorState(),
     qAfter: 720000000n,
+    ...overrides,
   };
 }
 
 export class FakeGluonClient {
   public mode: SnapshotMode = "healthy";
-  public calls: Array<{ method: string; args: unknown[] }> = [];
+  public calls: Array<{ method: string; chain?: ChainState; args: unknown[] }> = [];
 
   constructor(initialMode: SnapshotMode = "healthy") {
     this.mode = initialMode;
@@ -176,35 +196,201 @@ export class FakeGluonClient {
 
   async fetchChainState(): Promise<ChainState> {
     this.calls.push({ method: "fetchChainState", args: [] });
-    return createFakeChainState();
+    return createFakeChainState({
+      buyback: this.mode === "no-buyback" ? undefined : createFakeChainState().buyback,
+    });
   }
 
-  async snapshot(_chain?: ChainState): Promise<ProtocolSnapshot> {
-    this.calls.push({ method: "snapshot", args: [_chain] });
+  snapshot(_chain?: ChainState): ProtocolSnapshot {
+    this.calls.push({ method: "snapshot", chain: _chain, args: [_chain] });
     return createFakeSnapshot(this.mode);
   }
 
-  async quoteFission(...args: unknown[]): Promise<ActionQuote> {
-    this.calls.push({ method: "quoteFission", args });
-    return createFakeQuote();
+  quoteFission(_chain: ChainState, erg: bigint): ActionQuote {
+    this.calls.push({ method: "quoteFission", chain: _chain, args: [erg] });
+    if (this.mode === "stale-oracle" || (_chain?.oracle?.creationHeight && _chain.height + 1 - _chain.oracle.creationHeight >= 35)) {
+      throw new GluonError("ORACLE_STALE", "the oracle price is too old");
+    }
+    if (this.mode === "below-range" || this.mode === "above-range") {
+      throw new GluonError("REACTOR_UNHEALTHY", "the reactor is outside its healthy range");
+    }
+    if (erg <= 0n) {
+      throw new GluonError("AMOUNT_TOO_SMALL", "fission amount must be greater than zero");
+    }
+    if (erg > 1000000000000000000n) {
+      throw new GluonError("AMOUNT_TOO_LARGE", "reactor cannot release that many tokens");
+    }
+
+    const dev = (erg * 3n) / 1000n;
+    const outputsMinFee = 1000000n;
+    const miner = 2000000n;
+    const total = dev + outputsMinFee + miner;
+    const neutronsOut = (erg * 1000000000n) / 1500000000n;
+    const protonsOut = (erg * 1000000000n) / 500000000n;
+
+    return {
+      ergIn: erg,
+      ergOut: 0n,
+      neutronsIn: 0n,
+      neutronsOut,
+      protonsIn: 0n,
+      protonsOut,
+      principal: erg,
+      fees: {
+        dev,
+        ui: 0n,
+        oracle: 0n,
+        outputsMinFee,
+        miner,
+        total,
+      },
+      next: createFakeReactorState(),
+      qAfter: 700000000n,
+    };
   }
 
-  async quoteFusion(...args: unknown[]): Promise<ActionQuote> {
-    this.calls.push({ method: "quoteFusion", args });
-    return createFakeQuote();
+  quoteFusion(_chain: ChainState, erg: bigint): ActionQuote {
+    this.calls.push({ method: "quoteFusion", chain: _chain, args: [erg] });
+    if (this.mode === "stale-oracle" || (_chain?.oracle?.creationHeight && _chain.height + 1 - _chain.oracle.creationHeight >= 35)) {
+      throw new GluonError("ORACLE_STALE", "the oracle price is too old");
+    }
+    if (this.mode === "below-range" || this.mode === "above-range") {
+      throw new GluonError("REACTOR_UNHEALTHY", "the reactor is outside its healthy range");
+    }
+    if (erg <= 0n) {
+      throw new GluonError("AMOUNT_TOO_SMALL", "fusion amount must be greater than zero");
+    }
+    if (erg >= 1000000000000n) {
+      throw new GluonError("AMOUNT_TOO_LARGE", "fusion amount cannot exceed the reactor reserve");
+    }
+
+    const dev = (erg * 3n) / 1000n;
+    const outputsMinFee = 1000000n;
+    const miner = 2000000n;
+    const total = dev + outputsMinFee + miner;
+    const neutronsIn = (erg * 1000000000n) / 1500000000n;
+    const protonsIn = (erg * 1000000000n) / 500000000n;
+
+    return {
+      ergIn: 0n,
+      ergOut: erg,
+      neutronsIn,
+      neutronsOut: 0n,
+      protonsIn,
+      protonsOut: 0n,
+      principal: erg,
+      fees: {
+        dev,
+        ui: 0n,
+        oracle: 0n,
+        outputsMinFee,
+        miner,
+        total,
+      },
+      next: createFakeReactorState(),
+      qAfter: 700000000n,
+    };
   }
 
-  async quoteBetaDecayPlus(...args: unknown[]): Promise<ActionQuote> {
-    this.calls.push({ method: "quoteBetaDecayPlus", args });
-    return createFakeQuote();
+  quoteBetaDecayPlus(_chain: ChainState, protons: bigint): ActionQuote {
+    this.calls.push({ method: "quoteBetaDecayPlus", chain: _chain, args: [protons] });
+    if (this.mode === "stale-oracle" || (_chain?.oracle?.creationHeight && _chain.height + 1 - _chain.oracle.creationHeight >= 35)) {
+      throw new GluonError("ORACLE_STALE", "the oracle price is too old");
+    }
+    if (this.mode === "below-range" || this.mode === "above-range") {
+      throw new GluonError("REACTOR_UNHEALTHY", "the reactor is outside its healthy range");
+    }
+    if (protons <= 0n) {
+      throw new GluonError("AMOUNT_TOO_SMALL", "proton amount must be greater than zero");
+    }
+    if (protons > 1000000000000n) {
+      throw new GluonError("AMOUNT_TOO_LARGE", "reactor cannot release that many neutrons");
+    }
+    if (protons > 50000000000n) {
+      throw new GluonError("WOULD_LEAVE_HEALTHY_RANGE", "beta decay would leave the reactor outside the healthy range");
+    }
+    if (this.mode === "no-buyback" || !_chain?.buyback) {
+      throw new GluonError("BUYBACK_UNAVAILABLE", "this beta decay owes an oracle fee, but no buyback box exists");
+    }
+
+    const dev = (protons * 3n) / 1000n;
+    const oracle = 5000000n;
+    const outputsMinFee = 2000000n;
+    const miner = 2000000n;
+    const total = dev + oracle + outputsMinFee + miner;
+    const neutronsOut = (protons * 500000000n) / 1500000000n;
+
+    return {
+      ergIn: 0n,
+      ergOut: 0n,
+      neutronsIn: 0n,
+      neutronsOut,
+      protonsIn: protons,
+      protonsOut: 0n,
+      principal: protons,
+      fees: {
+        dev,
+        ui: 0n,
+        oracle,
+        outputsMinFee,
+        miner,
+        total,
+      },
+      next: createFakeReactorState(),
+      qAfter: 750000000n,
+    };
   }
 
-  async quoteBetaDecayMinus(...args: unknown[]): Promise<ActionQuote> {
-    this.calls.push({ method: "quoteBetaDecayMinus", args });
-    return createFakeQuote();
+  quoteBetaDecayMinus(_chain: ChainState, neutrons: bigint): ActionQuote {
+    this.calls.push({ method: "quoteBetaDecayMinus", chain: _chain, args: [neutrons] });
+    if (this.mode === "stale-oracle" || (_chain?.oracle?.creationHeight && _chain.height + 1 - _chain.oracle.creationHeight >= 35)) {
+      throw new GluonError("ORACLE_STALE", "the oracle price is too old");
+    }
+    if (this.mode === "below-range" || this.mode === "above-range") {
+      throw new GluonError("REACTOR_UNHEALTHY", "the reactor is outside its healthy range");
+    }
+    if (neutrons <= 0n) {
+      throw new GluonError("AMOUNT_TOO_SMALL", "neutron amount must be greater than zero");
+    }
+    if (neutrons > 1000000000000n) {
+      throw new GluonError("AMOUNT_TOO_LARGE", "reactor cannot release that many protons");
+    }
+    if (neutrons > 50000000000n) {
+      throw new GluonError("WOULD_LEAVE_HEALTHY_RANGE", "beta decay would leave the reactor outside the healthy range");
+    }
+    if (this.mode === "no-buyback" || !_chain?.buyback) {
+      throw new GluonError("BUYBACK_UNAVAILABLE", "this beta decay owes an oracle fee, but no buyback box exists");
+    }
+
+    const dev = (neutrons * 3n) / 1000n;
+    const oracle = 5000000n;
+    const outputsMinFee = 2000000n;
+    const miner = 2000000n;
+    const total = dev + oracle + outputsMinFee + miner;
+    const protonsOut = (neutrons * 1500000000n) / 500000000n;
+
+    return {
+      ergIn: 0n,
+      ergOut: 0n,
+      neutronsIn: neutrons,
+      neutronsOut: 0n,
+      protonsIn: 0n,
+      protonsOut,
+      principal: neutrons,
+      fees: {
+        dev,
+        ui: 0n,
+        oracle,
+        outputsMinFee,
+        miner,
+        total,
+      },
+      next: createFakeReactorState(),
+      qAfter: 650000000n,
+    };
   }
 
-  async quoteAdjustPeg(...args: unknown[]): Promise<AdjustPegQuote> {
+  quoteAdjustPeg(...args: unknown[]): AdjustPegQuote {
     this.calls.push({ method: "quoteAdjustPeg", args });
     const snap = createFakeSnapshot(this.mode);
     return {
@@ -215,47 +401,83 @@ export class FakeGluonClient {
     };
   }
 
-  async buildFission(...args: unknown[]): Promise<FakeUnsignedTx> {
-    this.calls.push({ method: "buildFission", args });
-    return { toBytes: () => new Uint8Array([1, 2, 3]) };
+  buildFission(chain: ChainState, args: unknown): FakeEip12UnsignedTx {
+    this.calls.push({ method: "buildFission", chain, args: [chain, args] });
+    return {
+      inputs: [],
+      dataInputs: [],
+      outputs: [],
+      toBytes: () => new Uint8Array([1, 2, 3]),
+    };
   }
 
-  async buildFusion(...args: unknown[]): Promise<FakeUnsignedTx> {
-    this.calls.push({ method: "buildFusion", args });
-    return { toBytes: () => new Uint8Array([1, 2, 3]) };
+  buildFusion(chain: ChainState, args: unknown): FakeEip12UnsignedTx {
+    this.calls.push({ method: "buildFusion", chain, args: [chain, args] });
+    return {
+      inputs: [],
+      dataInputs: [],
+      outputs: [],
+      toBytes: () => new Uint8Array([1, 2, 3]),
+    };
   }
 
-  async buildBetaDecayPlus(...args: unknown[]): Promise<FakeUnsignedTx> {
-    this.calls.push({ method: "buildBetaDecayPlus", args });
-    return { toBytes: () => new Uint8Array([1, 2, 3]) };
+  buildBetaDecayPlus(chain: ChainState, args: unknown): FakeEip12UnsignedTx {
+    this.calls.push({ method: "buildBetaDecayPlus", chain, args: [chain, args] });
+    return {
+      inputs: [],
+      dataInputs: [],
+      outputs: [],
+      toBytes: () => new Uint8Array([1, 2, 3]),
+    };
   }
 
-  async buildBetaDecayMinus(...args: unknown[]): Promise<FakeUnsignedTx> {
-    this.calls.push({ method: "buildBetaDecayMinus", args });
-    return { toBytes: () => new Uint8Array([1, 2, 3]) };
+  buildBetaDecayMinus(chain: ChainState, args: unknown): FakeEip12UnsignedTx {
+    this.calls.push({ method: "buildBetaDecayMinus", chain, args: [chain, args] });
+    return {
+      inputs: [],
+      dataInputs: [],
+      outputs: [],
+      toBytes: () => new Uint8Array([1, 2, 3]),
+    };
   }
 
-  async buildAdjustPeg(...args: unknown[]): Promise<FakeUnsignedTx> {
-    this.calls.push({ method: "buildAdjustPeg", args });
-    return { toBytes: () => new Uint8Array([1, 2, 3]) };
+  buildAdjustPeg(chain: ChainState, args: unknown): FakeEip12UnsignedTx {
+    this.calls.push({ method: "buildAdjustPeg", chain, args: [chain, args] });
+    return {
+      inputs: [],
+      dataInputs: [],
+      outputs: [],
+      toBytes: () => new Uint8Array([1, 2, 3]),
+    };
   }
 
-  async buildUpdateTreasury(...args: unknown[]): Promise<FakeUnsignedTx> {
-    this.calls.push({ method: "buildUpdateTreasury", args });
-    return { toBytes: () => new Uint8Array([1, 2, 3]) };
+  buildUpdateTreasury(chain: ChainState, args: unknown): FakeEip12UnsignedTx {
+    this.calls.push({ method: "buildUpdateTreasury", chain, args: [chain, args] });
+    return {
+      inputs: [],
+      dataInputs: [],
+      outputs: [],
+      toBytes: () => new Uint8Array([1, 2, 3]),
+    };
   }
 
-  async maxBetaDecayPlus(...args: unknown[]): Promise<bigint> {
-    this.calls.push({ method: "maxBetaDecayPlus", args });
-    return 10000000000n;
+  maxBetaDecayPlus(_chain: ChainState): bigint {
+    this.calls.push({ method: "maxBetaDecayPlus", chain: _chain, args: [_chain] });
+    if (this.mode !== "healthy") {
+      return 0n;
+    }
+    return 50000000000n;
   }
 
-  async maxBetaDecayMinus(...args: unknown[]): Promise<bigint> {
-    this.calls.push({ method: "maxBetaDecayMinus", args });
-    return 10000000000n;
+  maxBetaDecayMinus(_chain: ChainState): bigint {
+    this.calls.push({ method: "maxBetaDecayMinus", chain: _chain, args: [_chain] });
+    if (this.mode !== "healthy") {
+      return 0n;
+    }
+    return 50000000000n;
   }
 
-  async findMaxQuote(...args: unknown[]): Promise<ActionQuote> {
+  findMaxQuote(...args: unknown[]): ActionQuote {
     this.calls.push({ method: "findMaxQuote", args });
     return createFakeQuote();
   }
