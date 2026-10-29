@@ -5,6 +5,7 @@
  */
 import { toast } from "sonner";
 import { GluonError, type GluonErrorCode } from "@stability-nexus/gluon-ergo-sdk";
+import { formatUnits } from "./amounts";
 
 export const GLUON_ERROR_MESSAGES: Record<GluonErrorCode, string> = {
   REACTOR_UNHEALTHY: "The reactor is outside its healthy range. Trading resumes after the peg is adjusted.",
@@ -23,11 +24,36 @@ export const GLUON_ERROR_MESSAGES: Record<GluonErrorCode, string> = {
   INVALID_DEPLOYMENT: "Configuration error: Invalid deployment data.",
 };
 
-export function getGluonErrorMessage(error: unknown): string | null {
+export interface GluonErrorOptions {
+  max?: bigint;
+  decimals?: number;
+}
+
+export function getGluonErrorMessage(error: unknown, options?: GluonErrorOptions): string | null {
   if (error instanceof GluonError) {
+    if (error.code === "WOULD_LEAVE_HEALTHY_RANGE" && options?.max !== undefined) {
+      const decimals = options.decimals ?? 9;
+      return `This amount would push the reactor out of its healthy range. The maximum is ${formatUnits(options.max, decimals)}.`;
+    }
     return GLUON_ERROR_MESSAGES[error.code] || error.message;
   }
   return null;
+}
+
+export function isWalletCancellation(error: unknown): boolean {
+  if (!error) return false;
+  const cancellationPattern = /(user\s*(rejected|cancelled|canceled|declined)|(rejected|cancelled|canceled|declined)\s*by\s*user)/i;
+
+  if (typeof error === "object") {
+    const err = error as { code?: number; info?: string; message?: string };
+    if (err.code === 2) return true;
+    const msg = String(err.message || err.info || "");
+    if (cancellationPattern.test(msg)) return true;
+  }
+  if (typeof error === "string") {
+    if (cancellationPattern.test(error)) return true;
+  }
+  return false;
 }
 
 export enum ErrorType {
