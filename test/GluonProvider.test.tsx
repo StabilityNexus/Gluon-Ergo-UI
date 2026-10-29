@@ -8,7 +8,7 @@ import { describe, expect, it } from "bun:test";
 import { render, waitFor, act } from "@testing-library/react";
 import { GluonProvider } from "@/lib/providers/GluonProvider";
 import { useGluon } from "@/lib/hooks/useGluon";
-import { FakeGluonClient } from "./fakeClient";
+import { FakeGluonClient, createFakeChainState } from "./fakeClient";
 import type { GluonClient } from "@stability-nexus/gluon-ergo-sdk";
 
 function ConsumerComponent() {
@@ -231,6 +231,69 @@ describe("GluonProvider", () => {
     expect(err2).toBeDefined();
     expect((err1 as Error).message).toBe("Network failure during fetch");
     expect((err2 as Error).message).toBe("Network failure during fetch");
+  });
+
+  it("clears refreshPromiseRef when fetchChainState throws synchronously so second refresh starts a new fetch", async () => {
+    const fakeClient = new FakeGluonClient("healthy");
+    let callCount = 0;
+    let shouldThrow = true;
+
+    fakeClient.fetchChainState = () => {
+      callCount++;
+      if (shouldThrow) {
+        throw new Error("Synchronous fetchChainState crash");
+      }
+      return Promise.resolve(createFakeChainState());
+    };
+
+    let refreshFn: (() => Promise<unknown>) | undefined;
+
+    function Capture() {
+      const { refresh } = useGluon();
+      React.useEffect(() => {
+        refreshFn = refresh;
+      }, [refresh]);
+      return null;
+    }
+
+    render(
+      <GluonProvider client={fakeClient as unknown as GluonClient} pollIntervalMs={10000}>
+        <Capture />
+      </GluonProvider>
+    );
+
+    await waitFor(() => {
+      expect(refreshFn).toBeDefined();
+    });
+
+    // Reset callCount from initial mount
+    callCount = 0;
+
+    // First refresh rejects
+    let firstError: unknown;
+    await act(async () => {
+      try {
+        await refreshFn!();
+      } catch (err) {
+        firstError = err;
+      }
+    });
+
+    expect(firstError).toBeDefined();
+    expect((firstError as Error).message).toBe("Synchronous fetchChainState crash");
+    expect(callCount).toBe(1);
+
+    // Fix the fake client
+    shouldThrow = false;
+
+    // Second refresh starts a new fetch (call count 2) and resolves
+    let secondResult: unknown;
+    await act(async () => {
+      secondResult = await refreshFn!();
+    });
+
+    expect(secondResult).toBeDefined();
+    expect(callCount).toBe(2);
   });
 
   it("exposes deployment (the synthetic one) and presentation in context", async () => {

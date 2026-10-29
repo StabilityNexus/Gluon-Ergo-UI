@@ -72,12 +72,16 @@ export function GluonProvider({ children, client: customClient, pollIntervalMs =
           setStatus("error");
         }
         throw err;
-      } finally {
-        refreshPromiseRef.current = null;
       }
     })();
 
     refreshPromiseRef.current = promise;
+    const clear = () => {
+      if (refreshPromiseRef.current === promise) {
+        refreshPromiseRef.current = null;
+      }
+    };
+    promise.then(clear, clear);
     return promise;
   }, [client]);
 
