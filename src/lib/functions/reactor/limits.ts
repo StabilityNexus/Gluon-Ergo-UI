@@ -10,7 +10,7 @@ import type { SwapClient } from "./types";
 /**
  * Safe minimum box value per Ergo protocol & EIP-12 standard.
  * Sourced from @fleet-sdk/core SAFE_MIN_BOX_VALUE (1000000n nanoERG),
- * cited in SDK select.js:1,115,137 and client.js:1,404,421,445,465.
+ * cited in SDK select.js selectInputs and client.js buildFission and friends.
  */
 export const SAFE_MIN_BOX_VALUE = 1000000n;
 export const MAX_BINARY_SEARCH_ITERATIONS = 64;
@@ -50,6 +50,8 @@ export function isFissionAmountAllowed(
  * Calculates the maximum ERG amount that can be deposited for fission,
  * strictly bounded by the conservative change-box rule (leftover >= SAFE_MIN_BOX_VALUE)
  * so buildFission will not throw INSUFFICIENT_FUNDS.
+ *
+ * Note: The UI passes walletErg minus its own reserve (e.g. MIN_ERG_BUFFER = 100_000_000n).
  */
 export function calculateFissionMax(client: SwapClient, chain: ChainState, walletErg: bigint): bigint {
   if (walletErg <= SAFE_MIN_BOX_VALUE * 2n) {
