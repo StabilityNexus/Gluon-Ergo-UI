@@ -102,7 +102,7 @@ export async function handleFusionSwap({
 
   // 7. Record transaction in transaction listener
   try {
-    const expectedChanges = buildExpectedChanges(ACTION_TYPES.FUSION, quote, deployment);
+    const expectedChanges = buildExpectedChanges(ACTION_TYPES.FUSION, quote);
     listener.saveUpTransaction(txHash, ACTION_TYPES.FUSION, preState, expectedChanges);
   } catch (err: unknown) {
     console.error("Failed to record swap in transaction listener:", err);

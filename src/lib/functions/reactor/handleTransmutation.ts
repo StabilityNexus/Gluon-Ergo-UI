@@ -115,7 +115,7 @@ export async function handleTransmutationSwap({
 
   // 7. Record transaction in transaction listener
   try {
-    const expectedChanges = buildExpectedChanges(actionType, quote, deployment);
+    const expectedChanges = buildExpectedChanges(actionType, quote);
     listener.saveUpTransaction(txHash, actionType, preState, expectedChanges);
   } catch (err: unknown) {
     console.error("Failed to record swap in transaction listener:", err);

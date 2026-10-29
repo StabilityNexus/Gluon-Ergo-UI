@@ -40,7 +40,7 @@ describe("history.ts > buildExpectedChanges", () => {
       qAfter: 720000000n,
     };
 
-    const changes = buildExpectedChanges(ACTION_TYPES.FISSION, quote, syntheticGoldDeployment);
+    const changes = buildExpectedChanges(ACTION_TYPES.FISSION, quote);
     expect(changes).toEqual({
       erg: "-1000000000",
       gau: "500000000",
@@ -70,7 +70,7 @@ describe("history.ts > buildExpectedChanges", () => {
       qAfter: 680000000n,
     };
 
-    const changes = buildExpectedChanges(ACTION_TYPES.FUSION, quote, syntheticGoldDeployment);
+    const changes = buildExpectedChanges(ACTION_TYPES.FUSION, quote);
     expect(changes).toEqual({
       erg: "1000000000",
       gau: "-400000000",
@@ -100,7 +100,7 @@ describe("history.ts > buildExpectedChanges", () => {
       qAfter: 750000000n,
     };
 
-    const changes = buildExpectedChanges(ACTION_TYPES.TRANSMUTE_TO_PEG, quote, syntheticGoldDeployment);
+    const changes = buildExpectedChanges(ACTION_TYPES.TRANSMUTE_TO_PEG, quote);
     expect(changes).toEqual({
       erg: "0",
       gau: "1000000000",
@@ -130,7 +130,7 @@ describe("history.ts > buildExpectedChanges", () => {
       qAfter: 650000000n,
     };
 
-    const changes = buildExpectedChanges(ACTION_TYPES.TRANSMUTE_FROM_PEG, quote, syntheticGoldDeployment);
+    const changes = buildExpectedChanges(ACTION_TYPES.TRANSMUTE_FROM_PEG, quote);
     expect(changes).toEqual({
       erg: "0",
       gau: "-1000000000",
