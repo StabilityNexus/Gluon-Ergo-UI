@@ -311,4 +311,59 @@ describe("useTransactionListener hook", () => {
     expect(html).toContain("no");
     expect(createCount).toBe(0);
   });
+
+  it("refreshPending() updates hasPending immediately when pending state flips, and is a no-op when disconnected", async () => {
+    // 1. When disconnected: calling refreshPending() is safe and does not set hasPending
+    mockIsConnected = false;
+    const { result: disResult } = renderHook(() => useTransactionListener());
+    expect(disResult.current.hasPending).toBe(false);
+    expect(typeof disResult.current.refreshPending).toBe("function");
+
+    act(() => {
+      disResult.current.refreshPending();
+    });
+    expect(disResult.current.hasPending).toBe(false);
+
+    // 2. When connected: after pending state flips, refreshPending() updates hasPending immediately without waiting for interval
+    mockIsConnected = true;
+    let pendingState = false;
+    const fakeListener: Partial<TransactionListener> = {
+      setBalanceProvider: () => {},
+      initialize: () => {},
+      hasPendingTransactions: () => pendingState,
+      checkWalletUpdates: async () => {},
+    };
+
+    const { result, unmount } = renderHook(() =>
+      useTransactionListener({
+        createListener: () => fakeListener as TransactionListener,
+        checkIntervalMs: 100000, // Very long interval: proves refreshPending does not wait for timer
+      })
+    );
+
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 5));
+    });
+
+    expect(result.current.hasPending).toBe(false);
+
+    // Flip pending state to true in the listener
+    pendingState = true;
+    expect(result.current.hasPending).toBe(false); // still false before check or refresh
+
+    // Calling refreshPending immediately updates hasPending
+    act(() => {
+      result.current.refreshPending();
+    });
+    expect(result.current.hasPending).toBe(true);
+
+    // Flip back to false
+    pendingState = false;
+    act(() => {
+      result.current.refreshPending();
+    });
+    expect(result.current.hasPending).toBe(false);
+
+    unmount();
+  });
 });

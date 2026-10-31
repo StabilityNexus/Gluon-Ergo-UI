@@ -33,6 +33,7 @@ export interface UseTransactionListenerOptions {
 export interface UseTransactionListenerResult {
   listener: TransactionListener | undefined;
   hasPending: boolean;
+  refreshPending: () => void;
 }
 
 /**
@@ -61,15 +62,18 @@ export function useTransactionListener(options?: UseTransactionListenerOptions):
   }, [getUtxos]);
 
   const isAvailable = isConnected && !isRestoringConnection;
+  const listenerRef = useRef<TransactionListener | undefined>(undefined);
 
   useEffect(() => {
     if (!isAvailable) {
+      listenerRef.current = undefined;
       return;
     }
 
     // Lazy initialization strictly in effect (safe for SSR / static export)
     const nodeService = new NodeService(nodeUrl);
     const instance = createListener(nodeService);
+    listenerRef.current = instance;
 
     const balanceProvider = async (): Promise<Array<{ tokenId: string; balance: string }>> => {
       const boxes = await getUtxosRef.current();
@@ -99,12 +103,21 @@ export function useTransactionListener(options?: UseTransactionListenerOptions):
     }, checkIntervalMs);
 
     return () => {
+      listenerRef.current = undefined;
       clearInterval(intervalId);
     };
   }, [isAvailable, nodeUrl, createListener, checkIntervalMs]);
 
+  const refreshPending = (): void => {
+    const current = isAvailable ? (listenerRef.current ?? listener) : undefined;
+    if (current) {
+      setHasPending(current.hasPendingTransactions());
+    }
+  };
+
   return {
     listener: isAvailable ? listener : undefined,
     hasPending: isAvailable ? hasPending : false,
+    refreshPending,
   };
 }
