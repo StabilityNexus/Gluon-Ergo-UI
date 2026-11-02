@@ -4,8 +4,8 @@
  * @module test
  */
 
-import { describe, it, expect, beforeEach } from "bun:test";
-import { renderHook, act } from "@testing-library/react";
+import { describe, it, expect, beforeEach, afterEach, afterAll, mock } from "bun:test";
+import { renderHook, act, cleanup } from "@testing-library/react";
 import { useWalletBalances } from "@/lib/hooks/useWalletBalances";
 import type { Box, Amount } from "@fleet-sdk/common";
 
@@ -16,9 +16,13 @@ let mockBoxes: Box<Amount>[] = [];
 
 const mockGetUtxos = async () => mockBoxes;
 
+// Save real module before mocking to enable restoration in afterAll
+import * as realErgoProvider from "@/lib/providers/ErgoProvider";
+const savedRealErgoProvider = { ...realErgoProvider };
+
 // Use mock.module to control useErgo in this test file
-import { mock } from "bun:test";
 mock.module("@/lib/providers/ErgoProvider", () => ({
+  ...savedRealErgoProvider,
   useErgo: () => ({
     walletList: [],
     isConnected: mockIsConnected,
@@ -38,6 +42,18 @@ mock.module("@/lib/providers/ErgoProvider", () => ({
 }));
 
 describe("useWalletBalances hook", () => {
+  afterAll(() => {
+    cleanup();
+    mock.module("@/lib/providers/ErgoProvider", () => savedRealErgoProvider);
+  });
+
+  afterEach(() => {
+    cleanup();
+    mockIsConnected = false;
+    mockIsRestoringConnection = false;
+    mockBoxes = [];
+  });
+
   beforeEach(() => {
     mockIsConnected = false;
     mockIsRestoringConnection = false;

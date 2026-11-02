@@ -4,7 +4,7 @@
  * @module test
  */
 
-import { describe, it, expect } from "bun:test";
+import { describe, it, expect, afterAll } from "bun:test";
 import React from "react";
 import { renderToString } from "react-dom/server";
 import { useWalletBalances } from "@/lib/hooks/useWalletBalances";
@@ -15,7 +15,11 @@ let getUtxosCallCount = 0;
 let createListenerCallCount = 0;
 
 import { mock } from "bun:test";
+import * as realErgoProvider from "@/lib/providers/ErgoProvider";
+const savedRealErgoProvider = { ...realErgoProvider };
+
 mock.module("@/lib/providers/ErgoProvider", () => ({
+  ...savedRealErgoProvider,
   useErgo: () => ({
     walletList: [],
     isConnected: true, // Even if true, effects MUST NOT run in SSR
@@ -57,6 +61,10 @@ function ServerComponent() {
 }
 
 describe("SSR Probe: useWalletBalances and useTransactionListener", () => {
+  afterAll(() => {
+    mock.module("@/lib/providers/ErgoProvider", () => savedRealErgoProvider);
+  });
+
   it("performs ZERO calls to getUtxos and ZERO createListener calls during renderToString", () => {
     getUtxosCallCount = 0;
     createListenerCallCount = 0;

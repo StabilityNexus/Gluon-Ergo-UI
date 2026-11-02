@@ -4,8 +4,8 @@
  * @module test
  */
 
-import { describe, it, expect, beforeEach } from "bun:test";
-import { renderHook, act } from "@testing-library/react";
+import { describe, it, expect, beforeEach, afterEach, afterAll, mock } from "bun:test";
+import { renderHook, act, cleanup } from "@testing-library/react";
 import React from "react";
 import { renderToString } from "react-dom/server";
 import { useTransactionListener } from "@/lib/hooks/useTransactionListener";
@@ -18,8 +18,12 @@ let mockBoxes: Box<Amount>[] = [];
 
 const mockGetUtxos = async () => mockBoxes;
 
-import { mock } from "bun:test";
+// Save real module before mocking to enable restoration in afterAll
+import * as realErgoProvider from "@/lib/providers/ErgoProvider";
+const savedRealErgoProvider = { ...realErgoProvider };
+
 mock.module("@/lib/providers/ErgoProvider", () => ({
+  ...savedRealErgoProvider,
   useErgo: () => ({
     walletList: [],
     isConnected: mockIsConnected,
@@ -45,6 +49,18 @@ mock.module("@/lib/providers/ErgoProvider", () => ({
 }));
 
 describe("useTransactionListener hook", () => {
+  afterAll(() => {
+    cleanup();
+    mock.module("@/lib/providers/ErgoProvider", () => savedRealErgoProvider);
+  });
+
+  afterEach(() => {
+    cleanup();
+    mockIsConnected = false;
+    mockIsRestoringConnection = false;
+    mockBoxes = [];
+  });
+
   beforeEach(() => {
     mockIsConnected = false;
     mockIsRestoringConnection = false;
