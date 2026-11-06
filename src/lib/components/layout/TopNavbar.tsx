@@ -10,8 +10,9 @@ import { useRouter } from "next/router";
 import { WalletConnector } from "../blockchain/connector/WalletConnector";
 import { tokenConfig } from "@/config/tokenConfig";
 
-// Hidden during B1 foundation; ported back in B2 (swap) and B4 (reactor)
+// Hidden during B1 foundation; ported back in B4 (reactor)
 const navItems = [
+  { href: "/swap", label: "Swap" },
   { href: "/history", label: "History" },
   {
     href: "https://docs.stability.nexus/gluon-protocols/gluon-overview",
