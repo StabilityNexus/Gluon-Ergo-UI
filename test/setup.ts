@@ -20,8 +20,13 @@ globalThis.HTMLElement = dom.window.HTMLElement;
 globalThis.Element = dom.window.Element;
 globalThis.Node = dom.window.Node;
 globalThis.MutationObserver = dom.window.MutationObserver;
+globalThis.DocumentFragment = dom.window.DocumentFragment;
 globalThis.Event = dom.window.Event as unknown as typeof Event;
 globalThis.CustomEvent = dom.window.CustomEvent as unknown as typeof CustomEvent;
+
+// Radix UI requires scrollIntoView which JSDOM does not implement
+dom.window.HTMLElement.prototype.scrollIntoView = () => {};
+dom.window.Element.prototype.scrollIntoView = () => {};
 
 // 2. Register synthetic deployment for testing (R9 hex "590280897a" decodes to pair [1n, 1000000n])
 export const syntheticGoldDeployment = deploymentFromRecord({

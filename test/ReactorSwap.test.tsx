@@ -426,9 +426,13 @@ describe("ReactorSwap Component Tests", () => {
     });
 
     // Select From: GAU, To: GAUC (Transmutation: quoteBetaDecayMinus throws WOULD_LEAVE when > 50)
-    const selects = screen.getAllByRole("combobox");
+    const fromTrigger = screen.getByRole("combobox", { name: "From token" });
     await act(async () => {
-      fireEvent.change(selects[0], { target: { value: "GAU" } });
+      fireEvent.click(fromTrigger);
+    });
+    const gauOption = screen.getByRole("option", { name: "GAU" });
+    await act(async () => {
+      fireEvent.click(gauOption);
     });
 
     const inputs = screen.getAllByRole("textbox");

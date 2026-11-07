@@ -46,7 +46,7 @@ import { handleTransmutationSwap } from "@/lib/functions/reactor/handleTransmuta
 import type { SwapClient, SwapHandlerResult } from "@/lib/functions/reactor/types";
 import { toBaseUnits, formatUnits } from "@/lib/utils/amounts";
 import { cn } from "@/lib/utils/utils";
-import { SwapTokenCard } from "./SwapTokenCard";
+import { SwapTokenCard, type PairBreakdownItem } from "./SwapTokenCard";
 import { SwapReceipt } from "./SwapReceipt";
 import { Card, CardHeader, CardContent } from "@/lib/components/ui/card";
 import { Button } from "@/lib/components/ui/button";
@@ -336,6 +336,50 @@ export function ReactorSwap({
     [state.toSymbol, balances, deployment]
   );
 
+  const fromPairBreakdown = useMemo((): [PairBreakdownItem, PairBreakdownItem] | undefined => {
+    if (state.fromSymbol !== pairSymbol) return undefined;
+    const stableBalance = getTokenBalanceText(neutronName, balances, deployment);
+    const volatileBalance = getTokenBalanceText(protonName, balances, deployment);
+
+    let stableAmount = "0";
+    let volatileAmount = "0";
+
+    if (quote.status === "ready" && quote.result?.ok && action === ACTION_TYPES.FUSION) {
+      const desc = describeQuote(action, quote.result.quote, deployment);
+      if (desc.pay.length === 2) {
+        stableAmount = desc.pay[0].amount;
+        volatileAmount = desc.pay[1].amount;
+      }
+    }
+
+    return [
+      { symbol: neutronName, balanceText: stableBalance, amountText: stableAmount },
+      { symbol: protonName, balanceText: volatileBalance, amountText: volatileAmount },
+    ];
+  }, [state.fromSymbol, pairSymbol, neutronName, protonName, balances, deployment, quote, action]);
+
+  const toPairBreakdown = useMemo((): [PairBreakdownItem, PairBreakdownItem] | undefined => {
+    if (state.toSymbol !== pairSymbol) return undefined;
+    const stableBalance = getTokenBalanceText(neutronName, balances, deployment);
+    const volatileBalance = getTokenBalanceText(protonName, balances, deployment);
+
+    let stableAmount = "0";
+    let volatileAmount = "0";
+
+    if (quote.status === "ready" && quote.result?.ok && action === ACTION_TYPES.FISSION) {
+      const desc = describeQuote(action, quote.result.quote, deployment);
+      if (desc.receive.length === 2) {
+        stableAmount = desc.receive[0].amount;
+        volatileAmount = desc.receive[1].amount;
+      }
+    }
+
+    return [
+      { symbol: neutronName, balanceText: stableBalance, amountText: stableAmount },
+      { symbol: protonName, balanceText: volatileBalance, amountText: volatileAmount },
+    ];
+  }, [state.toSymbol, pairSymbol, neutronName, protonName, balances, deployment, quote, action]);
+
   // MAX button visibility rules:
   // Shown on FROM card for ERG (fission), proton, neutron; NEVER on pair token in FROM card.
   // Shown on TO card for ERG (fusion).
@@ -478,28 +522,11 @@ export function ReactorSwap({
           <CardContent className="space-y-4 p-6 pt-0">
             {/* FROM Section */}
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  From
-                </span>
-                <select
-                  value={state.fromSymbol}
-                  onChange={(e) => dispatch({ type: "selectFrom", symbol: e.target.value, deployment })}
-                  disabled={isBlocked}
-                  aria-label="From token"
-                  className="h-8 rounded-md border border-input bg-background px-2.5 py-1 text-xs font-semibold text-foreground shadow-sm focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {allTokens.map((token) => (
-                    <option key={token.symbol} value={token.symbol}>
-                      {token.symbol}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
               <SwapTokenCard
                 label="From"
                 symbol={state.fromSymbol}
+                tokens={allTokens}
+                onSelectToken={(sym) => dispatch({ type: "selectFrom", symbol: sym, deployment })}
                 value={fromCardValue}
                 onChange={driving === "from" ? (val) => dispatch({ type: "setAmount", amountText: val }) : undefined}
                 readOnly={driving !== "from"}
@@ -508,6 +535,7 @@ export function ReactorSwap({
                 balanceText={fromBalanceText}
                 onMax={showFromMax ? handleFromMax : undefined}
                 error={driving === "from" ? buttonState.inlineError : undefined}
+                pairBreakdown={fromPairBreakdown}
               />
             </div>
 
@@ -528,28 +556,11 @@ export function ReactorSwap({
 
             {/* TO Section */}
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  To
-                </span>
-                <select
-                  value={state.toSymbol}
-                  onChange={(e) => dispatch({ type: "selectTo", symbol: e.target.value, deployment })}
-                  disabled={isBlocked}
-                  aria-label="To token"
-                  className="h-8 rounded-md border border-input bg-background px-2.5 py-1 text-xs font-semibold text-foreground shadow-sm focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {validToTokens.map((token) => (
-                    <option key={token.symbol} value={token.symbol}>
-                      {token.symbol}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
               <SwapTokenCard
                 label="To"
                 symbol={state.toSymbol}
+                tokens={validToTokens}
+                onSelectToken={(sym) => dispatch({ type: "selectTo", symbol: sym, deployment })}
                 value={toCardValue}
                 onChange={driving === "to" ? (val) => dispatch({ type: "setAmount", amountText: val }) : undefined}
                 readOnly={driving !== "to"}
@@ -558,6 +569,7 @@ export function ReactorSwap({
                 balanceText={toBalanceText}
                 onMax={showToMax ? handleToMax : undefined}
                 error={driving === "to" ? buttonState.inlineError : undefined}
+                pairBreakdown={toPairBreakdown}
               />
             </div>
 

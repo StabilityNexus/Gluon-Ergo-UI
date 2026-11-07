@@ -203,6 +203,60 @@ describe("SwapTokenCard", () => {
     expect(alert.textContent).toContain("Insufficient ERG balance");
   });
 
+  it("renders token dropdown with token options and selects new token", async () => {
+    let selectedToken = "";
+    render(
+      <SwapTokenCard
+        label="From"
+        symbol="ERG"
+        value="0"
+        decimals={9}
+        tokens={[{ symbol: "ERG" }, { symbol: "GAU" }, { symbol: "GAUC" }]}
+        onSelectToken={(sym) => {
+          selectedToken = sym;
+        }}
+      />
+    );
+
+    const trigger = screen.getByRole("combobox", { name: "From token" });
+    expect(trigger).toBeDefined();
+
+    await act(async () => {
+      fireEvent.click(trigger);
+    });
+
+    const gauOption = screen.getByRole("option", { name: "GAU" });
+    expect(gauOption).toBeDefined();
+
+    await act(async () => {
+      fireEvent.click(gauOption);
+    });
+
+    expect(selectedToken).toBe("GAU");
+  });
+
+  it("renders pair breakdown for combined tokens", () => {
+    render(
+      <SwapTokenCard
+        label="To"
+        symbol="GAU-GAUC"
+        value="0"
+        decimals={9}
+        pairBreakdown={[
+          { symbol: "GAU", balanceText: "100.0", amountText: "50.0" },
+          { symbol: "GAUC", balanceText: "20.0", amountText: "10.0" },
+        ]}
+      />
+    );
+
+    expect(screen.getByText("GAU Balance")).toBeDefined();
+    expect(screen.getByText("100.0")).toBeDefined();
+    expect(screen.getByText("50.0")).toBeDefined();
+    expect(screen.getByText("GAUC Balance")).toBeDefined();
+    expect(screen.getByText("20.0")).toBeDefined();
+    expect(screen.getByText("10.0")).toBeDefined();
+  });
+
   it("hydrates without any recoverable errors or mismatch warnings", async () => {
     const html = renderToString(
       <SwapTokenCard
