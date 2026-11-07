@@ -4,8 +4,8 @@
  * @module test
  */
 
-import { describe, it, expect } from "bun:test";
-import { renderHook, act } from "@testing-library/react";
+import { describe, it, expect, afterEach } from "bun:test";
+import { renderHook, act, cleanup } from "@testing-library/react";
 import React from "react";
 import { renderToString } from "react-dom/server";
 import { useSwapQuote } from "@/lib/hooks/useSwapQuote";
@@ -16,6 +16,8 @@ import { GluonError } from "@stability-nexus/gluon-ergo-sdk";
 import type { SwapClient } from "@/lib/functions/reactor/types";
 
 describe("useSwapQuote hook", () => {
+  afterEach(cleanup);
+
   const deployment = syntheticGoldDeployment;
 
   it("handles status transitions: idle -> pending -> ready", async () => {

@@ -4,8 +4,8 @@
  * @module test
  */
 import React from "react";
-import { describe, expect, it } from "bun:test";
-import { render, waitFor, act } from "@testing-library/react";
+import { describe, expect, it, afterEach } from "bun:test";
+import { render, waitFor, act, cleanup } from "@testing-library/react";
 import { GluonProvider } from "@/lib/providers/GluonProvider";
 import { useGluon } from "@/lib/hooks/useGluon";
 import { FakeGluonClient, createFakeChainState } from "./fakeClient";
@@ -23,6 +23,8 @@ function ConsumerComponent() {
 }
 
 describe("GluonProvider", () => {
+  afterEach(cleanup);
+
   it("initializes and fetches chain state and snapshot on mount", async () => {
     const fakeClient = new FakeGluonClient("healthy");
 

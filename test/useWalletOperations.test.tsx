@@ -5,7 +5,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from "bun:test";
-import { renderHook, act } from "@testing-library/react";
+import { renderHook, act, cleanup } from "@testing-library/react";
 import React from "react";
 import { ErgoProvider, useErgo } from "@/lib/providers/ErgoProvider";
 import { useWalletOperations } from "@/lib/hooks/useWalletOperations";
@@ -51,6 +51,7 @@ describe("useWalletOperations", () => {
   });
 
   afterEach(() => {
+    cleanup();
     window.ergo = origErgo;
     window.ergoConnector = origConnector;
     window.localStorage?.clear?.();
