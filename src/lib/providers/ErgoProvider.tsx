@@ -1,28 +1,32 @@
-// @ts-nocheck
 "use client";
 
-import React, { createContext, useContext, useState, useCallback } from "react";
+import React, { createContext, useContext, useState, useCallback, useMemo } from "react";
+import type { Amount, Box, EIP12UnsignedTransaction, SignedTransaction } from "@fleet-sdk/common";
+import { createEip12Wallet } from "@/lib/utils/eip12-wallet";
+
+import type { WalletOperations } from "@/lib/functions/reactor/types";
+
+interface ErgoConnectorWallet {
+  connect: (params?: { createTx?: boolean }) => Promise<boolean>;
+  isConnected: () => Promise<boolean>;
+  isAuthorized?: () => Promise<boolean>;
+}
 
 // Declare global window types for EIP-12
 declare global {
   interface Window {
-    ergoConnector?: {
-      nautilus: {
-        connect: () => Promise<boolean>;
-        isConnected: () => Promise<boolean>;
-        isAuthorized?: () => Promise<boolean>; // Optional: may not exist in all wallet versions
-      };
-      // Add other wallets if needed
+    ergoConnector?: Record<string, ErgoConnectorWallet | undefined> & {
+      nautilus: ErgoConnectorWallet;
     };
     ergo?: {
       get_balance: (assetId?: string | "ERG" | "all") => Promise<string | Array<{ tokenId: string; balance: string }>>;
       get_change_address: () => Promise<string>;
       get_unused_addresses: () => Promise<string[]>;
       get_used_addresses: () => Promise<string[]>;
-      get_utxos: (filter?: { tokens: Array<{ tokenId: string; amount?: string }> }) => Promise<any[]>;
+      get_utxos: (filter?: { tokens: Array<{ tokenId: string; amount?: string }> }) => Promise<Box<Amount>[]>;
       get_current_height: () => Promise<number>;
-      sign_tx: (tx: any) => Promise<any>;
-      submit_tx: (tx: any) => Promise<string>;
+      sign_tx: (tx: EIP12UnsignedTransaction) => Promise<SignedTransaction>;
+      submit_tx: (tx: SignedTransaction) => Promise<string>;
       sign_data: (address: string, message: string) => Promise<string>;
     };
   }
@@ -31,7 +35,7 @@ declare global {
 interface WalletInfo {
   connectName: string;
   icon: string;
-  name: string;
+  name?: string;
 }
 
 interface ErgoContextType {
@@ -43,9 +47,12 @@ interface ErgoContextType {
   disconnect: () => void;
   getChangeAddress: () => Promise<string>;
   signMessage: (address: string, message: string) => Promise<string>;
-  getBalance: () => Promise<any>;
-  getUtxos: () => Promise<any>;
-  SignAndSubmitTx: (tx: any) => Promise<any>;
+  getBalance: () => Promise<Array<{ tokenId: string; balance: string }>>;
+  getUtxos: () => Promise<Box<Amount>[]>;
+  SignAndSubmitTx: (tx: EIP12UnsignedTransaction) => Promise<string>;
+  signTx: (tx: EIP12UnsignedTransaction) => Promise<SignedTransaction>;
+  submitTx: (tx: SignedTransaction) => Promise<string>;
+  walletOps: WalletOperations;
   ergoWallet: typeof window.ergo | undefined;
 }
 
@@ -162,6 +169,7 @@ export function ErgoProvider({ children }: { children: React.ReactNode }) {
 
       const availableWallets: WalletInfo[] = Object.keys(ergoConnector).map((walletName) => ({
         connectName: walletName,
+        name: walletName,
         icon:
           walletName.toLowerCase() === "nautilus"
             ? "https://user-images.githubusercontent.com/96133754/196057495-45bcca0f-a4de-4905-85ea-fbcdead01b42.svg"
@@ -259,6 +267,12 @@ export function ErgoProvider({ children }: { children: React.ReactNode }) {
     return () => clearInterval(interval);
   }, [isInitialized]);
 
+  const disconnect = useCallback(() => {
+    setIsConnected(false);
+    setErgoWallet(undefined);
+    localStorage.removeItem("connectedWallet");
+  }, []);
+
   const connect = useCallback(async (walletName: string): Promise<boolean> => {
     try {
       const { ergoConnector } = window;
@@ -307,13 +321,7 @@ export function ErgoProvider({ children }: { children: React.ReactNode }) {
       disconnect();
       return false;
     }
-  }, []);
-
-  const disconnect = useCallback(() => {
-    setIsConnected(false);
-    setErgoWallet(undefined);
-    localStorage.removeItem("connectedWallet");
-  }, []);
+  }, [disconnect]);
 
   const signMessage = useCallback(async (address: string, message: string): Promise<string> => {
     const { ergo } = window;
@@ -375,36 +383,52 @@ export function ErgoProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const getUtxos = useCallback(async (): Promise<any[]> => {
-    const { ergo, ergoConnector } = window;
-    if (!ergo || !ergoConnector) {
-      throw new Error("Ergo object not found");
-    }
-    try {
-      return await ergo.get_utxos();
-    } catch (error) {
-      console.error("Error getting utxos:", error);
-      throw error;
-    }
+  const isConnectedRef = React.useRef(isConnected);
+  React.useEffect(() => {
+    isConnectedRef.current = isConnected;
+  }, [isConnected]);
+
+  const walletOps = useMemo<WalletOperations>(() => {
+    const raw = createEip12Wallet(() => (typeof window === "undefined" ? undefined : window.ergo));
+    return {
+      getUtxos: async (): Promise<Box<Amount>[]> => {
+        if (!isConnectedRef.current) {
+          throw new Error("Ergo wallet not connected");
+        }
+        return raw.getUtxos();
+      },
+      getChangeAddress: async (): Promise<string> => {
+        if (!isConnectedRef.current) {
+          throw new Error("Ergo wallet not connected");
+        }
+        return raw.getChangeAddress();
+      },
+      signTx: async (tx: EIP12UnsignedTransaction): Promise<SignedTransaction> => {
+        if (!isConnectedRef.current) {
+          throw new Error("Ergo wallet not connected");
+        }
+        return raw.signTx(tx);
+      },
+      submitTx: async (tx: SignedTransaction): Promise<string> => {
+        if (!isConnectedRef.current) {
+          throw new Error("Ergo wallet not connected");
+        }
+        return raw.submitTx(tx);
+      },
+    };
   }, []);
 
-  const SignAndSubmitTx = useCallback(async (tx: any): Promise<any> => {
-    // not tested yet, sdk not working on testnet
-    const { ergo, ergoConnector } = window;
-    if (!ergo || !ergoConnector) {
-      throw new Error("Ergo object not found");
-    }
-    try {
-      const signedTx = await ergo.sign_tx(tx);
-      console.log("signed tx", signedTx);
-      const submittedTx = await ergo.submit_tx(signedTx);
-      console.log("submitted tx", submittedTx);
-      return submittedTx;
-    } catch (error) {
-      console.error("Error signing and submitting transaction:", error);
-      throw error;
-    }
-  }, []);
+  const getUtxos = useCallback(async (): Promise<Box<Amount>[]> => {
+    return walletOps.getUtxos();
+  }, [walletOps]);
+
+  const SignAndSubmitTx = useCallback(
+    async (tx: EIP12UnsignedTransaction): Promise<string> => {
+      const signedTx = await walletOps.signTx(tx);
+      return await walletOps.submitTx(signedTx);
+    },
+    [walletOps]
+  );
 
   return (
     <ErgoContext.Provider
@@ -420,6 +444,9 @@ export function ErgoProvider({ children }: { children: React.ReactNode }) {
         signMessage,
         getUtxos,
         SignAndSubmitTx,
+        signTx: walletOps.signTx,
+        submitTx: walletOps.submitTx,
+        walletOps,
         ergoWallet,
       }}
     >
