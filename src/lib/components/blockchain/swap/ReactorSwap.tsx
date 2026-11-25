@@ -56,6 +56,7 @@ export interface ReactorSwapProps {
   balancePollMs?: number;
   listenerCheckMs?: number;
   quoteDebounceMs?: number;
+  networkBlocked?: boolean;
   className?: string;
 }
 
@@ -99,6 +100,7 @@ export function ReactorSwap({
   balancePollMs,
   listenerCheckMs,
   quoteDebounceMs,
+  networkBlocked = false,
   className,
 }: ReactorSwapProps) {
   const { client, chain, snapshot, status, error, refresh, deployment } = useGluon();
@@ -264,6 +266,7 @@ export function ReactorSwap({
     return getSwapButtonState({
       connected: isConnected,
       walletReady,
+      networkBlocked,
       balancesReady,
       listenerReady,
       availability,
@@ -280,6 +283,7 @@ export function ReactorSwap({
   }, [
     isConnected,
     walletReady,
+    networkBlocked,
     balancesReady,
     listenerReady,
     availability,
@@ -399,7 +403,7 @@ export function ReactorSwap({
   };
 
   const handleSwapClick = async () => {
-    if (inFlightRef.current || inProgress) return;
+    if (networkBlocked || inFlightRef.current || inProgress) return;
     if (!listener || !action) return;
 
     inFlightRef.current = true;

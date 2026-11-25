@@ -503,4 +503,47 @@ describe("ReactorSwap Component Tests", () => {
       container.remove();
     }
   });
+
+  it("(l) networkBlocked renders 'Wrong network', disables swap button, and clicking calls no build*", async () => {
+    setupFakeWallet();
+    const fakeClient = new FakeGluonClient("healthy");
+    const client = fakeClient as unknown as GluonClient;
+
+    await act(async () => {
+      render(
+        <ErgoProvider>
+          <GluonProvider client={client} pollIntervalMs={100000}>
+            <ConnectHelper />
+            <ReactorSwap
+              createListener={() => createTestListener()}
+              balancePollMs={100000}
+              listenerCheckMs={100000}
+              quoteDebounceMs={0}
+              networkBlocked={true}
+            />
+          </GluonProvider>
+        </ErgoProvider>
+      );
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("connect-button"));
+    });
+
+    const inputs = screen.getAllByRole("textbox");
+    await act(async () => {
+      fireEvent.change(inputs[0], { target: { value: "1.0" } });
+    });
+
+    const swapBtn = screen.getByRole("button", { name: "Wrong network" });
+    expect((swapBtn as HTMLButtonElement).disabled).toBe(true);
+
+    await act(async () => {
+      fireEvent.click(swapBtn);
+    });
+
+    const buildCalls = fakeClient.calls.filter((c) => c.method.startsWith("build"));
+    expect(buildCalls.length).toBe(0);
+    expect(recordedSaves.length).toBe(0);
+  });
 });
