@@ -62,6 +62,25 @@ export function useAdjustPeg(options?: UseAdjustPegOptions): UseAdjustPegResult 
   const [lastTxId, setLastTxId] = useState<string | undefined>(undefined);
   const [message, setMessage] = useState<AdjustPegMessage | undefined>(undefined);
 
+  // Track previous healthy state during render to reset progress when a new unhealthy episode begins.
+  // When snapshot.healthy transitions from true to false, an entirely new adjustment episode starts.
+  const isHealthy = snapshot?.healthy;
+  const [prevHealthy, setPrevHealthy] = useState<boolean | undefined>(isHealthy);
+
+  const isNewUnhealthyEpisode = prevHealthy === true && isHealthy === false;
+  if (prevHealthy !== isHealthy) {
+    setPrevHealthy(isHealthy);
+    if (isNewUnhealthyEpisode) {
+      setStepsDone(0);
+      setLastTxId(undefined);
+      setMessage(undefined);
+    }
+  }
+
+  const effectiveStepsDone = isNewUnhealthyEpisode ? 0 : stepsDone;
+  const effectiveLastTxId = isNewUnhealthyEpisode ? undefined : lastTxId;
+  const effectiveBaseMessage = isNewUnhealthyEpisode ? undefined : message;
+
   const inFlightRef = useRef(false);
 
   // Remaining steps calculated from quoteAdjustPeg
@@ -85,7 +104,7 @@ export function useAdjustPeg(options?: UseAdjustPegOptions): UseAdjustPegResult 
       walletReady,
       networkBlocked: options?.networkBlocked,
       phase,
-      stepsDone,
+      stepsDone: effectiveStepsDone,
       remainingSteps,
     });
   }, [
@@ -96,7 +115,7 @@ export function useAdjustPeg(options?: UseAdjustPegOptions): UseAdjustPegResult 
     walletReady,
     options?.networkBlocked,
     phase,
-    stepsDone,
+    effectiveStepsDone,
     remainingSteps,
   ]);
 
@@ -107,7 +126,7 @@ export function useAdjustPeg(options?: UseAdjustPegOptions): UseAdjustPegResult 
   // Compute effective message in render: avoids any setState in effect bodies
   const derivedMessage: AdjustPegMessage | undefined = useMemo(() => {
     if (snapshot?.healthy) {
-      if (stepsDone > 0) {
+      if (effectiveStepsDone > 0) {
         return {
           kind: "info",
           text: "The reactor is healthy again; no peg adjustment is needed.",
@@ -115,8 +134,8 @@ export function useAdjustPeg(options?: UseAdjustPegOptions): UseAdjustPegResult 
       }
       return undefined;
     }
-    return message;
-  }, [snapshot?.healthy, stepsDone, message]);
+    return effectiveBaseMessage;
+  }, [snapshot?.healthy, effectiveStepsDone, effectiveBaseMessage]);
 
   const pollMs = options?.pollMs;
   const timeoutMs = options?.timeoutMs;
@@ -163,7 +182,7 @@ export function useAdjustPeg(options?: UseAdjustPegOptions): UseAdjustPegResult 
         } else {
           setLastTxId(res.txHash);
           if (res.seen) {
-            const nextDone = stepsDone + 1;
+            const nextDone = effectiveStepsDone + 1;
             setStepsDone(nextDone);
             setPhase("idle");
             setMessage({ kind: "info", text: `Step ${nextDone} done.` });
@@ -172,12 +191,12 @@ export function useAdjustPeg(options?: UseAdjustPegOptions): UseAdjustPegResult 
           }
         }
       } else if (state.action === "recheck") {
-        if (!lastTxId) return;
+        if (!effectiveLastTxId) return;
         setPhase("waiting");
 
         const waitResult = await waitForReactorBox({
           refresh,
-          txId: lastTxId,
+          txId: effectiveLastTxId,
           pollMs,
           timeoutMs,
           sleep,
@@ -185,7 +204,7 @@ export function useAdjustPeg(options?: UseAdjustPegOptions): UseAdjustPegResult 
         });
 
         if (waitResult.seen) {
-          const nextDone = stepsDone + 1;
+          const nextDone = effectiveStepsDone + 1;
           setStepsDone(nextDone);
           setPhase("idle");
           setMessage({ kind: "info", text: `Step ${nextDone} done.` });
@@ -205,15 +224,15 @@ export function useAdjustPeg(options?: UseAdjustPegOptions): UseAdjustPegResult 
     timeoutMs,
     sleep,
     now,
-    stepsDone,
-    lastTxId,
+    effectiveStepsDone,
+    effectiveLastTxId,
   ]);
 
   return {
     state,
     directionText,
     remainingSteps,
-    stepsDone,
+    stepsDone: effectiveStepsDone,
     message: derivedMessage,
     run,
     phase,

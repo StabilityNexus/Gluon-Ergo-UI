@@ -303,6 +303,46 @@ describe("AdjustPegPanel Component Tests", () => {
     expect(screen.getByText("The reactor is healthy again; no peg adjustment is needed.")).toBeDefined();
   });
 
+  it("(4b) resets stepsDone and progress when a new unhealthy episode begins", async () => {
+    const client = new ScriptedAdjustPegClient({
+      stepsToHealthy: 1,
+      direction: "down",
+      confirmAfterFetches: 0,
+    });
+    setupFakeWallet(client);
+    await renderAdjustPegPanel(client);
+
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("connect-button"));
+    });
+
+    const adjustBtn = screen.getByRole("button", { name: "Adjust peg (step 1 of 1)" });
+
+    // Step 1: complete the first episode
+    await act(async () => {
+      fireEvent.click(adjustBtn);
+    });
+
+    // Form disappears and shows healthy message
+    expect(screen.queryByText("Adjust peg")).toBeNull();
+    expect(
+      screen.getByText("The reactor is healthy again; no peg adjustment is needed.")
+    ).toBeDefined();
+
+    // Step 2: flip the scripted client back to unhealthy (2 steps needed)
+    client.stepsRemaining = 2;
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("refresh-button"));
+    });
+
+    // Form reappears with step 1 of 2 (reset to step 1 of N, not step 2 of 3)
+    expect(screen.getByRole("heading", { name: "Adjust peg" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Adjust peg (step 1 of 2)" })).toBeDefined();
+    expect(
+      screen.queryByText("The reactor is healthy again; no peg adjustment is needed.")
+    ).toBeNull();
+  });
+
   it("(5) finishExternally() then click before provider refreshes: build throws REACTOR_HEALTHY, message is shown, no toast, and after the next refresh the panel hides", async () => {
     const client = new ScriptedAdjustPegClient({
       stepsToHealthy: 1,
