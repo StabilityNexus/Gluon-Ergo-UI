@@ -36,6 +36,7 @@ export class ScriptedAdjustPegClient extends FakeGluonClient {
   public pendingTxId?: string;
   public fetchesUntilVisible: number = 0;
   public oracleStale: boolean = false;
+  public fetchGate?: Promise<void>;
   private txCounter: number = 0;
 
   constructor(options: ScriptedAdjustPegOptions) {
@@ -52,6 +53,9 @@ export class ScriptedAdjustPegClient extends FakeGluonClient {
   }
 
   public override async fetchChainState(): Promise<ChainState> {
+    if (this.fetchGate !== undefined) {
+      await this.fetchGate;
+    }
     this.calls.push({ method: "fetchChainState", args: [] });
 
     if (this.pendingTxId !== undefined) {

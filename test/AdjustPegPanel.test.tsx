@@ -52,6 +52,16 @@ function RefreshTrigger() {
   );
 }
 
+function createDeferred<T>() {
+  let resolve!: (value: T | PromiseLike<T>) => void;
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((res, rej) => {
+    resolve = res;
+    reject = rej;
+  });
+  return { promise, resolve, reject };
+}
+
 describe("AdjustPegPanel Component Tests", () => {
   const origConnector = window.ergoConnector;
 
@@ -208,7 +218,15 @@ describe("AdjustPegPanel Component Tests", () => {
       direction: "down",
       confirmAfterFetches: 2,
     });
-    setupFakeWallet(client);
+
+    let capturedTx: { id?: string } | undefined;
+    const signDeferred = createDeferred<SignedTransaction>();
+    setupFakeWallet(client, {
+      signTx: (tx) => {
+        capturedTx = tx as { id?: string };
+        return signDeferred.promise;
+      },
+    });
     await renderAdjustPegPanel(client);
 
     await act(async () => {
@@ -221,6 +239,35 @@ describe("AdjustPegPanel Component Tests", () => {
       fireEvent.click(adjustBtn);
     });
 
+    // 1. While signing, button reads "Waiting for your wallet…" and is disabled
+    const signingBtn = screen.getByRole("button", { name: "Waiting for your wallet…" });
+    expect((signingBtn as HTMLButtonElement).disabled).toBe(true);
+
+    // 2. Set up fetchGate to pause polling refresh when submitted
+    const fetchDeferred = createDeferred<void>();
+    client.fetchGate = fetchDeferred.promise;
+
+    // Resolve signing
+    await act(async () => {
+      signDeferred.resolve({
+        id: capturedTx?.id ?? "adjust-tx-1",
+        inputs: [],
+        dataInputs: [],
+        outputs: [],
+      } as unknown as SignedTransaction);
+    });
+
+    // 3. While polling refresh is held, button reads "Waiting for the network…" and is disabled
+    const waitingBtn = screen.getByRole("button", { name: "Waiting for the network…" });
+    expect((waitingBtn as HTMLButtonElement).disabled).toBe(true);
+
+    // Resolve the polling refresh gate
+    await act(async () => {
+      client.fetchGate = undefined;
+      fetchDeferred.resolve();
+    });
+
+    // 4. Verify completion
     const builds = client.calls.filter((c) => c.method === "buildAdjustPeg");
     expect(builds).toHaveLength(1);
     expect(builds[0].args[1]).toEqual({
