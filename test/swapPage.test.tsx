@@ -9,10 +9,11 @@ import React from "react";
 import { render, screen, fireEvent, act, cleanup } from "@testing-library/react";
 import { renderToString } from "react-dom/server";
 import { hydrateRoot } from "react-dom/client";
-import type { GluonClient } from "@stability-nexus/gluon-ergo-sdk";
+import { GluonError, type GluonClient } from "@stability-nexus/gluon-ergo-sdk";
 import type { Box, Amount } from "@fleet-sdk/common";
 import { ErgoProvider, useErgo } from "@/lib/providers/ErgoProvider";
 import { GluonProvider } from "@/lib/providers/GluonProvider";
+import { useGluon } from "@/lib/hooks/useGluon";
 import SwapPage from "@/pages/swap";
 import { ScriptedAdjustPegClient } from "./helpers/scriptedAdjustPegClient";
 
@@ -31,6 +32,21 @@ function ConnectHelper() {
       }}
     >
       Connect Nautilus
+    </button>
+  );
+}
+
+function RefreshHelper() {
+  const { refresh } = useGluon();
+  return (
+    <button
+      type="button"
+      data-testid="refresh-button"
+      onClick={() => {
+        void refresh().catch(() => {});
+      }}
+    >
+      Refresh Gluon
     </button>
   );
 }
@@ -102,6 +118,7 @@ describe("SwapPage Integration Tests", () => {
         <ErgoProvider>
           <GluonProvider client={client as unknown as GluonClient} pollIntervalMs={100000}>
             <ConnectHelper />
+            <RefreshHelper />
             <SwapPage />
           </GluonProvider>
         </ErgoProvider>
@@ -184,6 +201,57 @@ describe("SwapPage Integration Tests", () => {
     expect(
       screen.queryByText("Your wallet is not connected to Ergo mainnet. Switch it to mainnet.")
     ).toBeNull();
+  });
+
+  it("surfaces stale warning in ReactorHealth when refresh fails with retained snapshot", async () => {
+    let shouldFail = false;
+    const client = new ScriptedAdjustPegClient({ stepsToHealthy: 0, direction: "down" });
+    const originalFetch = client.fetchChainState.bind(client);
+    client.fetchChainState = async () => {
+      if (shouldFail) {
+        throw new Error("Network timeout");
+      }
+      return originalFetch();
+    };
+
+    setupWallet("9f4QF8AD1nQ3nJahQVkMj8hFSVVzVom77b52JU7EW71Zexg6N8v");
+    await renderSwapPage(client);
+
+    // Initial render is healthy with no stale warning
+    expect(screen.getByText("Healthy")).toBeDefined();
+    expect(
+      screen.queryByText("Last update failed; showing the last known data. Retrying.")
+    ).toBeNull();
+
+    // Trigger refresh that fails
+    shouldFail = true;
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("refresh-button"));
+    });
+
+    // Stale warning is surfaced in ReactorHealth
+    const staleMsg = screen.getByText(
+      "Last update failed; showing the last known data. Retrying."
+    );
+    expect(staleMsg).toBeDefined();
+    expect(staleMsg.getAttribute("role")).toBe("status");
+    expect(screen.getByText("Healthy")).toBeDefined();
+    expect(screen.getByText("Healthy").getAttribute("data-stale")).toBe("true");
+  });
+
+  it("surfaces error message in ReactorHealth when initial fetch fails without snapshot", async () => {
+    const client = new ScriptedAdjustPegClient({ stepsToHealthy: 0, direction: "down" });
+    client.fetchChainState = async () => {
+      throw new GluonError("NODE_ERROR", "node unreachable");
+    };
+
+    setupWallet("9f4QF8AD1nQ3nJahQVkMj8hFSVVzVom77b52JU7EW71Zexg6N8v");
+    await renderSwapPage(client);
+
+    // Surfaced across ReactorHealth and ReactorSwap banner
+    const messages = screen.getAllByText("Reconnecting to the node.");
+    expect(messages.length).toBe(2);
+    expect(screen.queryByText("Loading reactor data…")).toBeNull();
   });
 
   it("hydrates cleanly without errors", async () => {

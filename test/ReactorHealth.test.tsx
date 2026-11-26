@@ -9,6 +9,7 @@ import React from "react";
 import { render, screen, cleanup, act } from "@testing-library/react";
 import { renderToString } from "react-dom/server";
 import { hydrateRoot } from "react-dom/client";
+import { GluonError } from "@stability-nexus/gluon-ergo-sdk";
 import { ReactorHealth } from "@/lib/components/blockchain/reactor/ReactorHealth";
 import { createFakeSnapshot } from "./fakeClient";
 import { syntheticGoldDeployment } from "./setup";
@@ -91,15 +92,141 @@ describe("ReactorHealth Component Tests", () => {
     expect(screen.getByText("oracle price age: 12 blocks")).toBeDefined();
   });
 
+  it("renders error message instead of loading text when status is error without snapshot", () => {
+    // 1. Generic error without explicit error object
+    const { rerender } = render(
+      <ReactorHealth deployment={syntheticGoldDeployment} status="error" />
+    );
+    expect(screen.getByText("Could not load the reactor state. Retrying.")).toBeDefined();
+    expect(screen.queryByText("Loading reactor data…")).toBeNull();
+
+    // 2. NODE_ERROR
+    rerender(
+      <ReactorHealth
+        deployment={syntheticGoldDeployment}
+        status="error"
+        error={new GluonError("NODE_ERROR", "network down")}
+      />
+    );
+    expect(screen.getByText("Reconnecting to the node.")).toBeDefined();
+    expect(screen.queryByText("Loading reactor data…")).toBeNull();
+
+    // 3. BOX_AMBIGUOUS
+    rerender(
+      <ReactorHealth
+        deployment={syntheticGoldDeployment}
+        status="error"
+        error={new GluonError("BOX_AMBIGUOUS", "mempool race")}
+      />
+    );
+    expect(screen.getByText("The reactor or the oracle is being updated; retrying.")).toBeDefined();
+
+    // 4. ORACLE_STALE
+    rerender(
+      <ReactorHealth
+        deployment={syntheticGoldDeployment}
+        status="error"
+        error={new GluonError("ORACLE_STALE", "stale price")}
+      />
+    );
+    expect(screen.getByText("Waiting for the next oracle update.")).toBeDefined();
+  });
+
+  it("renders metrics with stale indicator and muted badge when snapshot is present and status is error", () => {
+    const snapshot = createFakeSnapshot("healthy");
+    render(
+      <ReactorHealth
+        snapshot={snapshot}
+        deployment={syntheticGoldDeployment}
+        status="error"
+        error={new GluonError("NODE_ERROR", "connection refused")}
+      />
+    );
+
+    // Metrics are retained
+    expect(screen.getByText("Reactor health")).toBeDefined();
+    expect(screen.getByText("Healthy")).toBeDefined();
+    expect(screen.getByText("70.0 %")).toBeDefined();
+    expect(screen.getByText("Prices and the peg")).toBeDefined();
+
+    // Stale status line is visible with role="status"
+    const statusLine = screen.getByRole("status");
+    expect(statusLine.textContent).toContain(
+      "Last update failed; showing the last known data. Retrying."
+    );
+
+    // Status badge has muted treatment and data-stale attribute
+    const badge = screen.getByText("Healthy");
+    expect(badge.className).toContain("bg-muted");
+    expect(badge.className).toContain("text-muted-foreground");
+    expect(badge.className).not.toContain("bg-emerald-500");
+    expect(badge.getAttribute("data-stale")).toBe("true");
+  });
+
+  it("renders normal metrics with no stale warning and styled badge when status is ready or loading", () => {
+    const snapshot = createFakeSnapshot("healthy");
+    const { rerender } = render(
+      <ReactorHealth
+        snapshot={snapshot}
+        deployment={syntheticGoldDeployment}
+        status="ready"
+      />
+    );
+
+    // No stale line
+    expect(screen.queryByRole("status")).toBeNull();
+    expect(
+      screen.queryByText("Last update failed; showing the last known data. Retrying.")
+    ).toBeNull();
+
+    // Badge has normal emerald style
+    const readyBadge = screen.getByText("Healthy");
+    expect(readyBadge.className).toContain("bg-emerald-500/15");
+    expect(readyBadge.getAttribute("data-stale")).toBeNull();
+
+    // Same for status="loading" with existing snapshot
+    rerender(
+      <ReactorHealth
+        snapshot={snapshot}
+        deployment={syntheticGoldDeployment}
+        status="loading"
+      />
+    );
+    expect(screen.queryByRole("status")).toBeNull();
+    const loadingBadge = screen.getByText("Healthy");
+    expect(loadingBadge.className).toContain("bg-emerald-500/15");
+    expect(loadingBadge.getAttribute("data-stale")).toBeNull();
+  });
+
   it("hydrates both placeholder and snapshot views cleanly with zero recoverable or console errors", async () => {
     const cases = [
       { label: "placeholder", element: <ReactorHealth deployment={syntheticGoldDeployment} /> },
+      {
+        label: "error-placeholder",
+        element: (
+          <ReactorHealth
+            deployment={syntheticGoldDeployment}
+            status="error"
+            error={new GluonError("NODE_ERROR", "network down")}
+          />
+        ),
+      },
       {
         label: "snapshot",
         element: (
           <ReactorHealth
             snapshot={createFakeSnapshot("healthy")}
             deployment={syntheticGoldDeployment}
+          />
+        ),
+      },
+      {
+        label: "stale-snapshot",
+        element: (
+          <ReactorHealth
+            snapshot={createFakeSnapshot("healthy")}
+            deployment={syntheticGoldDeployment}
+            status="error"
           />
         ),
       },

@@ -13,6 +13,7 @@ import {
   formatErgPrice,
   formatQPercent,
 } from "@/lib/functions/reactor/health";
+import { deriveReactorErrorMessage } from "@/lib/functions/reactor/availability";
 import { Card, CardContent } from "@/lib/components/ui/card";
 import { Separator } from "@/lib/components/ui/separator";
 import { cn } from "@/lib/utils/utils";
@@ -21,6 +22,8 @@ export interface ReactorHealthProps {
   snapshot?: ProtocolSnapshot;
   deployment: GluonDeployment;
   className?: string;
+  status?: "loading" | "ready" | "error";
+  error?: unknown;
 }
 
 /**
@@ -32,14 +35,28 @@ export interface ReactorHealthProps {
  *
  * Reusable across swap and dashboard pages (props-only, hydration-safe).
  */
-export function ReactorHealth({ snapshot, deployment, className }: ReactorHealthProps) {
+export function ReactorHealth({
+  snapshot,
+  deployment,
+  className,
+  status,
+  error,
+}: ReactorHealthProps) {
+  const isStale = Boolean(snapshot && status === "error");
+
   return (
     <div className={cn("w-full", className)}>
       <Card className="rounded-2xl">
         <CardContent className="p-6">
           {!snapshot ? (
             <div className="flex flex-col items-center justify-center py-6 text-center text-muted-foreground">
-              <p className="text-sm">Loading reactor data…</p>
+              {status === "error" ? (
+                <p role="alert" className="text-sm text-destructive">
+                  {deriveReactorErrorMessage(error)}
+                </p>
+              ) : (
+                <p className="text-sm">Loading reactor data…</p>
+              )}
             </div>
           ) : (
             (() => {
@@ -64,16 +81,28 @@ export function ReactorHealth({ snapshot, deployment, className }: ReactorHealth
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <h3 className="text-lg font-semibold text-foreground">Reactor health</h3>
                     <span
+                      data-stale={isStale ? "true" : undefined}
                       className={cn(
                         "inline-flex w-fit items-center rounded-full px-2.5 py-0.5 text-xs font-semibold",
-                        snapshot.healthy
-                          ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
-                          : "bg-amber-500/15 text-amber-600 dark:text-amber-400"
+                        isStale
+                          ? "bg-muted text-muted-foreground"
+                          : snapshot.healthy
+                            ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                            : "bg-amber-500/15 text-amber-600 dark:text-amber-400"
                       )}
                     >
                       {statusLabel}
                     </span>
                   </div>
+
+                  {isStale && (
+                    <p
+                      role="status"
+                      className="text-xs text-muted-foreground"
+                    >
+                      Last update failed; showing the last known data. Retrying.
+                    </p>
+                  )}
 
                   {/* Fusion ratio q bar */}
                   <div className="space-y-2">

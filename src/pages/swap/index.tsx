@@ -15,7 +15,7 @@ import { useGluon } from "@/lib/hooks/useGluon";
 import { useNetworkGuard } from "@/lib/hooks/useNetworkGuard";
 
 export default function SwapPage() {
-  const { snapshot, deployment } = useGluon();
+  const { snapshot, deployment, status, error } = useGluon();
   const { status: networkStatus, blocked: networkBlocked } = useNetworkGuard();
 
   return (
@@ -28,7 +28,12 @@ export default function SwapPage() {
       <PageLayout>
         <div className="flex w-full flex-col gap-6">
           <NetworkGuard status={networkStatus} />
-          <ReactorHealth snapshot={snapshot} deployment={deployment} />
+          <ReactorHealth
+            snapshot={snapshot}
+            deployment={deployment}
+            status={status}
+            error={error}
+          />
           <AdjustPegPanel networkBlocked={networkBlocked} />
           <ReactorSwap networkBlocked={networkBlocked} />
         </div>
