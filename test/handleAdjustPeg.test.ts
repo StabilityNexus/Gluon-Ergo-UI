@@ -71,6 +71,7 @@ describe("handleAdjustPeg and waitForReactorBox", () => {
     it("finds box on the first attempt with 1 refresh and 0 sleeps", async () => {
       let refreshCount = 0;
       let sleepCount = 0;
+      let clock = 0;
       const targetTxId = "tx-match-1";
 
       const chainWithBox = createFakeChainState({
@@ -88,7 +89,9 @@ describe("handleAdjustPeg and waitForReactorBox", () => {
         txId: targetTxId,
         pollMs: 2000,
         timeoutMs: 60000,
-        sleep: async () => {
+        now: () => clock,
+        sleep: async (ms) => {
+          clock += ms;
           sleepCount++;
         },
       });
@@ -102,6 +105,7 @@ describe("handleAdjustPeg and waitForReactorBox", () => {
     it("finds box on the third attempt with 3 refreshes and 2 sleeps", async () => {
       let refreshCount = 0;
       let sleepCount = 0;
+      let clock = 0;
       const targetTxId = "tx-match-3";
 
       const chainWithoutBox = createFakeChainState({
@@ -129,7 +133,9 @@ describe("handleAdjustPeg and waitForReactorBox", () => {
         txId: targetTxId,
         pollMs: 2000,
         timeoutMs: 60000,
-        sleep: async () => {
+        now: () => clock,
+        sleep: async (ms) => {
+          clock += ms;
           sleepCount++;
         },
       });
@@ -143,6 +149,7 @@ describe("handleAdjustPeg and waitForReactorBox", () => {
     it("finds box on the last attempt (e.g. 5 attempts with 4 sleeps)", async () => {
       let refreshCount = 0;
       let sleepCount = 0;
+      let clock = 0;
       const targetTxId = "tx-match-last";
 
       const chainWithoutBox = createFakeChainState({
@@ -170,7 +177,9 @@ describe("handleAdjustPeg and waitForReactorBox", () => {
         txId: targetTxId,
         pollMs: 100,
         timeoutMs: 500, // 5 attempts
-        sleep: async () => {
+        now: () => clock,
+        sleep: async (ms) => {
+          clock += ms;
           sleepCount++;
         },
       });
@@ -180,9 +189,10 @@ describe("handleAdjustPeg and waitForReactorBox", () => {
       expect(sleepCount).toBe(4);
     });
 
-    it("returns seen: false after exactly attempts refreshes when never seen", async () => {
+    it("returns seen: false after elapsed timeout when never seen", async () => {
       let refreshCount = 0;
       let sleepCount = 0;
+      let clock = 0;
       const targetTxId = "tx-never-found";
 
       const chainWithoutBox = createFakeChainState({
@@ -199,8 +209,10 @@ describe("handleAdjustPeg and waitForReactorBox", () => {
         },
         txId: targetTxId,
         pollMs: 10,
-        timeoutMs: 40, // Math.ceil(40 / 10) = 4 attempts
-        sleep: async () => {
+        timeoutMs: 40,
+        now: () => clock,
+        sleep: async (ms) => {
+          clock += ms;
           sleepCount++;
         },
       });
@@ -208,12 +220,14 @@ describe("handleAdjustPeg and waitForReactorBox", () => {
       expect(res.seen).toBe(false);
       expect(res.chain).toBeUndefined();
       expect(refreshCount).toBe(4);
-      expect(sleepCount).toBe(3); // no sleep after the 4th attempt
+      expect(sleepCount).toBe(4);
+      expect(clock).toBe(40);
     });
 
     it("tolerates transient refresh failures during polling", async () => {
       let refreshCount = 0;
       let sleepCount = 0;
+      let clock = 0;
       const targetTxId = "tx-match-tolerant";
 
       const chainWithBox = createFakeChainState({
@@ -237,7 +251,9 @@ describe("handleAdjustPeg and waitForReactorBox", () => {
         txId: targetTxId,
         pollMs: 10,
         timeoutMs: 50,
-        sleep: async () => {
+        now: () => clock,
+        sleep: async (ms) => {
+          clock += ms;
           sleepCount++;
         },
       });
@@ -245,6 +261,113 @@ describe("handleAdjustPeg and waitForReactorBox", () => {
       expect(res.seen).toBe(true);
       expect(refreshCount).toBe(3);
       expect(sleepCount).toBe(2);
+    });
+
+    it("(a) slow refresh (each call advances clock by 5000, timeoutMs 60000) stops after ~60 s of clock time, not 30 attempts, and returns seen:false", async () => {
+      let clock = 0;
+      let refreshCount = 0;
+      let sleepCount = 0;
+      const targetTxId = "tx-match-a";
+
+      const chainWithoutBox = createFakeChainState({
+        reactor: {
+          ...createFakeChainState().reactor,
+          transactionId: "tx-other",
+        },
+      });
+
+      const res = await waitForReactorBox({
+        refresh: async () => {
+          refreshCount++;
+          clock += 5000;
+          return chainWithoutBox;
+        },
+        txId: targetTxId,
+        pollMs: 2000,
+        timeoutMs: 60000,
+        now: () => clock,
+        sleep: async (ms) => {
+          clock += ms;
+          sleepCount++;
+        },
+      });
+
+      expect(res.seen).toBe(false);
+      expect(clock).toBeGreaterThanOrEqual(60000);
+      expect(clock).toBeLessThan(70000);
+      // Each cycle takes 5000ms refresh + 2000ms sleep = 7000ms.
+      // After ~9 refreshes (61s of clock time), it stops, far below 30 attempts.
+      expect(refreshCount).toBeLessThan(15);
+      expect(refreshCount).toBeGreaterThan(0);
+      expect(sleepCount).toBeGreaterThan(0);
+    });
+
+    it("(b) the last sleep is capped to the remaining budget", async () => {
+      let clock = 0;
+      const sleeps: number[] = [];
+      const targetTxId = "tx-match-b";
+
+      const chainWithoutBox = createFakeChainState({
+        reactor: {
+          ...createFakeChainState().reactor,
+          transactionId: "tx-other",
+        },
+      });
+
+      const res = await waitForReactorBox({
+        refresh: async () => chainWithoutBox,
+        txId: targetTxId,
+        pollMs: 2000,
+        timeoutMs: 5000,
+        now: () => clock,
+        sleep: async (ms) => {
+          sleeps.push(ms);
+          clock += ms;
+        },
+      });
+
+      expect(res.seen).toBe(false);
+      // With timeoutMs 5000 and pollMs 2000:
+      // Attempt 1: fails, remaining 5000 -> sleep 2000 (clock = 2000)
+      // Attempt 2: fails, remaining 3000 -> sleep 2000 (clock = 4000)
+      // Attempt 3: fails, remaining 1000 -> sleep capped to 1000 (clock = 5000)
+      // Next attempt: budget is 0 -> returns seen: false
+      expect(sleeps).toEqual([2000, 2000, 1000]);
+      expect(clock).toBe(5000);
+    });
+
+    it("(c) immediate match = 1 refresh, 0 sleeps", async () => {
+      let clock = 0;
+      let refreshCount = 0;
+      let sleepCount = 0;
+      const targetTxId = "tx-immediate-match";
+
+      const chainWithBox = createFakeChainState({
+        reactor: {
+          ...createFakeChainState().reactor,
+          transactionId: targetTxId,
+        },
+      });
+
+      const res = await waitForReactorBox({
+        refresh: async () => {
+          refreshCount++;
+          return chainWithBox;
+        },
+        txId: targetTxId,
+        pollMs: 2000,
+        timeoutMs: 60000,
+        now: () => clock,
+        sleep: async (ms) => {
+          clock += ms;
+          sleepCount++;
+        },
+      });
+
+      expect(res.seen).toBe(true);
+      expect(res.chain?.reactor.transactionId).toBe(targetTxId);
+      expect(refreshCount).toBe(1);
+      expect(sleepCount).toBe(0);
     });
   });
 
@@ -485,6 +608,39 @@ describe("handleAdjustPeg and waitForReactorBox", () => {
       expect(toastErrorSpy).not.toHaveBeenCalled();
       // initial refresh + 1 poll attempt where box matched
       expect(refreshCount).toBe(2);
+    });
+
+    it("passes now clock through handleAdjustPegStep to waitForReactorBox", async () => {
+      const targetTxId = "tx-now-passthrough";
+      const client: AdjustPegClient = {
+        buildAdjustPeg: () => dummyTx,
+      };
+
+      const wallet = createMockWallet({
+        submitTx: async () => targetTxId,
+      });
+
+      const clock = 100000;
+      let nowCalled = 0;
+
+      const res = await handleAdjustPegStep({
+        client,
+        refresh: async () =>
+          createFakeChainState({
+            reactor: {
+              ...createFakeChainState().reactor,
+              transactionId: targetTxId,
+            },
+          }),
+        wallet,
+        now: () => {
+          nowCalled++;
+          return clock;
+        },
+      });
+
+      expect(res.ok).toBe(true);
+      expect(nowCalled).toBeGreaterThanOrEqual(1);
     });
   });
 });

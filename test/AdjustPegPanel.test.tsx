@@ -138,6 +138,7 @@ describe("AdjustPegPanel Component Tests", () => {
     client: ScriptedAdjustPegClient,
     props: Partial<AdjustPegPanelProps> = {}
   ) {
+    let clock = 0;
     let result: ReturnType<typeof render> | undefined;
     await act(async () => {
       result = render(
@@ -148,7 +149,10 @@ describe("AdjustPegPanel Component Tests", () => {
             <AdjustPegPanel
               pollMs={5}
               timeoutMs={100}
-              sleep={async () => {}}
+              now={() => clock}
+              sleep={async (ms) => {
+                clock += ms;
+              }}
               {...props}
             />
           </GluonProvider>

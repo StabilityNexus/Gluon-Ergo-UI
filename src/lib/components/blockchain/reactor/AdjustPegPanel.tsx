@@ -19,6 +19,7 @@ export interface AdjustPegPanelProps {
   pollMs?: number;
   timeoutMs?: number;
   sleep?: (ms: number) => Promise<void>;
+  now?: () => number;
 }
 
 /**
@@ -41,6 +42,7 @@ export function AdjustPegPanel({
   pollMs,
   timeoutMs,
   sleep,
+  now,
 }: AdjustPegPanelProps) {
   const { client } = useGluon();
   const { state, directionText, remainingSteps, message, run } = useAdjustPeg({
@@ -48,6 +50,7 @@ export function AdjustPegPanel({
     pollMs,
     timeoutMs,
     sleep,
+    now,
   });
 
   const effectiveMinerFee = minerFeeProp ?? client?.minerFee;

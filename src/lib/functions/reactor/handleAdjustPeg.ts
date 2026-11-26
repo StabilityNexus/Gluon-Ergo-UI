@@ -32,6 +32,7 @@ export interface WaitForReactorBoxParams {
   pollMs?: number;
   timeoutMs?: number;
   sleep?: (ms: number) => Promise<void>;
+  now?: () => number;
 }
 
 export interface HandleAdjustPegStepParams {
@@ -41,6 +42,7 @@ export interface HandleAdjustPegStepParams {
   pollMs?: number;
   timeoutMs?: number;
   sleep?: (ms: number) => Promise<void>;
+  now?: () => number;
   onSubmitted?: (txHash: string) => void;
 }
 
@@ -86,11 +88,13 @@ function mapAdjustPegError(err: unknown): AdjustPegResult {
 }
 
 /**
- * Polls refresh() until the reactor box created by txId appears in chain state or timeout is reached.
- * Refreshes run up to Math.max(1, Math.ceil(timeoutMs / pollMs)) attempts.
- * Transient errors during polling are ignored. No sleep is performed after the final attempt.
+ * Polls refresh() until the reactor box created by txId appears in chain state or the elapsed-time deadline is reached.
+ * Enforces an elapsed-time deadline (deadline = now() + timeoutMs), always making at least one attempt.
+ * Each refresh() is raced against the remaining time budget. Immediate matches return right away with no sleep.
+ * After a failed attempt, remaining budget is re-evaluated; if expired, returns { seen: false }, otherwise sleeps
+ * for Math.min(pollMs, remaining). Transient errors during polling are ignored.
  *
- * @param params - Configuration containing refresh function, txId, polling interval, timeout, and sleep adapter.
+ * @param params - Configuration containing refresh function, txId, polling interval, timeout, sleep adapter, and clock source.
  * @returns Object indicating whether the box was seen and the latest ChainState if seen.
  */
 export async function waitForReactorBox({
@@ -99,22 +103,68 @@ export async function waitForReactorBox({
   pollMs = 2000,
   timeoutMs = 60000,
   sleep = defaultSleep,
+  now = Date.now,
 }: WaitForReactorBoxParams): Promise<{ seen: boolean; chain?: ChainState }> {
-  const attempts = Math.max(1, Math.ceil(timeoutMs / pollMs));
-  for (let attempt = 0; attempt < attempts; attempt++) {
+  const deadline = now() + timeoutMs;
+  let isFirstAttempt = true;
+
+  while (true) {
+    const budget = deadline - now();
+    if (!isFirstAttempt && budget <= 0) {
+      return { seen: false };
+    }
+    isFirstAttempt = false;
+
+    // Race refresh against the remaining budget
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let raceResult:
+      | { ok: true; chain: ChainState }
+      | { ok: false; isTimeout: true }
+      | { ok: false; isTimeout: false; error: unknown };
+
     try {
-      const chain = await refresh();
-      if (chain?.reactor?.transactionId === txId) {
-        return { seen: true, chain };
+      const promises: Promise<typeof raceResult>[] = [
+        refresh().then(
+          (chain) => ({ ok: true as const, chain }),
+          (error: unknown) => ({ ok: false as const, isTimeout: false, error })
+        ),
+      ];
+
+      if (budget > 0) {
+        promises.push(
+          new Promise<typeof raceResult>((resolve) => {
+            timer = setTimeout(() => {
+              resolve({ ok: false, isTimeout: true });
+            }, budget);
+          })
+        );
       }
-    } catch {
-      // Transient refresh errors (such as BOX_AMBIGUOUS or node timeouts) during polling are ignored
+
+      raceResult = await Promise.race(promises);
+    } finally {
+      if (timer !== undefined) {
+        clearTimeout(timer);
+      }
     }
-    if (attempt < attempts - 1) {
-      await sleep(pollMs);
+
+    if (!raceResult.ok && raceResult.isTimeout) {
+      return { seen: false };
     }
+
+    if (raceResult.ok) {
+      if (raceResult.chain?.reactor?.transactionId === txId) {
+        return { seen: true, chain: raceResult.chain };
+      }
+    }
+
+    // Failed attempt (box not matched or transient refresh error)
+    const remaining = deadline - now();
+    if (remaining <= 0) {
+      return { seen: false };
+    }
+
+    await sleep(Math.min(pollMs, remaining));
   }
-  return { seen: false };
 }
 
 /**
@@ -137,6 +187,7 @@ export async function handleAdjustPegStep({
   pollMs = 2000,
   timeoutMs = 60000,
   sleep = defaultSleep,
+  now = Date.now,
   onSubmitted,
 }: HandleAdjustPegStepParams): Promise<AdjustPegResult> {
   // 1. Refresh chain state before building
@@ -201,6 +252,7 @@ export async function handleAdjustPegStep({
     pollMs,
     timeoutMs,
     sleep,
+    now,
   });
 
   if (waitResult.seen) {

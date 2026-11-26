@@ -23,6 +23,7 @@ export interface UseAdjustPegOptions {
   pollMs?: number;
   timeoutMs?: number;
   sleep?: (ms: number) => Promise<void>;
+  now?: () => number;
 }
 
 export interface AdjustPegMessage {
@@ -120,6 +121,7 @@ export function useAdjustPeg(options?: UseAdjustPegOptions): UseAdjustPegResult 
   const pollMs = options?.pollMs;
   const timeoutMs = options?.timeoutMs;
   const sleep = options?.sleep;
+  const now = options?.now;
 
   const run = useCallback(async (): Promise<void> => {
     if (inFlightRef.current) return;
@@ -137,6 +139,7 @@ export function useAdjustPeg(options?: UseAdjustPegOptions): UseAdjustPegResult 
           pollMs,
           timeoutMs,
           sleep,
+          now,
           onSubmitted: (txHash) => {
             setLastTxId(txHash);
             setPhase("waiting");
@@ -178,6 +181,7 @@ export function useAdjustPeg(options?: UseAdjustPegOptions): UseAdjustPegResult 
           pollMs,
           timeoutMs,
           sleep,
+          now,
         });
 
         if (waitResult.seen) {
@@ -200,6 +204,7 @@ export function useAdjustPeg(options?: UseAdjustPegOptions): UseAdjustPegResult 
     pollMs,
     timeoutMs,
     sleep,
+    now,
     stepsDone,
     lastTxId,
   ]);
