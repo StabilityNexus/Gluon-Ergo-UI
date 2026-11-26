@@ -190,7 +190,7 @@ describe("SwapPage Integration Tests", () => {
   });
 
   it("connecting with mainnet address ('9...') does not render NetworkGuard banner", async () => {
-    const client = new ScriptedAdjustPegClient({ stepsToHealthy: 0, direction: "down" });
+    const client = new ScriptedAdjustPegClient({ stepsToHealthy: 2, direction: "down" });
     setupWallet("9f4QF8AD1nQ3nJahQVkMj8hFSVVzVom77b52JU7EW71Zexg6N8v");
     await renderSwapPage(client);
 
@@ -201,6 +201,14 @@ describe("SwapPage Integration Tests", () => {
     expect(
       screen.queryByText("Your wallet is not connected to Ergo mainnet. Switch it to mainnet.")
     ).toBeNull();
+
+    // Verify Adjust Peg action is available and enabled
+    const adjustBtn = screen.getByRole("button", { name: "Adjust peg (step 1 of 2)" });
+    expect(adjustBtn).toBeDefined();
+    expect((adjustBtn as HTMLButtonElement).disabled).toBe(false);
+
+    // Verify no action is gated by "Wrong network"
+    expect(screen.queryByRole("button", { name: "Wrong network" })).toBeNull();
   });
 
   it("surfaces stale warning in ReactorHealth when refresh fails with retained snapshot", async () => {
