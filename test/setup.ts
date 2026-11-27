@@ -24,12 +24,6 @@ globalThis.MutationObserver = dom.window.MutationObserver;
 globalThis.DocumentFragment = dom.window.DocumentFragment;
 globalThis.Event = dom.window.Event as unknown as typeof Event;
 globalThis.CustomEvent = dom.window.CustomEvent as unknown as typeof CustomEvent;
-if (dom.window.AbortController) {
-  globalThis.AbortController = dom.window.AbortController as unknown as typeof AbortController;
-}
-if (dom.window.AbortSignal) {
-  globalThis.AbortSignal = dom.window.AbortSignal as unknown as typeof AbortSignal;
-}
 
 if (typeof globalThis.ResizeObserver === "undefined") {
   globalThis.ResizeObserver = class ResizeObserver {

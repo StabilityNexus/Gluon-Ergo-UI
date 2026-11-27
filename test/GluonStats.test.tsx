@@ -5,7 +5,7 @@
  * @module test
  */
 
-import { describe, it, expect, afterEach } from "bun:test";
+import { describe, it, expect, afterEach, beforeAll, afterAll } from "bun:test";
 import React from "react";
 import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import type { GluonDeployment, ProtocolSnapshot } from "@stability-nexus/gluon-ergo-sdk";
@@ -75,6 +75,25 @@ describe("dashboard.ts pure helpers", () => {
 });
 
 describe("GluonStats Component Tests", () => {
+  const originalAbortController = globalThis.AbortController;
+  const originalAbortSignal = globalThis.AbortSignal;
+
+  beforeAll(() => {
+    // motion-dom hover gestures pass an AbortSignal to jsdom's addEventListener,
+    // which rejects Bun's native AbortSignal unless JSDOM's AbortController/AbortSignal are used.
+    if (window.AbortController) {
+      globalThis.AbortController = window.AbortController as unknown as typeof AbortController;
+    }
+    if (window.AbortSignal) {
+      globalThis.AbortSignal = window.AbortSignal as unknown as typeof AbortSignal;
+    }
+  });
+
+  afterAll(() => {
+    globalThis.AbortController = originalAbortController;
+    globalThis.AbortSignal = originalAbortSignal;
+  });
+
   afterEach(() => {
     cleanup();
   });
