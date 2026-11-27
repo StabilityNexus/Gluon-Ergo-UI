@@ -12,6 +12,7 @@ import { getGluonErrorMessage } from "@/lib/utils/error-handler";
 export interface SwapButtonStateInput {
   connected: boolean;
   walletReady: boolean;
+  networkBlocked?: boolean;
   balancesReady: boolean;
   listenerReady: boolean;
   availability: SwapAvailability;
@@ -56,9 +57,10 @@ function isActionAvailable(availability: SwapAvailability, action: ActionType | 
 }
 
 /**
- * Computes button label, disabled state, and inline validation errors based on 12-level precedence order:
+ * Computes button label, disabled state, and inline validation errors based on 13-level precedence order:
  *
  * 1. !connected || !walletReady -> "Connect wallet (top bar)" (disabled)
+ * 1b. networkBlocked -> "Wrong network" (disabled)
  * 2. availability flag for action is false -> banner code LOADING => "Loading reactor data…", else "Trading paused" (disabled)
  * 3. !balancesReady || !listenerReady -> "Loading wallet…" (disabled)
  * 4. inProgress -> "Transaction in progress…" (disabled)
@@ -80,6 +82,14 @@ export function getSwapButtonState(input: SwapButtonStateInput): SwapButtonState
     return {
       disabled: true,
       label: "Connect wallet (top bar)",
+    };
+  }
+
+  // 1b. Wallet connected to a non-mainnet network
+  if (input.networkBlocked) {
+    return {
+      disabled: true,
+      label: "Wrong network",
     };
   }
 

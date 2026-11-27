@@ -415,3 +415,47 @@ describe("swapButtonState precedence collisions", () => {
   });
 });
 
+describe("swapButtonState networkBlocked gating (Row 1b)", () => {
+  it("Row 1b: networkBlocked true -> 'Wrong network' (disabled)", () => {
+    const state = getSwapButtonState(createBaseValidInput({ networkBlocked: true }));
+    expect(state).toEqual({
+      disabled: true,
+      label: "Wrong network",
+    });
+  });
+
+  it("Collision: !connected + networkBlocked -> Row 1 wins: 'Connect wallet (top bar)'", () => {
+    const state = getSwapButtonState(
+      createBaseValidInput({ connected: false, networkBlocked: true })
+    );
+    expect(state).toEqual({
+      disabled: true,
+      label: "Connect wallet (top bar)",
+    });
+  });
+
+  it("Collision: networkBlocked + availability block -> Row 1b wins: 'Wrong network'", () => {
+    const state = getSwapButtonState(
+      createBaseValidInput({
+        networkBlocked: true,
+        availability: unhealthyAvailability,
+      })
+    );
+    expect(state).toEqual({
+      disabled: true,
+      label: "Wrong network",
+    });
+  });
+
+  it("networkBlocked false or undefined changes nothing", () => {
+    expect(getSwapButtonState(createBaseValidInput({ networkBlocked: false }))).toEqual({
+      disabled: false,
+      label: "Swap",
+    });
+    expect(getSwapButtonState(createBaseValidInput({ networkBlocked: undefined }))).toEqual({
+      disabled: false,
+      label: "Swap",
+    });
+  });
+});
+

@@ -35,6 +35,35 @@ export interface SwapAvailability {
   banner?: SwapBanner;
 }
 
+/**
+ * Derives a user-friendly error message for reactor fetch or refresh failures.
+ * Reuses existing wording from availability banners and getGluonErrorMessage.
+ */
+export function deriveReactorErrorMessage(error: unknown): string {
+  const isNodeError =
+    (error instanceof GluonError && error.code === "NODE_ERROR") ||
+    (error instanceof TypeError && /failed to fetch/i.test(error.message)) ||
+    (error instanceof Error && (error.name === "AbortError" || /failed to fetch/i.test(error.message)));
+
+  if (isNodeError) {
+    return "Reconnecting to the node.";
+  }
+
+  if (error instanceof GluonError && error.code === "BOX_AMBIGUOUS") {
+    return "The reactor or the oracle is being updated; retrying.";
+  }
+
+  if (error instanceof GluonError && error.code === "ORACLE_STALE") {
+    return "Waiting for the next oracle update.";
+  }
+
+  if (error instanceof GluonError) {
+    return getGluonErrorMessage(error) || error.message;
+  }
+
+  return "Could not load the reactor state. Retrying.";
+}
+
 export function getSwapAvailability({ snapshot, status, error }: SwapAvailabilityParams): SwapAvailability {
   // If refresh failed with an error, every action is disabled (even if last good snapshot exists)
   if (status === "error" || error) {
@@ -52,7 +81,7 @@ export function getSwapAvailability({ snapshot, status, error }: SwapAvailabilit
         transmuteFromPeg: false,
         banner: {
           code: "NODE_ERROR",
-          text: "Reconnecting to the node.",
+          text: deriveReactorErrorMessage(error),
         },
       };
     }
@@ -66,7 +95,7 @@ export function getSwapAvailability({ snapshot, status, error }: SwapAvailabilit
         transmuteFromPeg: false,
         banner: {
           code: "BOX_AMBIGUOUS",
-          text: "The reactor or the oracle is being updated; retrying.",
+          text: deriveReactorErrorMessage(error),
         },
       };
     }
@@ -80,14 +109,13 @@ export function getSwapAvailability({ snapshot, status, error }: SwapAvailabilit
         transmuteFromPeg: false,
         banner: {
           code: "ORACLE_STALE",
-          text: "Waiting for the next oracle update.",
+          text: deriveReactorErrorMessage(error),
         },
       };
     }
 
     // 4. Other GluonError codes
     if (error instanceof GluonError) {
-      const text = getGluonErrorMessage(error) || error.message;
       return {
         fission: false,
         fusion: false,
@@ -95,7 +123,7 @@ export function getSwapAvailability({ snapshot, status, error }: SwapAvailabilit
         transmuteFromPeg: false,
         banner: {
           code: error.code,
-          text,
+          text: deriveReactorErrorMessage(error),
         },
       };
     }
@@ -108,7 +136,7 @@ export function getSwapAvailability({ snapshot, status, error }: SwapAvailabilit
       transmuteFromPeg: false,
       banner: {
         code: "REFRESH_ERROR",
-        text: "Could not load the reactor state. Retrying.",
+        text: deriveReactorErrorMessage(error),
       },
     };
   }
