@@ -121,8 +121,8 @@ describe("ReactorDashboard Page Tests", () => {
       await new Promise((r) => setTimeout(r, 20));
     });
 
-    const messages = screen.getAllByText("Reconnecting to the node.");
-    expect(messages.length).toBeGreaterThanOrEqual(1);
+    const alert = screen.getByRole("alert");
+    expect(alert.textContent).toContain("Reconnecting to the node.");
     expect(screen.queryByText("Loading reactor data…")).toBeNull();
   });
 
