@@ -15,7 +15,10 @@ import { GluonStats } from "@/lib/components/blocks/dashboard/GluonStats";
 import { GluonExplainer } from "@/lib/components/blocks/dashboard/GluonExplainer";
 import {
   ProtonAPYBadge,
+  computeWindowYield,
   getHistorySnapshot,
+  pruneHistory,
+  shouldRecordObservation,
 } from "@/lib/components/blocks/dashboard/ProtonAPYBadge";
 import { sumVolumeBuckets, buildVolumeSeries } from "@/lib/functions/reactor/dashboard";
 import { createFakeSnapshot, FakeGluonClient } from "./fakeClient";
@@ -235,7 +238,7 @@ describe("ProtonAPYBadge Cache Isolation", () => {
     const keyB = "gluon_proton_history:gluon-dollar-v3";
     const entriesA = [
       { ts: Date.now() - 40 * 86_400_000, value: 0.25 },
-      { ts: Date.now() - 10 * 86_400_000, value: 0.5 },
+      { ts: Date.now(), value: 0.5 },
     ];
     window.localStorage.setItem(keyA, JSON.stringify(entriesA));
     window.localStorage.setItem(keyB, "{malformed-json");
@@ -268,5 +271,62 @@ describe("ProtonAPYBadge Cache Isolation", () => {
     expect(screen.getByText(/Accumulating data/i)).toBeDefined();
     expect(window.localStorage.getItem(keyB)).toBe("{malformed-json");
     expect(getHistorySnapshot(keyA)).toHaveLength(2);
+  });
+});
+
+describe("ProtonAPYBadge APY Math (computeWindowYield & retention)", () => {
+  const DAY_MS = 86_400_000;
+  const HOUR_MS = 3_600_000;
+
+  it("does not report an old increase on day 61 when price 1->2 happened on day 1 (30D baseline is day 1)", () => {
+    const history = [
+      { ts: 0, value: 1 },
+      { ts: 1 * DAY_MS, value: 2 },
+    ];
+    const res = computeWindowYield(history, 2, 61 * DAY_MS, 30);
+    expect(res.status).toBe("ok");
+    if (res.status === "ok") {
+      expect(res.elapsedDays).toBe(60);
+      expect(res.apy).toBe(0);
+      expect(res.apr).toBe(0);
+    }
+  });
+
+  it("returns insufficient for a 1-day interval on a 30D window", () => {
+    const history = [{ ts: 0, value: 1 }];
+    const res = computeWindowYield(history, 2, 1 * DAY_MS, 30);
+    expect(res).toEqual({ status: "insufficient" });
+  });
+
+  it("computes expected APY and APR for exactly 30 days elapsed", () => {
+    const history = [{ ts: 0, value: 1 }];
+    const res = computeWindowYield(history, 1.1, 30 * DAY_MS, 30);
+    expect(res.status).toBe("ok");
+    if (res.status === "ok") {
+      expect(res.elapsedDays).toBe(30);
+      const expectedApy = (Math.pow(1.1, 365 / 30) - 1) * 100;
+      const expectedApr = 0.1 * (365 / 30) * 100;
+      expect(res.apy).toBeCloseTo(expectedApy, 6);
+      expect(res.apr).toBeCloseTo(expectedApr, 6);
+    }
+  });
+
+  it("guards past <= 0 and non-finite inputs", () => {
+    expect(computeWindowYield([{ ts: 0, value: 0 }], 2, 30 * DAY_MS, 30)).toEqual({ status: "insufficient" });
+    expect(computeWindowYield([{ ts: 0, value: 1 }], null, 30 * DAY_MS, 30)).toEqual({ status: "insufficient" });
+    expect(computeWindowYield([{ ts: 0, value: 1 }], Number.NaN, 30 * DAY_MS, 30)).toEqual({ status: "insufficient" });
+  });
+
+  it("records unchanged-price observations after >= 1 hour and retains 90D anchor across 120d pruning", () => {
+    const h = [{ ts: 0, value: 2 }];
+    expect(shouldRecordObservation(h, 2, 30 * 60_000)).toBe(false);
+    expect(shouldRecordObservation(h, 2, HOUR_MS)).toBe(true);
+
+    const nowMs = 150 * DAY_MS;
+    const oldAnchor = { ts: 10 * DAY_MS, value: 1.0 }; // 140d old, newest <= 90d cutoff (60d)
+    const veryOld = { ts: 1 * DAY_MS, value: 0.9 };
+    const recent = { ts: 100 * DAY_MS, value: 1.5 };
+    const pruned = pruneHistory([veryOld, oldAnchor, recent], nowMs);
+    expect(pruned).toEqual([oldAnchor, recent]);
   });
 });

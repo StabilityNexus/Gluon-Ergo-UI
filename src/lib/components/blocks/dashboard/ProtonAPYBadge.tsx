@@ -17,14 +17,21 @@ import {
 import { useGluon } from "@/lib/hooks/useGluon";
 import { formatUnits } from "@/lib/utils/amounts";
 
-interface BackingEntry {
+export interface BackingEntry {
   ts: number;
   value: number;
 }
 
 type WindowKey = "30D" | "60D" | "90D";
 
-const NINETY_DAYS_MS = 90 * 24 * 60 * 60 * 1000;
+export type WindowYieldResult =
+  | { status: "insufficient" }
+  | { status: "ok"; apy: number; apr: number; elapsedDays: number };
+
+const DAY_MS = 86_400_000;
+const ONE_HOUR_MS = 60 * 60 * 1000;
+const NINETY_DAYS_MS = 90 * DAY_MS;
+const ONE_HUNDRED_TWENTY_DAYS_MS = 120 * DAY_MS;
 const WINDOW_DAYS: Record<WindowKey, number> = { "30D": 30, "60D": 60, "90D": 90 };
 const EMPTY_HISTORY: BackingEntry[] = [];
 const historyListeners = new Set<() => void>();
@@ -32,11 +39,14 @@ const historyListeners = new Set<() => void>();
 let cachedKey = "";
 let cachedRaw: string | null = null;
 let cachedEntries: BackingEntry[] = EMPTY_HISTORY;
+let observedNowMs = 0;
 
 const emptySubscribe = () => () => {};
 const getClientMounted = () => true;
 const getServerMounted = () => false;
 const getServerHistory = () => EMPTY_HISTORY;
+const getObservedNow = () => observedNowMs;
+const getServerObservedNow = () => 0;
 
 function subscribeHistory(callback: () => void): () => void {
   historyListeners.add(callback);
@@ -94,9 +104,48 @@ export function getHistorySnapshot(storageKey: string): BackingEntry[] {
   }
 }
 
-function pruneAndSave(storageKey: string, entries: BackingEntry[]): void {
-  const cutoff = Date.now() - NINETY_DAYS_MS;
-  const pruned = entries.filter((e) => e.ts >= cutoff);
+/**
+ * Returns true when an observation should be recorded: either no history exists,
+ * the price changed materially, or at least one hour has elapsed since the last entry.
+ */
+export function shouldRecordObservation(
+  history: readonly BackingEntry[],
+  currentValue: number,
+  nowMs: number
+): boolean {
+  if (history.length === 0) return true;
+  const last = history[history.length - 1];
+  if (Math.abs(last.value - currentValue) > 0.0001) return true;
+  return nowMs - last.ts >= ONE_HOUR_MS;
+}
+
+/**
+ * Prunes entries older than ~120 days while always retaining the newest entry
+ * at or before the longest window (90 days) so the 90D baseline is preserved.
+ */
+export function pruneHistory(
+  entries: readonly BackingEntry[],
+  nowMs: number
+): BackingEntry[] {
+  const pruneCutoff = nowMs - ONE_HUNDRED_TWENTY_DAYS_MS;
+  const ninetyDayCutoff = nowMs - NINETY_DAYS_MS;
+
+  let anchor: BackingEntry | null = null;
+  for (const e of entries) {
+    if (e.ts <= ninetyDayCutoff && (!anchor || e.ts > anchor.ts)) {
+      anchor = e;
+    }
+  }
+
+  const kept = entries.filter((e) => e.ts >= pruneCutoff);
+  if (anchor && !kept.some((e) => e.ts === anchor.ts && e.value === anchor.value)) {
+    return [anchor, ...kept].sort((a, b) => a.ts - b.ts);
+  }
+  return kept;
+}
+
+function pruneAndSave(storageKey: string, entries: readonly BackingEntry[], nowMs: number): void {
+  const pruned = pruneHistory(entries, nowMs);
   try {
     window.localStorage.setItem(storageKey, JSON.stringify(pruned));
     notifyHistoryListeners();
@@ -105,21 +154,57 @@ function pruneAndSave(storageKey: string, entries: BackingEntry[]): void {
   }
 }
 
-function calcAPY(current: number, past: number, windowDays: number): number | null {
-  if (!past || past <= 0) return null;
-  return (Math.pow(current / past, 365 / windowDays) - 1) * 100;
-}
+/**
+ * Computes annualised APY and simple APR using the newest baseline observation
+ * with ts <= nowMs - windowDays * 86_400_000 and the actual elapsed time to nowMs.
+ */
+export function computeWindowYield(
+  history: readonly BackingEntry[],
+  currentValue: number | null,
+  nowMs: number,
+  windowDays: number
+): WindowYieldResult {
+  if (
+    currentValue === null ||
+    !Number.isFinite(currentValue) ||
+    currentValue <= 0 ||
+    !Number.isFinite(nowMs) ||
+    history.length === 0
+  ) {
+    return { status: "insufficient" };
+  }
 
-function findClosest(history: BackingEntry[], targetMs: number): BackingEntry | null {
-  if (!history.length) return null;
-  return history.reduce((best, e) =>
-    Math.abs(e.ts - targetMs) < Math.abs(best.ts - targetMs) ? e : best
-  );
+  const targetCutoff = nowMs - windowDays * DAY_MS;
+  let baseline: BackingEntry | null = null;
+  for (const entry of history) {
+    if (entry.ts <= targetCutoff && (!baseline || entry.ts > baseline.ts)) {
+      baseline = entry;
+    }
+  }
+
+  if (!baseline || !Number.isFinite(baseline.value) || baseline.value <= 0) {
+    return { status: "insufficient" };
+  }
+
+  const elapsedDays = (nowMs - baseline.ts) / DAY_MS;
+  if (!Number.isFinite(elapsedDays) || elapsedDays <= 0) {
+    return { status: "insufficient" };
+  }
+
+  const apy = (Math.pow(currentValue / baseline.value, 365 / elapsedDays) - 1) * 100;
+  const apr = (currentValue / baseline.value - 1) * (365 / elapsedDays) * 100;
+
+  if (!Number.isFinite(apy) || !Number.isFinite(apr)) {
+    return { status: "insufficient" };
+  }
+
+  return { status: "ok", apy, apr, elapsedDays };
 }
 
 export function ProtonAPYBadge() {
   const { snapshot, deployment } = useGluon();
   const mounted = useSyncExternalStore(emptySubscribe, getClientMounted, getServerMounted);
+  const nowMs = useSyncExternalStore(subscribeHistory, getObservedNow, getServerObservedNow);
   const [activeWindow, setActiveWindow] = useState<WindowKey>("30D");
 
   const protonName = deployment.tokens.proton.name;
@@ -141,33 +226,24 @@ export function ProtonAPYBadge() {
 
   useEffect(() => {
     if (!mounted || currentValue === null) return;
+    const observationTime = Date.now();
+    observedNowMs = observationTime;
     const existing = getHistorySnapshot(storageKey);
-    const lastEntry = existing[existing.length - 1];
-    const hasChanged = !lastEntry || Math.abs(lastEntry.value - currentValue) > 0.0001;
-    if (hasChanged || existing.length === 0) {
-      pruneAndSave(storageKey, [...existing, { ts: Date.now(), value: currentValue }]);
+    if (shouldRecordObservation(existing, currentValue, observationTime)) {
+      pruneAndSave(storageKey, [...existing, { ts: observationTime, value: currentValue }], observationTime);
+    } else {
+      notifyHistoryListeners();
     }
-  }, [mounted, currentValue, storageKey]);
+  }, [mounted, currentValue, snapshot, storageKey]);
 
-  const { displayAPY, apr } = useMemo(() => {
-    if (currentValue === null || history.length < 2) {
-      return { displayAPY: null, apr: null };
-    }
-    const days = WINDOW_DAYS[activeWindow];
-    const now = history[history.length - 1].ts;
-    const past = findClosest(history, now - days * 86_400_000);
-    if (!past || past.value <= 0) {
-      return { displayAPY: null, apr: null };
-    }
-    const apy = calcAPY(currentValue, past.value, days);
-    const daysDiff = Math.max(1, (now - past.ts) / 86_400_000);
-    const aprValue = ((currentValue / past.value) - 1) * (365 / daysDiff) * 100;
-    return { displayAPY: apy, apr: aprValue };
-  }, [currentValue, history, activeWindow]);
+  const yieldResult = useMemo(() => {
+    return computeWindowYield(history, currentValue, nowMs, WINDOW_DAYS[activeWindow]);
+  }, [history, currentValue, nowMs, activeWindow]);
 
+  const displayAPY = yieldResult.status === "ok" ? yieldResult.apy : null;
+  const apr = yieldResult.status === "ok" ? yieldResult.apr : null;
+  const hasEnough = yieldResult.status === "ok";
   const hasData = displayAPY !== null && Math.abs(displayAPY) > 0.001;
-  const hasEnough = history.length >= 2;
-  const isEarlyEstimate = hasEnough && history.length < 30;
   const isZeroMovement = displayAPY !== null && !hasData;
 
   return (
@@ -207,9 +283,6 @@ export function ProtonAPYBadge() {
                       </>
                     )}
                   </div>
-                )}
-                {isEarlyEstimate && hasData && (
-                  <span className="ml-1 text-xs text-muted-foreground">Early estimate</span>
                 )}
               </div>
             </TooltipTrigger>
