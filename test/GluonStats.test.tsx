@@ -9,7 +9,16 @@ import { describe, it, expect, afterEach, beforeAll, afterAll } from "bun:test";
 import React from "react";
 import { render, screen, cleanup, fireEvent, waitFor } from "@testing-library/react";
 import { MotionGlobalConfig } from "framer-motion";
-import { GluonError, type GluonDeployment, type ProtocolSnapshot } from "@stability-nexus/gluon-ergo-sdk";
+import {
+  GluonClient,
+  GluonError,
+  math,
+  oraclePrice as readOraclePrice,
+  reactorRegisters,
+  type ChainState,
+  type GluonDeployment,
+  type ProtocolSnapshot,
+} from "@stability-nexus/gluon-ergo-sdk";
 import { GluonContext, type GluonContextValue } from "@/lib/providers/GluonProvider";
 import { PRESENTATION } from "@/config/presentation";
 import { GluonStats } from "@/lib/components/blocks/dashboard/GluonStats";
@@ -263,6 +272,74 @@ describe("GluonStats Component Tests", () => {
     expect(screen.getByTestId("stat-target-price").textContent).toBe("1.485 ERG");
     expect(screen.getByText("Target: 1.485 ERG (peg 99.0% of initial)")).toBeDefined();
     expect(screen.getByTestId("stat-proton-leverage").textContent).toBe("—");
+  });
+
+  it("formats reserveRatio as 143% at q=0.7 using real SDK client.snapshot() math", () => {
+    const minFee = syntheticGoldDeployment.minFee;
+    const reserve = 1_000_000_000_000n;
+    const oracleBox = {
+      boxId: "3".repeat(64),
+      transactionId: "4".repeat(64),
+      index: 0,
+      creationHeight: 1_249_995,
+      value: 1_000_000n,
+      ergoTree: "0008cd",
+      assets: [{ tokenId: syntheticGoldDeployment.oraclePoolNft, amount: 1n }],
+      additionalRegisters: { R4: "0580c8e8a6da57" },
+    };
+    const oraclePrice = readOraclePrice(oracleBox);
+    const pegFactor = syntheticGoldDeployment.initialPegFactor;
+    const targetPrice = math.adjustedPrice(oraclePrice, pegFactor);
+    const { neutrons, protons } = math.genesisSupplies(reserve, targetPrice, 700_000_000n);
+    const state = {
+      value: reserve + minFee,
+      neutrons: syntheticGoldDeployment.tokens.neutron.emission - neutrons,
+      protons: syntheticGoldDeployment.tokens.proton.emission - protons,
+      totalNeutrons: syntheticGoldDeployment.tokens.neutron.emission,
+      totalProtons: syntheticGoldDeployment.tokens.proton.emission,
+      treasury: "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
+      devFeeRepaid: 0n,
+      maxDevFee: 100_000_000_000n,
+      volumePlus: Array(14).fill(0n),
+      volumeMinus: Array(14).fill(0n),
+      lastBucketBlock: 1_200_000n,
+      pegFactor,
+    };
+    const regs = reactorRegisters(state);
+    const chainState: ChainState = {
+      height: 1_250_000,
+      state,
+      reactor: {
+        boxId: "1".repeat(64),
+        transactionId: "2".repeat(64),
+        index: 0,
+        creationHeight: 1_200_000,
+        value: state.value,
+        ergoTree: syntheticGoldDeployment.ergoTree,
+        assets: [
+          { tokenId: syntheticGoldDeployment.tokens.nft.id, amount: 1n },
+          { tokenId: syntheticGoldDeployment.tokens.neutron.id, amount: state.neutrons },
+          { tokenId: syntheticGoldDeployment.tokens.proton.id, amount: state.protons },
+        ],
+        additionalRegisters: regs,
+      },
+      oracle: oracleBox,
+    };
+
+    const realClient = new GluonClient({
+      deployment: syntheticGoldDeployment,
+      nodeUrl: "https://node.sigmaspace.io",
+    });
+    const realSnapshot = realClient.snapshot(chainState);
+
+    renderWithGluon(<GluonStats />, {
+      deployment: syntheticGoldDeployment,
+      presentation: PRESENTATION["gluon-gold-v3"],
+      snapshot: realSnapshot,
+    });
+
+    expect(screen.getByTestId("stat-fusion-ratio").textContent).toBe("70.0%");
+    expect(screen.getByTestId("stat-reserve-ratio").textContent).toBe("143%");
   });
 
   it("renders Dollar stats with GUSD/GUSDC tickers and 1 USD label", () => {
