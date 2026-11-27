@@ -7,7 +7,7 @@
  */
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useSyncExternalStore } from "react";
 import {
   Tooltip,
   TooltipContent,
@@ -26,27 +26,78 @@ type WindowKey = "30D" | "60D" | "90D";
 
 const NINETY_DAYS_MS = 90 * 24 * 60 * 60 * 1000;
 const WINDOW_DAYS: Record<WindowKey, number> = { "30D": 30, "60D": 60, "90D": 90 };
+const EMPTY_HISTORY: BackingEntry[] = [];
+const historyListeners = new Set<() => void>();
 
-function loadHistory(storageKey: string): BackingEntry[] {
-  try {
-    const raw = localStorage.getItem(storageKey);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw) as BackingEntry[];
-    return parsed.filter((e) => Number.isFinite(e.value) && e.value > 0 && Number.isFinite(e.ts));
-  } catch {
-    return [];
+let cachedKey = "";
+let cachedRaw: string | null = null;
+let cachedEntries: BackingEntry[] = EMPTY_HISTORY;
+
+const emptySubscribe = () => () => {};
+const getClientMounted = () => true;
+const getServerMounted = () => false;
+const getServerHistory = () => EMPTY_HISTORY;
+
+function subscribeHistory(callback: () => void): () => void {
+  historyListeners.add(callback);
+  if (typeof window !== "undefined") {
+    window.addEventListener("storage", callback);
+  }
+  return () => {
+    historyListeners.delete(callback);
+    if (typeof window !== "undefined") {
+      window.removeEventListener("storage", callback);
+    }
+  };
+}
+
+function notifyHistoryListeners(): void {
+  for (const listener of historyListeners) {
+    listener();
   }
 }
 
-function pruneAndSave(storageKey: string, entries: BackingEntry[]): BackingEntry[] {
+function getHistorySnapshot(storageKey: string): BackingEntry[] {
+  if (typeof window === "undefined") return EMPTY_HISTORY;
+  try {
+    const raw = window.localStorage.getItem(storageKey);
+    if (raw === cachedRaw && storageKey === cachedKey) {
+      return cachedEntries;
+    }
+    cachedKey = storageKey;
+    cachedRaw = raw;
+    if (!raw) {
+      cachedEntries = EMPTY_HISTORY;
+      return cachedEntries;
+    }
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) {
+      cachedEntries = EMPTY_HISTORY;
+      return cachedEntries;
+    }
+    cachedEntries = parsed.filter(
+      (e): e is BackingEntry =>
+        typeof e === "object" &&
+        e !== null &&
+        Number.isFinite((e as BackingEntry).value) &&
+        (e as BackingEntry).value > 0 &&
+        Number.isFinite((e as BackingEntry).ts)
+    );
+    return cachedEntries;
+  } catch {
+    return EMPTY_HISTORY;
+  }
+}
+
+function pruneAndSave(storageKey: string, entries: BackingEntry[]): void {
   const cutoff = Date.now() - NINETY_DAYS_MS;
   const pruned = entries.filter((e) => e.ts >= cutoff);
   try {
-    localStorage.setItem(storageKey, JSON.stringify(pruned));
+    window.localStorage.setItem(storageKey, JSON.stringify(pruned));
+    notifyHistoryListeners();
   } catch {
-    /* storage full */
+    /* storage unavailable or full */
   }
-  return pruned;
 }
 
 function calcAPY(current: number, past: number, windowDays: number): number | null {
@@ -63,17 +114,17 @@ function findClosest(history: BackingEntry[], targetMs: number): BackingEntry | 
 
 export function ProtonAPYBadge() {
   const { snapshot, deployment } = useGluon();
-  const [mounted, setMounted] = useState(false);
-  const [history, setHistory] = useState<BackingEntry[]>([]);
+  const mounted = useSyncExternalStore(emptySubscribe, getClientMounted, getServerMounted);
   const [activeWindow, setActiveWindow] = useState<WindowKey>("30D");
 
   const protonName = deployment.tokens.proton.name;
   const storageKey = `gluon_proton_history:${deployment.name}`;
 
-  useEffect(() => {
-    setMounted(true);
-    setHistory(loadHistory(storageKey));
-  }, [storageKey]);
+  const history = useSyncExternalStore(
+    subscribeHistory,
+    () => getHistorySnapshot(storageKey),
+    getServerHistory
+  );
 
   const currentValue = useMemo(() => {
     if (!snapshot) return null;
@@ -85,12 +136,11 @@ export function ProtonAPYBadge() {
 
   useEffect(() => {
     if (!mounted || currentValue === null) return;
-    const existing = loadHistory(storageKey);
+    const existing = getHistorySnapshot(storageKey);
     const lastEntry = existing[existing.length - 1];
     const hasChanged = !lastEntry || Math.abs(lastEntry.value - currentValue) > 0.0001;
     if (hasChanged || existing.length === 0) {
-      const updated = pruneAndSave(storageKey, [...existing, { ts: Date.now(), value: currentValue }]);
-      setHistory(updated);
+      pruneAndSave(storageKey, [...existing, { ts: Date.now(), value: currentValue }]);
     }
   }, [mounted, currentValue, storageKey]);
 
@@ -99,12 +149,13 @@ export function ProtonAPYBadge() {
       return { displayAPY: null, apr: null };
     }
     const days = WINDOW_DAYS[activeWindow];
-    const past = findClosest(history, Date.now() - days * 86_400_000);
+    const now = history[history.length - 1].ts;
+    const past = findClosest(history, now - days * 86_400_000);
     if (!past || past.value <= 0) {
       return { displayAPY: null, apr: null };
     }
     const apy = calcAPY(currentValue, past.value, days);
-    const daysDiff = Math.max(1, (Date.now() - past.ts) / 86_400_000);
+    const daysDiff = Math.max(1, (now - past.ts) / 86_400_000);
     const aprValue = ((currentValue / past.value) - 1) * (365 / daysDiff) * 100;
     return { displayAPY: apy, apr: aprValue };
   }, [currentValue, history, activeWindow]);
