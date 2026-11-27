@@ -7,8 +7,9 @@
 
 import { describe, it, expect, afterEach, beforeAll, afterAll } from "bun:test";
 import React from "react";
-import { render, screen, cleanup, fireEvent } from "@testing-library/react";
-import type { GluonDeployment, ProtocolSnapshot } from "@stability-nexus/gluon-ergo-sdk";
+import { render, screen, cleanup, fireEvent, waitFor } from "@testing-library/react";
+import { MotionGlobalConfig } from "framer-motion";
+import { GluonError, type GluonDeployment, type ProtocolSnapshot } from "@stability-nexus/gluon-ergo-sdk";
 import { GluonContext, type GluonContextValue } from "@/lib/providers/GluonProvider";
 import { PRESENTATION } from "@/config/presentation";
 import { GluonStats } from "@/lib/components/blocks/dashboard/GluonStats";
@@ -42,11 +43,13 @@ function renderWithGluon(
     presentation = PRESENTATION["gluon-gold-v3"],
     snapshot,
     status = "ready",
+    error,
   }: {
     deployment?: GluonDeployment;
     presentation?: (typeof PRESENTATION)[string];
     snapshot?: ProtocolSnapshot;
     status?: "loading" | "ready" | "error";
+    error?: Error;
   }
 ) {
   const client = new FakeGluonClient("healthy");
@@ -56,6 +59,7 @@ function renderWithGluon(
     client: client as unknown as GluonContextValue["client"],
     snapshot,
     status,
+    error,
     refresh: async () => client.fetchChainState(),
   };
 
@@ -148,14 +152,83 @@ describe("GluonStats Component Tests", () => {
     expect(text).not.toContain("USD");
 
     // Volume window toggle: 14d -> 1d -> 7d (distinct sums for plus and minus)
+    const btn14 = screen.getByRole("button", { name: "14d" });
+    const btn7 = screen.getByRole("button", { name: "7d" });
+    const btn1 = screen.getByRole("button", { name: "1d" });
+    expect(btn14.getAttribute("aria-pressed")).toBe("true");
+    expect(btn7.getAttribute("aria-pressed")).toBe("false");
+    expect(btn1.getAttribute("aria-pressed")).toBe("false");
+
     expect(screen.getByTestId("stat-volume-plus").textContent).toBe("10.50");
     expect(screen.getByTestId("stat-volume-minus").textContent).toBe("5.25");
-    fireEvent.click(screen.getByRole("button", { name: "1d" }));
+    fireEvent.click(btn1);
+    expect(btn1.getAttribute("aria-pressed")).toBe("true");
+    expect(btn14.getAttribute("aria-pressed")).toBe("false");
     expect(screen.getByTestId("stat-volume-plus").textContent).toBe("0.10");
     expect(screen.getByTestId("stat-volume-minus").textContent).toBe("0.05");
-    fireEvent.click(screen.getByRole("button", { name: "7d" }));
+    fireEvent.click(btn7);
+    expect(btn7.getAttribute("aria-pressed")).toBe("true");
+    expect(btn1.getAttribute("aria-pressed")).toBe("false");
     expect(screen.getByTestId("stat-volume-plus").textContent).toBe("2.80");
     expect(screen.getByTestId("stat-volume-minus").textContent).toBe("1.40");
+  });
+
+  it("renders loading, initial error, cached-error recovery, and zero volume states", () => {
+    // 1. Loading
+    renderWithGluon(<GluonStats />, { status: "loading", snapshot: undefined });
+    expect(screen.getAllByText("Loading…").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText("Loading volume data…")).toBeDefined();
+    cleanup();
+
+    // 2. Initial error without snapshot
+    renderWithGluon(<GluonStats />, {
+      status: "error",
+      snapshot: undefined,
+      error: new GluonError("NODE_ERROR", "node unreachable"),
+    });
+    expect(screen.getAllByText("Reconnecting to the node.").length).toBeGreaterThanOrEqual(1);
+    expect(screen.queryByText("Loading…")).toBeNull();
+    cleanup();
+
+    // 3. Cached-error recovery: error with retained snapshot, then recovery to ready
+    const snap = { ...createFakeSnapshot("healthy"), volumes: { plus: [], minus: [] } };
+    const client = new FakeGluonClient("healthy");
+    const { rerender } = render(
+      <GluonContext.Provider
+        value={{
+          deployment: syntheticGoldDeployment,
+          presentation: PRESENTATION["gluon-gold-v3"],
+          client: client as unknown as GluonContextValue["client"],
+          snapshot: snap,
+          status: "error",
+          error: new Error("timeout"),
+          refresh: async () => client.fetchChainState(),
+        }}
+      >
+        <GluonStats />
+      </GluonContext.Provider>
+    );
+
+    expect(screen.getByText("Showing last known data")).toBeDefined();
+    expect(screen.getByTestId("stat-volume-plus").textContent).toBe("0.00");
+    expect(screen.getByTestId("stat-volume-minus").textContent).toBe("0.00");
+    expect(screen.getByText("No volume data available")).toBeDefined();
+
+    rerender(
+      <GluonContext.Provider
+        value={{
+          deployment: syntheticGoldDeployment,
+          presentation: PRESENTATION["gluon-gold-v3"],
+          client: client as unknown as GluonContextValue["client"],
+          snapshot: snap,
+          status: "ready",
+          refresh: async () => client.fetchChainState(),
+        }}
+      >
+        <GluonStats />
+      </GluonContext.Provider>
+    );
+    expect(screen.queryByText("Showing last known data")).toBeNull();
   });
 
   it("renders Gold stats at peg drift 0.99 and shows '—' when protonLeverage is undefined", () => {
@@ -206,24 +279,42 @@ describe("GluonStats Component Tests", () => {
 });
 
 describe("GluonExplainer Component Tests", () => {
+  const prevSkipAnimations = MotionGlobalConfig.skipAnimations;
+
+  beforeAll(() => {
+    MotionGlobalConfig.skipAnimations = true;
+  });
+
+  afterAll(() => {
+    MotionGlobalConfig.skipAnimations = prevSkipAnimations;
+  });
+
   afterEach(() => {
     cleanup();
   });
 
-  it("expands to show deployment token names and the v3 Healthy Range & Adjust Peg section", () => {
+  it("expands to show deployment token names and the v3 Healthy Range & Adjust Peg section", async () => {
     renderWithGluon(<GluonExplainer />, {
       deployment: syntheticDollarDeployment,
       presentation: PRESENTATION["gluon-dollar-v3"],
     });
 
     const toggle = screen.getByRole("button", { name: /How does Gluon work/i });
+    expect(toggle.getAttribute("aria-expanded")).toBe("false");
     fireEvent.click(toggle);
+    expect(toggle.getAttribute("aria-expanded")).toBe("true");
 
     expect(screen.getByText("HEALTHY RANGE & ADJUST PEG")).toBeDefined();
     expect(screen.getByText(/Adjust Peg transaction/i)).toBeDefined();
     expect(screen.getByText(/overcollateralized reactor with q below 50%/i)).toBeDefined();
     expect(screen.getAllByText(/GUSD/).length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText(/GUSDC/).length).toBeGreaterThanOrEqual(1);
+
+    fireEvent.click(toggle);
+    expect(toggle.getAttribute("aria-expanded")).toBe("false");
+    await waitFor(() => {
+      expect(screen.queryByText("HEALTHY RANGE & ADJUST PEG")).toBeNull();
+    });
   });
 });
 
