@@ -448,7 +448,8 @@ describe("ProtonAPYBadge Cache Isolation", () => {
     );
 
     // Switching to B with malformed JSON must show no entries and never write A's history under B's key
-    expect(screen.getByText(/Accumulating data/i)).toBeDefined();
+    expect(screen.getByText("Proton APY")).toBeDefined();
+    expect(screen.getByText("Needs 30 days of observations in this browser.")).toBeDefined();
     expect(window.localStorage.getItem(keyB)).toBe("{malformed-json");
     expect(getHistorySnapshot(keyA)).toHaveLength(2);
   });
