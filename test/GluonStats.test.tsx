@@ -13,6 +13,10 @@ import { GluonContext, type GluonContextValue } from "@/lib/providers/GluonProvi
 import { PRESENTATION } from "@/config/presentation";
 import { GluonStats } from "@/lib/components/blocks/dashboard/GluonStats";
 import { GluonExplainer } from "@/lib/components/blocks/dashboard/GluonExplainer";
+import {
+  ProtonAPYBadge,
+  getHistorySnapshot,
+} from "@/lib/components/blocks/dashboard/ProtonAPYBadge";
 import { sumVolumeBuckets, buildVolumeSeries } from "@/lib/functions/reactor/dashboard";
 import { createFakeSnapshot, FakeGluonClient } from "./fakeClient";
 import { syntheticGoldDeployment } from "./setup";
@@ -217,5 +221,52 @@ describe("GluonExplainer Component Tests", () => {
     expect(screen.getByText(/overcollateralized reactor with q below 50%/i)).toBeDefined();
     expect(screen.getAllByText(/GUSD/).length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText(/GUSDC/).length).toBeGreaterThanOrEqual(1);
+  });
+});
+
+describe("ProtonAPYBadge Cache Isolation", () => {
+  afterEach(() => {
+    cleanup();
+    window.localStorage.clear();
+  });
+
+  it("clears entries on parse failure when switching to a deployment with malformed JSON", () => {
+    const keyA = "gluon_proton_history:gluon-gold-v3";
+    const keyB = "gluon_proton_history:gluon-dollar-v3";
+    const entriesA = [
+      { ts: Date.now() - 40 * 86_400_000, value: 0.25 },
+      { ts: Date.now() - 10 * 86_400_000, value: 0.5 },
+    ];
+    window.localStorage.setItem(keyA, JSON.stringify(entriesA));
+    window.localStorage.setItem(keyB, "{malformed-json");
+
+    expect(getHistorySnapshot(keyA)).toHaveLength(2);
+    expect(getHistorySnapshot(keyB)).toEqual([]);
+
+    const { rerender } = renderWithGluon(<ProtonAPYBadge />, {
+      deployment: syntheticGoldDeployment,
+      presentation: PRESENTATION["gluon-gold-v3"],
+      snapshot: createFakeSnapshot("healthy"),
+    });
+
+    rerender(
+      <GluonContext.Provider
+        value={{
+          deployment: syntheticDollarDeployment,
+          presentation: PRESENTATION["gluon-dollar-v3"],
+          client: new FakeGluonClient("healthy") as unknown as GluonContextValue["client"],
+          snapshot: undefined,
+          status: "loading",
+          refresh: async () => new FakeGluonClient("healthy").fetchChainState(),
+        }}
+      >
+        <ProtonAPYBadge />
+      </GluonContext.Provider>
+    );
+
+    // Switching to B with malformed JSON must show no entries and never write A's history under B's key
+    expect(screen.getByText(/Accumulating data/i)).toBeDefined();
+    expect(window.localStorage.getItem(keyB)).toBe("{malformed-json");
+    expect(getHistorySnapshot(keyA)).toHaveLength(2);
   });
 });

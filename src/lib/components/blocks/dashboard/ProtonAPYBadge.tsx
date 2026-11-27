@@ -57,34 +57,39 @@ function notifyHistoryListeners(): void {
   }
 }
 
-function getHistorySnapshot(storageKey: string): BackingEntry[] {
+export function getHistorySnapshot(storageKey: string): BackingEntry[] {
   if (typeof window === "undefined") return EMPTY_HISTORY;
   try {
     const raw = window.localStorage.getItem(storageKey);
     if (raw === cachedRaw && storageKey === cachedKey) {
       return cachedEntries;
     }
-    cachedKey = storageKey;
-    cachedRaw = raw;
     if (!raw) {
+      cachedKey = storageKey;
+      cachedRaw = raw;
       cachedEntries = EMPTY_HISTORY;
       return cachedEntries;
     }
     const parsed = JSON.parse(raw) as unknown;
-    if (!Array.isArray(parsed)) {
-      cachedEntries = EMPTY_HISTORY;
-      return cachedEntries;
-    }
-    cachedEntries = parsed.filter(
-      (e): e is BackingEntry =>
-        typeof e === "object" &&
-        e !== null &&
-        Number.isFinite((e as BackingEntry).value) &&
-        (e as BackingEntry).value > 0 &&
-        Number.isFinite((e as BackingEntry).ts)
-    );
+    const nextEntries = Array.isArray(parsed)
+      ? parsed.filter(
+          (e): e is BackingEntry =>
+            typeof e === "object" &&
+            e !== null &&
+            Number.isFinite((e as BackingEntry).value) &&
+            (e as BackingEntry).value > 0 &&
+            Number.isFinite((e as BackingEntry).ts)
+        )
+      : EMPTY_HISTORY;
+
+    cachedKey = storageKey;
+    cachedRaw = raw;
+    cachedEntries = nextEntries;
     return cachedEntries;
   } catch {
+    cachedKey = "";
+    cachedRaw = null;
+    cachedEntries = EMPTY_HISTORY;
     return EMPTY_HISTORY;
   }
 }
