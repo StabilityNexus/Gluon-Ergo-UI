@@ -21,7 +21,7 @@ import {
   pruneHistory,
   shouldRecordObservation,
 } from "@/lib/components/blocks/dashboard/ProtonAPYBadge";
-import { sumVolumeBuckets, buildVolumeSeries } from "@/lib/functions/reactor/dashboard";
+import { sumVolumeBuckets, buildVolumeSeries, formatVolumeTick } from "@/lib/functions/reactor/dashboard";
 import { createFakeSnapshot, FakeGluonClient } from "./fakeClient";
 import { syntheticGoldDeployment } from "./setup";
 
@@ -74,14 +74,26 @@ describe("dashboard.ts pure helpers", () => {
     expect(sumVolumeBuckets(buckets, 14)).toBe(550n);
   });
 
-  it("builds chronological volume series ordered oldest to Today", () => {
+  it("builds chronological 14-bucket volume series ordered oldest to Today with zeros for empty days", () => {
     const series = buildVolumeSeries([1_000_000_000n, 2_000_000_000n], [500_000_000n, 0n]);
-    expect(series).toHaveLength(2);
-    expect(series[0].day).toBe("1d ago");
-    expect(series[0].plusErg).toBe(2);
-    expect(series[1].day).toBe("Today");
-    expect(series[1].plusErg).toBe(1);
-    expect(series[1].minusErg).toBe(0.5);
+    expect(series).toHaveLength(14);
+    expect(series[0].day).toBe("13d ago");
+    expect(series[0].plusErg).toBe(0);
+    expect(series[0].minusErg).toBe(0);
+    expect(series[12].day).toBe("1d ago");
+    expect(series[12].plusErg).toBe(2);
+    expect(series[13].day).toBe("Today");
+    expect(series[13].plusErg).toBe(1);
+    expect(series[13].minusErg).toBe(0.5);
+  });
+
+  it("formats VolumeChart Y-axis ticks with adaptive precision for small and large values", () => {
+    expect(formatVolumeTick(0)).toBe("0");
+    expect(formatVolumeTick(0.0025)).toBe("0.0025");
+    expect(formatVolumeTick(0.025)).toBe("0.025");
+    expect(formatVolumeTick(0.1)).toBe("0.10");
+    expect(formatVolumeTick(12.34)).toBe("12.3");
+    expect(formatVolumeTick(1500)).toBe("1.5k");
   });
 });
 

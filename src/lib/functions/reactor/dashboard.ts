@@ -7,6 +7,7 @@
 import { formatUnits } from "@/lib/utils/amounts";
 
 const NANOERG_DECIMALS = 9;
+export const VOLUME_BUCKETS = 14;
 
 export interface VolumeSeriesPoint {
   day: string;
@@ -39,11 +40,10 @@ export function buildVolumeSeries(
   plus: readonly bigint[],
   minus: readonly bigint[]
 ): VolumeSeriesPoint[] {
-  const len = Math.max(plus.length, minus.length);
-  if (len === 0) return [];
+  if (plus.length === 0 && minus.length === 0) return [];
 
   const points: VolumeSeriesPoint[] = [];
-  for (let i = len - 1; i >= 0; i--) {
+  for (let i = VOLUME_BUCKETS - 1; i >= 0; i--) {
     const plusNano = plus[i] ?? 0n;
     const minusNano = minus[i] ?? 0n;
     const day = i === 0 ? "Today" : `${i}d ago`;
@@ -56,6 +56,20 @@ export function buildVolumeSeries(
     });
   }
   return points;
+}
+
+/**
+ * Formats VolumeChart Y-axis ticks with adaptive precision for small ERG volumes
+ * and compact notation for large volumes.
+ */
+export function formatVolumeTick(value: number): string {
+  if (!Number.isFinite(value) || value === 0) return "0";
+  const abs = Math.abs(value);
+  if (abs < 0.01) return value.toFixed(4);
+  if (abs < 0.1) return value.toFixed(3);
+  if (abs < 10) return value.toFixed(2);
+  if (abs < 1000) return value.toFixed(1);
+  return `${(value / 1000).toFixed(1)}k`;
 }
 
 /**

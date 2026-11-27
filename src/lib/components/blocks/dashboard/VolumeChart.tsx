@@ -12,7 +12,7 @@ import { motion } from "framer-motion";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { useTheme } from "next-themes";
 import { useGluon } from "@/lib/hooks/useGluon";
-import { buildVolumeSeries } from "@/lib/functions/reactor/dashboard";
+import { buildVolumeSeries, formatVolumeTick } from "@/lib/functions/reactor/dashboard";
 import { deriveReactorErrorMessage } from "@/lib/functions/reactor/availability";
 
 export function VolumeChart() {
@@ -73,9 +73,9 @@ export function VolumeChart() {
                   tickLine={false}
                 />
                 <YAxis
-                  tickFormatter={(value: number) => value.toFixed(1)}
+                  tickFormatter={formatVolumeTick}
                   tick={{ fill: isDark ? "rgba(255,255,255,0.3)" : "#9ca3af", fontSize: 11 }}
-                  width={45}
+                  width={52}
                   axisLine={false}
                   tickLine={false}
                 />
