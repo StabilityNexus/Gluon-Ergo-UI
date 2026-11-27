@@ -78,7 +78,7 @@ export function BottomNavbar() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-around py-4">
             {[
-              // Hidden during B1 foundation; ported back in B4
+              { href: "/reactor", label: "Dashboard" },
               { href: "/swap", label: "Swap" },
               { href: "/history", label: "History" },
               {
