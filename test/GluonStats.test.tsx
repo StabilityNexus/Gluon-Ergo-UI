@@ -214,6 +214,7 @@ describe("GluonExplainer Component Tests", () => {
 
     expect(screen.getByText("HEALTHY RANGE & ADJUST PEG")).toBeDefined();
     expect(screen.getByText(/Adjust Peg transaction/i)).toBeDefined();
+    expect(screen.getByText(/overcollateralized reactor with q below 50%/i)).toBeDefined();
     expect(screen.getAllByText(/GUSD/).length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText(/GUSDC/).length).toBeGreaterThanOrEqual(1);
   });

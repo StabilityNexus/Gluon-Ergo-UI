@@ -41,7 +41,7 @@ export function GluonExplainer() {
       borderColor: "border-border",
       headingColor: "text-muted-foreground",
       label: "RESERVE RATIO",
-      body: `The reserve ratio is the total ERG in the reactor divided by the ERG value of all circulating ${neutronName}. A higher ratio means ${neutronName} is better collateralized and the protocol is healthier.`,
+      body: `The reserve ratio is the total ERG in the reactor divided by the ERG value of all circulating ${neutronName}, showing how well ${neutronName} is collateralized. However, protocol health requires the fusion ratio q to stay within 50%–98%: even an overcollateralized reactor with q below 50% is outside the healthy range and trading pauses until Adjust Peg restores it.`,
     },
     {
       borderColor: "border-purple-500/50",
