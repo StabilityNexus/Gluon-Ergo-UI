@@ -17,12 +17,21 @@ globalThis.window = dom.window as unknown as Window & typeof globalThis;
 globalThis.document = dom.window.document;
 globalThis.navigator = dom.window.navigator;
 globalThis.HTMLElement = dom.window.HTMLElement;
+globalThis.SVGElement = dom.window.SVGElement;
 globalThis.Element = dom.window.Element;
 globalThis.Node = dom.window.Node;
 globalThis.MutationObserver = dom.window.MutationObserver;
 globalThis.DocumentFragment = dom.window.DocumentFragment;
 globalThis.Event = dom.window.Event as unknown as typeof Event;
 globalThis.CustomEvent = dom.window.CustomEvent as unknown as typeof CustomEvent;
+
+if (typeof globalThis.ResizeObserver === "undefined") {
+  globalThis.ResizeObserver = class ResizeObserver {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  };
+}
 
 // Radix UI requires scrollIntoView which JSDOM does not implement
 dom.window.HTMLElement.prototype.scrollIntoView = () => {};

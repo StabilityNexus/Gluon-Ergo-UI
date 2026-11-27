@@ -7,10 +7,12 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, type LucideIcon } from "lucide-react";
+import { Menu, X, Grip, ArrowDownUp, type LucideIcon } from "lucide-react";
 
-// Hidden during B1 foundation; ported back in B4 (reactor dashboard)
-const ispoLinks: Array<{ href: string; label: string; icon: LucideIcon }> = [];
+const ispoLinks: Array<{ href: string; label: string; icon: LucideIcon }> = [
+  { href: "/reactor", label: "Dashboard", icon: Grip },
+  { href: "/swap", label: "Swap", icon: ArrowDownUp },
+];
 
 export function ReactorSidebar() {
   const router = useRouter();
